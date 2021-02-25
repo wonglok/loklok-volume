@@ -6,6 +6,10 @@ import { Points } from "three";
 import { ShaderMaterial } from "three";
 import { BufferGeometry } from "three";
 import { BufferAttribute } from "three";
+import { Vector3 } from "three/src/Three";
+import { Mesh } from "three/src/Three";
+import { SphereBufferGeometry } from "three/src/Three";
+import { MeshNormalMaterial } from "three/src/Three";
 
 export class Simulator {
   constructor(
@@ -30,6 +34,7 @@ export class Simulator {
 
   async setupSimulator() {
     let renderer = await this.mini.get("renderer");
+    let scene = await this.mini.get("scene");
 
     let SIZE = this.SIZE;
     this.tick = 0;
@@ -48,7 +53,7 @@ export class Simulator {
           data[idx * 4 + 0] = Math.random() - 0.5;
           data[idx * 4 + 1] = Math.random() - 0.5;
           data[idx * 4 + 2] = Math.random() - 0.5;
-          data[idx * 4 + 3] = Math.random() * 2.0;
+          data[idx * 4 + 3] = Math.random() * 0.5;
           idx++;
         }
       }
@@ -65,6 +70,10 @@ export class Simulator {
       uniform float dT;
       uniform float eT;
 
+      const int colliders = COLLIDERS;
+      uniform vec3[colliders] collidersPosition;
+      uniform float[colliders] collidersRadius;
+
       void main(void) {
         vec2 uv = gl_FragCoord.xy / resolution.xy;
 
@@ -78,7 +87,6 @@ export class Simulator {
         life -= .01 * ( rand( uv ) + .1 );
 
         if( life > 1. ){
-
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
@@ -89,13 +97,13 @@ export class Simulator {
         }
 
         if( life < 0. ){
-          life = 1.1;
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
+          life = 1.1;
         }
 
         // gravity
@@ -104,30 +112,74 @@ export class Simulator {
         // wind
         vel += vec3( 0.001 * life, 0.0, 0.0 );
 
-        vec3 colliderPos = vec3(0.3, -3.3, 0.0);
-        float radius = 1.5;
+        for( int i = 0; i < colliders; i++ ){
+          vec3 colliderPos = collidersPosition[i];
+          float radius = collidersRadius[i];
 
-        vec3 dif = colliderPos - pos.xyz;
-        if( length( dif ) < radius ){
-          vel -= normalize(dif) * .01;
+          vec3 dif = colliderPos - pos.xyz;
+          if( length( dif ) < radius ){
+            vel -= normalize(dif) * .01;
+          }
         }
 
-        vel *= .9; // dampening
+        vel *= .96; // dampening
 
         vec3 p = pos.xyz + vel;
-
         gl_FragColor = vec4( p , life );
 
       }
       `;
 
+    // scene;
+
+    let balls = [
+      {
+        position: new Vector3(0.0, -3.0, 0.0),
+        radius: 1.3,
+      },
+
+      {
+        position: new Vector3(2.5, -4.0, 0.0),
+        radius: 1.4,
+      },
+    ];
+
+    //
+    let geoBall = new SphereBufferGeometry(1, 80, 80);
+    let matBall = new MeshNormalMaterial();
+    balls.forEach((ball) => {
+      let ballMesh = new Mesh(geoBall, matBall);
+
+      ballMesh.scale.set(ball.radius, ball.radius, ball.radius);
+      ballMesh.position.copy(ball.position);
+      scene.add(ballMesh);
+    });
+
     this.filter0 = this.gpuCompute.createShaderMaterial(this.shaderCode, {
+      //
+      collidersPosition: {
+        type: "v3v",
+        value: balls.map((b) => b.position),
+      },
+      collidersRadius: { value: balls.map((b) => b.radius) },
+
+      //
       initTexture: { value: initTexture },
       nowPosTex: { value: null },
       lastPosTex: { value: null },
-      dT: { value: null },
-      eT: { value: null },
+      dT: { value: 0 },
+      eT: { value: 0 },
     });
+
+    let scope = this;
+    this.filter0.defines = {
+      resolution: `vec2(${SIZE.toFixed(1)}, ${SIZE.toFixed(1)})`,
+      get COLLIDERS() {
+        return `${scope.filter0.uniforms.collidersPosition.value.length.toFixed(
+          0
+        )}`;
+      },
+    };
 
     this.rtt0 = this.gpuCompute.createRenderTarget();
     this.rtt1 = this.gpuCompute.createRenderTarget();
@@ -138,10 +190,6 @@ export class Simulator {
     this.gpuCompute.renderTexture(initTexture, this.loopRTT[0]);
     this.gpuCompute.renderTexture(initTexture, this.loopRTT[1]);
     this.gpuCompute.renderTexture(initTexture, this.loopRTT[2]);
-
-    this.compute();
-    this.compute();
-    this.compute();
   }
 
   async particles() {
@@ -173,7 +221,6 @@ export class Simulator {
           uniform sampler2D nowPosTex;
           void main (void) {
             vec3 pos = texture2D(nowPosTex, position.xy).xyz;
-            pos *= 100.0;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
             gl_PointSize = 1.0;
           }
@@ -189,9 +236,11 @@ export class Simulator {
     scene.add(particles);
 
     this.mini.onLoop(() => {
-      this.compute();
-      let outdata = this.loopRTT[2];
-      matPt.uniforms.nowPosTex.value = outdata.texture;
+      if (this.filter0) {
+        this.compute();
+        let outdata = this.loopRTT[2];
+        matPt.uniforms.nowPosTex.value = outdata.texture;
+      }
     });
   }
 
