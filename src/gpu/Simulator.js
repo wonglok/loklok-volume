@@ -21,11 +21,16 @@ export class Simulator {
 
     this.balls = [
       {
+        // first one is mouse
         position: new Vector3(0.0, 0.0, 0.0),
-        radius: 1,
+        radius: 1.5,
       },
       {
-        position: new Vector3(2.5, -4.0, 0.0),
+        position: new Vector3(2.0, -2.0, 0.0),
+        radius: 1.4,
+      },
+      {
+        position: new Vector3(-1.5, -4.0, 0.0),
         radius: 1.4,
       },
     ];
@@ -50,22 +55,6 @@ export class Simulator {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
-    var initTexture = this.gpuCompute.createTexture();
-    let prepInitTexture = () => {
-      let idx = 0;
-      let data = initTexture.image.data;
-      for (let y = 0; y < SIZE; y++) {
-        for (let x = 0; x < SIZE; x++) {
-          data[idx * 4 + 0] = Math.random() - 0.5;
-          data[idx * 4 + 1] = Math.random() - 0.5;
-          data[idx * 4 + 2] = Math.random() - 0.5;
-          data[idx * 4 + 3] = 0.0;
-          idx++;
-        }
-      }
-    };
-
-    prepInitTexture();
     let eachBallCode = `
     `;
 
@@ -85,7 +74,6 @@ export class Simulator {
       #include <common>
 
       precision highp float;
-      uniform sampler2D initTexture;
       uniform sampler2D nowPosTex;
       uniform sampler2D lastPosTex;
       uniform float dT;
@@ -116,7 +104,6 @@ export class Simulator {
       void main(void) {
         vec2 uv = gl_FragCoord.xy / resolution.xy;
 
-        vec4 initPosition = texture2D(initTexture, uv);
         vec4 pos = texture2D(nowPosTex, uv);
         vec4 oPos = texture2D(lastPosTex, uv);
 
@@ -133,19 +120,22 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz *= 0.3;
+
+          pos.xyz *= 0.5;
           pos.y += 2.0;
           life = .99;
         }
 
-        if( life < 0. ){
+        float bottomLimit = -7.0 + rand(uv + 0.1);
+
+        if( life < 0. || pos.y <= bottomLimit ){
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz *= 0.3;
+          pos.xyz *= 0.5;
           pos.y += 2.0;
           life = 1.1;
         }
@@ -209,7 +199,6 @@ export class Simulator {
       },
 
       //
-      initTexture: { value: initTexture },
       nowPosTex: { value: null },
       lastPosTex: { value: null },
       dT: { value: 0 },
@@ -222,9 +211,26 @@ export class Simulator {
 
     this.loopRTT = [this.rtt0, this.rtt1, this.rtt2];
 
-    this.gpuCompute.renderTexture(initTexture, this.loopRTT[0]);
-    this.gpuCompute.renderTexture(initTexture, this.loopRTT[1]);
-    this.gpuCompute.renderTexture(initTexture, this.loopRTT[2]);
+    let prepInitTexture = () => {
+      var initTexture = this.gpuCompute.createTexture();
+      let idx = 0;
+      let data = initTexture.image.data;
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          data[idx * 4 + 0] = Math.random() - 0.5;
+          data[idx * 4 + 1] = Math.random() - 0.5;
+          data[idx * 4 + 2] = Math.random() - 0.5;
+          data[idx * 4 + 3] = 0.0;
+          idx++;
+        }
+      }
+
+      this.gpuCompute.renderTexture(initTexture, this.loopRTT[0]);
+      this.gpuCompute.renderTexture(initTexture, this.loopRTT[1]);
+      this.gpuCompute.renderTexture(initTexture, this.loopRTT[2]);
+    };
+
+    prepInitTexture();
   }
 
   async particles() {
