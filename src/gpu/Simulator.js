@@ -6,27 +6,32 @@ import { Points } from "three";
 import { ShaderMaterial } from "three";
 import { BufferGeometry } from "three";
 import { BufferAttribute } from "three";
-import { Vector3 } from "three/src/Three";
-import { Mesh } from "three/src/Three";
-import { SphereBufferGeometry } from "three/src/Three";
-import { MeshNormalMaterial } from "three/src/Three";
+import { Vector3 } from "three";
+import { Mesh } from "three";
+import { SphereBufferGeometry } from "three";
+import { MeshNormalMaterial } from "three";
 
 export class Simulator {
-  constructor(
-    { onLoop, onResize, getRect, onClean, ...mini },
-    name = "Simulator"
-  ) {
+  constructor({ ...mini }, name = "Simulator") {
     this.mini = {
-      onLoop,
-      onResize,
-      getRect,
-      onClean,
       ...mini,
     };
 
     this.mini.set(name, this);
 
-    this.SIZE = 128;
+    this.balls = [
+      {
+        position: new Vector3(0.0, -3.0, 0.0),
+        radius: 1.3,
+      },
+
+      {
+        position: new Vector3(2.5, -4.0, 0.0),
+        radius: 1.4,
+      },
+    ];
+
+    this.SIZE = 256;
 
     this.setupSimulator();
     this.particles();
@@ -132,19 +137,8 @@ export class Simulator {
 
     // scene;
 
-    let balls = [
-      {
-        position: new Vector3(0.0, -3.0, 0.0),
-        radius: 1.3,
-      },
+    let balls = this.balls;
 
-      {
-        position: new Vector3(2.5, -4.0, 0.0),
-        radius: 1.4,
-      },
-    ];
-
-    //
     let geoBall = new SphereBufferGeometry(1, 80, 80);
     let matBall = new MeshNormalMaterial();
     balls.forEach((ball) => {
@@ -203,14 +197,11 @@ export class Simulator {
     let uv = [];
     for (let y = 0; y < this.SIZE; y++) {
       for (let x = 0; x < this.SIZE; x++) {
-        uv.push(y / this.SIZE, x / this.SIZE, 0.0);
+        uv.push(y / this.SIZE, x / this.SIZE);
       }
     }
-    geoPt.setAttribute(
-      "position",
-      new BufferAttribute(new Float32Array(uv), 3)
-    );
-
+    geoPt.setAttribute("uv", new BufferAttribute(new Float32Array(uv), 2));
+    geoPt.setAttribute("position", geoPt.attributes.uv.clone());
     let matPt = new ShaderMaterial({
       uniforms: {
         nowPosTex: {
@@ -220,7 +211,7 @@ export class Simulator {
       vertexShader: /* glsl */ `
           uniform sampler2D nowPosTex;
           void main (void) {
-            vec3 pos = texture2D(nowPosTex, position.xy).xyz;
+            vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
             gl_PointSize = 1.0;
           }
@@ -257,6 +248,7 @@ export class Simulator {
     this.filter0.uniforms.lastPosTex.value = this.loopRTT[1].texture;
     this.filter0.uniforms.dT.value = this.clock.getDelta();
     this.filter0.uniforms.eT.value = this.clock.getElapsedTime();
+
     this.gpuCompute.doRenderTarget(this.filter0, this.loopRTT[2]);
 
     this.tick++;
