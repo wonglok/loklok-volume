@@ -64,7 +64,7 @@ export class Base {
       renderer.domElement.remove();
     });
 
-    let mouse = new Vector3(1000000, 10000000, 0);
+    let mouse = new Vector3(0, 0, 0);
     let rect = renderer.domElement.getBoundingClientRect();
     onResize(() => {
       rect = renderer.domElement.getBoundingClientRect();

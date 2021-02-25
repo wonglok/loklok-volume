@@ -10,6 +10,7 @@ import { Vector3 } from "three";
 import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
+import { MathUtils } from "three/src/Three";
 
 export class Simulator {
   constructor({ ...mini }, name = "Simulator") {
@@ -21,7 +22,6 @@ export class Simulator {
 
     this.balls = [
       {
-        // first one is mouse
         position: new Vector3(0.0, 0.0, 0.0),
         radius: 1.5,
       },
@@ -46,7 +46,13 @@ export class Simulator {
     this.interaction();
   }
   async interaction() {
-    //
+    let mouse = await this.mini.get("mouse");
+    let camera = await this.mini.get("camera");
+
+    this.mini.onLoop(() => {
+      camera.position.x = MathUtils.lerp(camera.position.x, mouse.x, 0.5);
+      camera.lookAt(0.0, 0.0, 0.0);
+    });
   }
   async setupSimulator() {
     let mouse = await this.mini.get("mouse");
@@ -87,6 +93,8 @@ export class Simulator {
 
       uniform sampler2D collidersPositionTex;
       uniform sampler2D collidersRadiusTex;
+
+      uniform mat4 sceneModelViewMatrix;
 
       uniform vec3 mouseNow;
       uniform vec3 mouseLast;
