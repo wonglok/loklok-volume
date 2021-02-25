@@ -30,9 +30,6 @@ export class Base {
       cameraUI.aspect = this.rect.width / this.rect.height;
       cameraUI.updateProjectionMatrix();
     });
-    onLoop(() => {
-      cameraUI.position.z = camera.position.z;
-    });
 
     const renderer = new WebGLRenderer();
     renderer.setSize(this.rect.width, this.rect.height);
@@ -52,21 +49,6 @@ export class Base {
     // const material = new MeshBasicMaterial({ color: 0x00ff00 });
     // const cube = new Mesh(geometry, material);
     // scene.add(cube);
-
-    let deps = [mini.get("VolumeVisualiser"), mini.get("SDFTexture")];
-    Promise.all(deps).then(([vol, sdf]) => {
-      onLoop(() => {
-        camera.position.z = 50;
-
-        if (sdf.compute) {
-          sdf.compute();
-        }
-        if (vol.compute) {
-          vol.compute();
-        }
-        renderer.render(scene, camera);
-      });
-    });
 
     mini.set("camera", camera);
     mini.set("scene", scene);

@@ -2,16 +2,14 @@
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer";
 import { HalfFloatType } from "three";
 import { Clock } from "three/src/Three";
-import { Sprite } from "three/src/Three";
-import { SpriteMaterial } from "three/src/Three";
-import { Vector4 } from "three/src/Three";
-import { MathUtils } from "three/src/Three";
 import { Points } from "three/src/Three";
-import { Vector3 } from "three/src/Three";
-import { PlaneBufferGeometry } from "three/src/Three";
 import { ShaderMaterial } from "three/src/Three";
 import { BufferGeometry } from "three/src/Three";
 import { BufferAttribute } from "three/src/Three";
+import { PlaneBufferGeometry } from "three/src/Three";
+import { Mesh } from "three/src/Three";
+import { MathUtils } from "three/src/Three";
+import { Vector3 } from "three/src/Three";
 
 export class Simulator {
   constructor(
@@ -32,6 +30,7 @@ export class Simulator {
 
     this.setupSimulator();
     this.particles();
+    this.debugger();
   }
 
   async setupSimulator() {
@@ -166,6 +165,56 @@ export class Simulator {
       this.compute();
       let outdata = this.loopRTT[2];
       matPt.uniforms.nowPosTex.value = outdata.texture;
+    });
+  }
+
+  async debugger() {
+    let sceneUI = await this.mini.get("sceneUI");
+    let cameraUI = await this.mini.get("cameraUI");
+
+    let geoDebugger = new PlaneBufferGeometry(100, 100, 2, 2);
+    let matDebugger = new ShaderMaterial({
+      uniforms: {
+        pos: { value: new Vector3() },
+        nowPosTex: {
+          value: null,
+        },
+      },
+      vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        uniform vec3 pos;
+        void main (void) {
+          vUv = uv.xy;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position + pos, 1.0);
+          gl_PointSize = 1.0;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        varying vec2 vUv;
+        uniform sampler2D nowPosTex;
+        void main (void) {
+          vec3 pos = texture2D(nowPosTex, vUv.xy).xyz;
+          gl_FragColor = vec4(pos, 1.0);
+        }
+      `,
+    });
+    let planeDebugger = new Mesh(geoDebugger, matDebugger);
+    planeDebugger.frustumCulled = false;
+    sceneUI.add(planeDebugger);
+
+    this.mini.onLoop(() => {
+      var vFOV = MathUtils.degToRad(cameraUI.fov); // convert vertical fov to radians
+      var height = 2 * Math.tan(vFOV / 2) * cameraUI.position.length(); // visible height
+      var width = height * cameraUI.aspect; // visible width
+
+      matDebugger.uniforms.pos.value.x = width * 0.5 - 100 / 2;
+      matDebugger.uniforms.pos.value.y = height * -0.5 + 100 / 2;
+      matDebugger.uniforms.pos.value.z = 0.0;
+
+      planeDebugger.scale.set(width / 1000, width / 1000, 1);
+
+      let outdata = this.loopRTT[2];
+      matDebugger.uniforms.nowPosTex.value = outdata.texture;
     });
   }
 
