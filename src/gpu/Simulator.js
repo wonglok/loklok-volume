@@ -120,10 +120,10 @@ export class Simulator {
 
   async particles() {
     let scene = await this.mini.get("scene");
-    let camera = await this.mini.get("camera");
 
-    let sceneUI = await this.mini.get("sceneUI");
-    let cameraUI = await this.mini.get("cameraUI");
+    // let camera = await this.mini.get("camera");
+    // let sceneUI = await this.mini.get("sceneUI");
+    // let cameraUI = await this.mini.get("cameraUI");
 
     let geoPt = new BufferGeometry();
     let uv = [];
