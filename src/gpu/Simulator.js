@@ -1,15 +1,11 @@
 // import { Geometry } from "three/examples/jsm/deprecated/Geometry";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer";
 import { HalfFloatType } from "three";
-import { Clock } from "three/src/Three";
-import { Points } from "three/src/Three";
-import { ShaderMaterial } from "three/src/Three";
-import { BufferGeometry } from "three/src/Three";
-import { BufferAttribute } from "three/src/Three";
-import { PlaneBufferGeometry } from "three/src/Three";
-import { Mesh } from "three/src/Three";
-import { MathUtils } from "three/src/Three";
-import { Vector3 } from "three/src/Three";
+import { Clock } from "three";
+import { Points } from "three";
+import { ShaderMaterial } from "three";
+import { BufferGeometry } from "three";
+import { BufferAttribute } from "three";
 
 export class Simulator {
   constructor(
@@ -26,11 +22,10 @@ export class Simulator {
 
     this.mini.set(name, this);
 
-    this.SIZE = 512;
+    this.SIZE = 128;
 
     this.setupSimulator();
     this.particles();
-    this.debugger();
   }
 
   async setupSimulator() {
@@ -74,25 +69,57 @@ export class Simulator {
         vec2 uv = gl_FragCoord.xy / resolution.xy;
 
         vec4 initPosition = texture2D(initTexture, uv);
-        vec4 nowPosition = texture2D(nowPosTex, uv);
-        vec4 lastPosition = texture2D(lastPosTex, uv);
-        vec4 velocity = nowPosition - lastPosition;
+        vec4 pos = texture2D(nowPosTex, uv);
+        vec4 oPos = texture2D(lastPosTex, uv);
 
-        vec4 latest = nowPosition;
+        float life = pos.w;
+        vec3 vel = pos.xyz - oPos.xyz;
 
-        velocity.y = 1.0 * dT;
-        latest.xyz += velocity.xyz;
+        life -= .01 * ( rand( uv ) + .1 );
 
-        latest.w += rand(uv + velocity.y) * dT;
+        if( life > 1. ){
 
-        if (latest.w >= 1.0) {
-          latest.xyz = initPosition.xyz;
-          latest.w = 0.0;
+          vel = vec3( 0. );
+          pos.xyz = vec3(
+            -0.5 + rand(uv + 0.1),
+            -0.5 + rand(uv + 0.2),
+            -0.5 + rand(uv + 0.3)
+          );
+          life = .99;
         }
 
-        gl_FragColor = vec4(latest.xyz, latest.w);
+        if( life < 0. ){
+          life = 1.1;
+          vel = vec3( 0. );
+          pos.xyz = vec3(
+            -0.5 + rand(uv + 0.1),
+            -0.5 + rand(uv + 0.2),
+            -0.5 + rand(uv + 0.3)
+          );
+        }
+
+        // gravity
+        vel += vec3( 0. , -.002 , 0. );
+
+        // wind
+        vel += vec3( 0.001 * life, 0.0, 0.0 );
+
+        vec3 colliderPos = vec3(0.3, -3.3, 0.0);
+        float radius = 1.5;
+
+        vec3 dif = colliderPos - pos.xyz;
+        if( length( dif ) < radius ){
+          vel -= normalize(dif) * .01;
+        }
+
+        vel *= .9; // dampening
+
+        vec3 p = pos.xyz + vel;
+
+        gl_FragColor = vec4( p , life );
+
       }
-    `;
+      `;
 
     this.filter0 = this.gpuCompute.createShaderMaterial(this.shaderCode, {
       initTexture: { value: initTexture },
@@ -143,19 +170,19 @@ export class Simulator {
         },
       },
       vertexShader: /* glsl */ `
-        uniform sampler2D nowPosTex;
-        void main (void) {
-          vec3 pos = texture2D(nowPosTex, position.xy).xyz;
-          pos *= 100.0;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-          gl_PointSize = 1.0;
-        }
-      `,
+          uniform sampler2D nowPosTex;
+          void main (void) {
+            vec3 pos = texture2D(nowPosTex, position.xy).xyz;
+            pos *= 100.0;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = 1.0;
+          }
+          `,
       fragmentShader: /* glsl */ `
-        void main (void) {
-          gl_FragColor = vec4(1.0);
-        }
-      `,
+          void main (void) {
+            gl_FragColor = vec4(0.7, 0.7, 1.0, 1.0);
+          }
+          `,
     });
     let particles = new Points(geoPt, matPt);
     particles.frustumCulled = false;
@@ -165,56 +192,6 @@ export class Simulator {
       this.compute();
       let outdata = this.loopRTT[2];
       matPt.uniforms.nowPosTex.value = outdata.texture;
-    });
-  }
-
-  async debugger() {
-    let sceneUI = await this.mini.get("sceneUI");
-    let cameraUI = await this.mini.get("cameraUI");
-
-    let geoDebugger = new PlaneBufferGeometry(100, 100, 2, 2);
-    let matDebugger = new ShaderMaterial({
-      uniforms: {
-        pos: { value: new Vector3() },
-        nowPosTex: {
-          value: null,
-        },
-      },
-      vertexShader: /* glsl */ `
-        varying vec2 vUv;
-        uniform vec3 pos;
-        void main (void) {
-          vUv = uv.xy;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position + pos, 1.0);
-          gl_PointSize = 1.0;
-        }
-      `,
-      fragmentShader: /* glsl */ `
-        varying vec2 vUv;
-        uniform sampler2D nowPosTex;
-        void main (void) {
-          vec3 pos = texture2D(nowPosTex, vUv.xy).xyz;
-          gl_FragColor = vec4(pos, 1.0);
-        }
-      `,
-    });
-    let planeDebugger = new Mesh(geoDebugger, matDebugger);
-    planeDebugger.frustumCulled = false;
-    sceneUI.add(planeDebugger);
-
-    this.mini.onLoop(() => {
-      var vFOV = MathUtils.degToRad(cameraUI.fov); // convert vertical fov to radians
-      var height = 2 * Math.tan(vFOV / 2) * cameraUI.position.length(); // visible height
-      var width = height * cameraUI.aspect; // visible width
-
-      matDebugger.uniforms.pos.value.x = width * 0.5 - 100 / 2;
-      matDebugger.uniforms.pos.value.y = height * -0.5 + 100 / 2;
-      matDebugger.uniforms.pos.value.z = 0.0;
-
-      planeDebugger.scale.set(width / 1000, width / 1000, 1);
-
-      let outdata = this.loopRTT[2];
-      matDebugger.uniforms.nowPosTex.value = outdata.texture;
     });
   }
 
@@ -243,23 +220,23 @@ export class Simulator {
 
 /*
 
-// Originally sourced from https://www.shadertoy.com/view/ldfSWs
-// Thank you Iñigo :)
+    // Originally sourced from https://www.shadertoy.com/view/ldfSWs
+    // Thank you Iñigo :)
 
-vec3 calcNormal(vec3 pos, float eps) {
-  const vec3 v1 = vec3( 1.0,-1.0,-1.0);
-  const vec3 v2 = vec3(-1.0,-1.0, 1.0);
-  const vec3 v3 = vec3(-1.0, 1.0,-1.0);
-  const vec3 v4 = vec3( 1.0, 1.0, 1.0);
+    vec3 calcNormal(vec3 pos, float eps) {
+      const vec3 v1 = vec3( 1.0,-1.0,-1.0);
+      const vec3 v2 = vec3(-1.0,-1.0, 1.0);
+      const vec3 v3 = vec3(-1.0, 1.0,-1.0);
+      const vec3 v4 = vec3( 1.0, 1.0, 1.0);
 
-  return normalize( v1 * map( pos + v1*eps ).x +
-                    v2 * map( pos + v2*eps ).x +
-                    v3 * map( pos + v3*eps ).x +
-                    v4 * map( pos + v4*eps ).x );
-}
+      return normalize( v1 * map( pos + v1*eps ).x +
+      v2 * map( pos + v2*eps ).x +
+      v3 * map( pos + v3*eps ).x +
+      v4 * map( pos + v4*eps ).x );
+    }
 
-vec3 calcNormal(vec3 pos) {
-  return calcNormal(pos, 0.002);
-}
+    vec3 calcNormal(vec3 pos) {
+      return calcNormal(pos, 0.002);
+    }
 
-*/
+    */

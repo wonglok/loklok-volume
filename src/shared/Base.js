@@ -15,7 +15,7 @@ export class Base {
       75,
       this.rect.width / this.rect.height,
       0.1,
-      10000
+      1000000
     );
 
     let sceneUI = new Scene();

@@ -31,24 +31,21 @@ export const VolumeCanvas = () => {
       mini.get("renderer"),
       mini.get("camera"),
       mini.get("scene"),
-    ]).then(([renderer, camera, scene]) => {
+      mini.get("VolumeVisualiser"),
+      mini.get("SDFTexture"),
+    ]).then(([renderer, camera, scene, vol, sdf]) => {
       camera.position.z = 50;
 
       workDisplay = () => {
-        renderer.render(scene, camera);
-      };
-    });
-
-    let deps = [mini.get("VolumeVisualiser"), mini.get("SDFTexture")];
-    Promise.all(deps).then(([vol, sdf]) => {
-      mini.onLoop(() => {
         if (sdf.compute) {
           sdf.compute();
         }
         if (vol.compute) {
           vol.compute();
         }
-      });
+
+        renderer.render(scene, camera);
+      };
     });
 
     let rAF = () => {
