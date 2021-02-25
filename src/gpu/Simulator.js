@@ -26,6 +26,10 @@ export class Simulator {
         radius: 1.5,
       },
       {
+        position: new Vector3(0.5, 0.0, 0.0),
+        radius: 0.3,
+      },
+      {
         position: new Vector3(2.0, -2.0, 0.0),
         radius: 1.4,
       },
