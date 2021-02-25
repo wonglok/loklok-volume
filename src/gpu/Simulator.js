@@ -41,7 +41,9 @@ export class Simulator {
     this.particles();
     this.interaction();
   }
-  async interaction() {}
+  async interaction() {
+    //
+  }
   async setupSimulator() {
     let mouse = await this.mini.get("mouse");
     let renderer = await this.mini.get("renderer");
