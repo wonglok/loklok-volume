@@ -59,7 +59,7 @@ export class Simulator {
           data[idx * 4 + 0] = Math.random() - 0.5;
           data[idx * 4 + 1] = Math.random() - 0.5;
           data[idx * 4 + 2] = Math.random() - 0.5;
-          data[idx * 4 + 3] = Math.random() * 0.5;
+          data[idx * 4 + 3] = 0.0;
           idx++;
         }
       }
@@ -97,18 +97,18 @@ export class Simulator {
       uniform vec3 mouseNow;
       uniform vec3 mouseLast;
 
-      void collision (inout vec4 pos, inout vec3 vel, vec3 colliderPos, float radius, bool useMouse) {
-        vec3 dif = (colliderPos) - pos.xyz;
-        if (useMouse) {
-          dif = (mouseNow) - pos.xyz;;
+      void collision (inout vec4 position, inout vec3 velocity, vec3 colliderPosition, float radius, bool isMouse) {
+        vec3 dif = (colliderPosition) - position.xyz;
+        if (isMouse) {
+          dif = (mouseNow) - position.xyz;;
         }
         vec3 mouseForce = mouseNow - mouseLast;
         float extraForce = 2.0;
         if( length( dif ) < radius ){
-          vel -= normalize(dif) * dT * 1.0;
+          velocity -= normalize(dif) * dT * 1.0;
 
-          if (useMouse) {
-            vel += mouseForce * dT * extraForce;
+          if (isMouse) {
+            velocity += mouseForce * dT * extraForce;
           }
         }
       }
@@ -124,7 +124,7 @@ export class Simulator {
 
         vec3 vel = pos.xyz - oPos.xyz;
 
-        life -= .01 * ( rand( uv ) + .1 );
+        life -= .01 * ( rand( uv ) + 0.1 );
 
         if( life > 1. ){
           vel = vec3( 0. );
@@ -133,6 +133,8 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
+          pos.xyz *= 0.3;
+          pos.y += 2.0;
           life = .99;
         }
 
@@ -143,11 +145,13 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
+          pos.xyz *= 0.3;
+          pos.y += 2.0;
           life = 1.1;
         }
 
         // gravity
-        vel += vec3( 0. , -.002 , 0. );
+        vel += vec3( 0.0 , -.003 , 0. );
 
         // wind
         vel += vec3( 0.001 * life, 0.0, 0.0 );
