@@ -11,6 +11,24 @@ import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
 
+const visibleHeightAtZDepth = (depth, camera) => {
+  // compensate for cameras not positioned at z=0
+  const cameraOffset = camera.position.z;
+  if (depth < cameraOffset) depth -= cameraOffset;
+  else depth += cameraOffset;
+
+  // vertical fov in radians
+  const vFOV = (camera.fov * Math.PI) / 180;
+
+  // Math.abs to ensure the result is always positive
+  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+};
+
+const visibleWidthAtZDepth = (depth, camera) => {
+  const height = visibleHeightAtZDepth(depth, camera);
+  return height * camera.aspect;
+};
+
 export class Simulator {
   constructor({ ...mini }, name = "Simulator") {
     this.mini = {
@@ -21,23 +39,68 @@ export class Simulator {
 
     this.balls = [
       {
+        init: new Vector3(0.0, -3.0, 0.0),
         position: new Vector3(0.0, -3.0, 0.0),
-        radius: 1.3,
+        positionLast: new Vector3(0.0, -3.0, 0.0),
+        radius: 1,
       },
 
       {
+        init: new Vector3(2.5, -4.0, 0.0),
         position: new Vector3(2.5, -4.0, 0.0),
+        positionLast: new Vector3(2.5, -4.0, 0.0),
         radius: 1.4,
       },
     ];
 
-    this.SIZE = 256;
+    this.SIZE = 128;
 
     this.setupSimulator();
     this.particles();
+    this.interaction();
   }
+  async interaction() {
+    let camera = await this.mini.get("camera");
+    let renderer = await this.mini.get("renderer");
+    let mouse = new Vector3(1000000, 10000000, 0);
+    let rect = renderer.domElement.getBoundingClientRect();
+    this.mini.onResize(() => {
+      rect = renderer.domElement.getBoundingClientRect();
+    });
+    renderer.domElement.addEventListener("mousemove", (evt) => {
+      let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
+      let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
+      mouse.setX(((evt.clientX - rect.width * 0.5) / rect.width) * width);
+      mouse.setY(
+        (((rect.height * 0.5 - evt.clientY) / rect.height) * height) /
+          camera.aspect
+      );
+    });
 
+    renderer.domElement.addEventListener(
+      "touchmove",
+      (evt) => {
+        evt.preventDefault();
+        let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
+        let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
+        mouse.setX(
+          ((evt.touches[0].clientX - rect.width * 0.5) / rect.width) * width
+        );
+        mouse.setY(
+          (((rect.height * 0.5 - evt.touches[0].clientY) / rect.height) *
+            height) /
+            camera.aspect
+        );
+      },
+      { passive: false }
+    );
+    this.mini.onLoop(() => {
+      this.balls[0].positionLast.copy(this.balls[0].position);
+      this.balls[0].position.copy(mouse);
+    });
+  }
   async setupSimulator() {
+    let scope = this;
     let renderer = await this.mini.get("renderer");
     let scene = await this.mini.get("scene");
 
@@ -77,6 +140,7 @@ export class Simulator {
 
       const int colliders = COLLIDERS;
       uniform vec3[colliders] collidersPosition;
+      uniform vec3[colliders] collidersPositionLast;
       uniform float[colliders] collidersRadius;
 
       void main(void) {
@@ -119,11 +183,15 @@ export class Simulator {
 
         for( int i = 0; i < colliders; i++ ){
           vec3 colliderPos = collidersPosition[i];
+          vec3 colliderPosLast = collidersPositionLast[i];
           float radius = collidersRadius[i];
 
           vec3 dif = colliderPos - pos.xyz;
+          vec3 ballVel = colliderPos - colliderPosLast;
+          float extraForce = 2.0;
           if( length( dif ) < radius ){
-            vel -= normalize(dif) * .01;
+            vel -= normalize(dif) * dT * 1.0;
+            vel += ballVel * dT * extraForce;
           }
         }
 
@@ -137,25 +205,37 @@ export class Simulator {
 
     // scene;
 
-    let balls = this.balls;
-
     let geoBall = new SphereBufferGeometry(1, 80, 80);
     let matBall = new MeshNormalMaterial();
-    balls.forEach((ball) => {
+    this.balls.forEach((ball) => {
       let ballMesh = new Mesh(geoBall, matBall);
-
-      ballMesh.scale.set(ball.radius, ball.radius, ball.radius);
-      ballMesh.position.copy(ball.position);
       scene.add(ballMesh);
+
+      this.mini.onLoop(() => {
+        ballMesh.scale.set(ball.radius, ball.radius, ball.radius);
+        ballMesh.position.copy(ball.position);
+      });
     });
 
     this.filter0 = this.gpuCompute.createShaderMaterial(this.shaderCode, {
       //
       collidersPosition: {
         type: "v3v",
-        value: balls.map((b) => b.position),
+        get value() {
+          return scope.balls.map((b) => b.position);
+        },
       },
-      collidersRadius: { value: balls.map((b) => b.radius) },
+      collidersPositionLast: {
+        type: "v3v",
+        get value() {
+          return scope.balls.map((b) => b.positionLast);
+        },
+      },
+      collidersRadius: {
+        get value() {
+          return scope.balls.map((b) => b.radius);
+        },
+      },
 
       //
       initTexture: { value: initTexture },
@@ -165,7 +245,6 @@ export class Simulator {
       eT: { value: 0 },
     });
 
-    let scope = this;
     this.filter0.defines = {
       resolution: `vec2(${SIZE.toFixed(1)}, ${SIZE.toFixed(1)})`,
       get COLLIDERS() {

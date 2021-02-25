@@ -21,7 +21,7 @@ export const GPUCanvas = () => {
       mini.get("sceneUI"),
       mini.get("cameraUI"),
     ]).then(([renderer, camera, scene, sceneUI, cameraUI]) => {
-      camera.position.z = 5;
+      camera.position.z = 15;
       renderer.autoClear = false;
       workDisplay = () => {
         renderer.clear(true, true, true);
