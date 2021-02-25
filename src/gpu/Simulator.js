@@ -39,7 +39,7 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 128;
+    this.SIZE = 256;
 
     this.setupSimulator();
     this.particles();
@@ -59,6 +59,7 @@ export class Simulator {
       camera.lookAt(0.0, 0.0, 0.0);
     });
   }
+
   async setupSimulator() {
     let mouse = await this.mini.get("mouse");
     let renderer = await this.mini.get("renderer");
@@ -72,8 +73,7 @@ export class Simulator {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
-    let eachBallCode = `
-    `;
+    let eachBallCode = ``;
 
     for (let i = 0; i < this.balls.length; i++) {
       let ball = this.balls[i];
@@ -113,7 +113,6 @@ export class Simulator {
         float extraForce = 2.0;
         if( length( dif ) < radius ){
           velocity -= normalize(dif) * dT * 1.0;
-
           if (isMouse) {
             velocity += mouseForce * dT * extraForce;
           }
