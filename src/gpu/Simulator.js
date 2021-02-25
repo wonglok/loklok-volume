@@ -49,6 +49,11 @@ export class Simulator {
     let mouse = await this.mini.get("mouse");
     let camera = await this.mini.get("camera");
 
+    window.addEventListener("wheel", (ev) => {
+      ev.preventDefault();
+      camera.position.z += ev.deltaY * 0.01;
+    });
+
     this.mini.onLoop(() => {
       camera.position.x = MathUtils.lerp(camera.position.x, mouse.x, 0.5);
       camera.lookAt(0.0, 0.0, 0.0);
