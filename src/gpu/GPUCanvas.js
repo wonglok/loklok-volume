@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
 import { Simulator } from "./Simulator";
+
+//
 // import { SceneControls } from "../shared/SceneControls";
 
 export const GPUCanvas = () => {
@@ -26,7 +28,7 @@ export const GPUCanvas = () => {
       camera.position.z = 15;
       renderer.autoClear = false;
       workDisplay = () => {
-        renderer.clear(true, true, true);
+        renderer.clear();
         renderer.render(scene, camera);
         renderer.render(sceneUI, cameraUI);
       };
@@ -35,7 +37,6 @@ export const GPUCanvas = () => {
     let rAF = () => {
       rAFID = requestAnimationFrame(rAF);
       workDisplay();
-
       mini.work();
     };
     rAFID = requestAnimationFrame(rAF);

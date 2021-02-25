@@ -11,24 +11,6 @@ import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
 
-const visibleHeightAtZDepth = (depth, camera) => {
-  // compensate for cameras not positioned at z=0
-  const cameraOffset = camera.position.z;
-  if (depth < cameraOffset) depth -= cameraOffset;
-  else depth += cameraOffset;
-
-  // vertical fov in radians
-  const vFOV = (camera.fov * Math.PI) / 180;
-
-  // Math.abs to ensure the result is always positive
-  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
-};
-
-const visibleWidthAtZDepth = (depth, camera) => {
-  const height = visibleHeightAtZDepth(depth, camera);
-  return height * camera.aspect;
-};
-
 export class Simulator {
   constructor({ ...mini }, name = "Simulator") {
     this.mini = {
@@ -39,16 +21,11 @@ export class Simulator {
 
     this.balls = [
       {
-        init: new Vector3(0.0, -3.0, 0.0),
-        position: new Vector3(0.0, -3.0, 0.0),
-        positionLast: new Vector3(0.0, -3.0, 0.0),
+        position: new Vector3(0.0, 0.0, 0.0),
         radius: 1,
       },
-
       {
-        init: new Vector3(2.5, -4.0, 0.0),
         position: new Vector3(2.5, -4.0, 0.0),
-        positionLast: new Vector3(2.5, -4.0, 0.0),
         radius: 1.4,
       },
     ];
@@ -59,49 +36,9 @@ export class Simulator {
     this.particles();
     this.interaction();
   }
-  async interaction() {
-    let camera = await this.mini.get("camera");
-    let renderer = await this.mini.get("renderer");
-    let mouse = new Vector3(1000000, 10000000, 0);
-    let rect = renderer.domElement.getBoundingClientRect();
-    this.mini.onResize(() => {
-      rect = renderer.domElement.getBoundingClientRect();
-    });
-    renderer.domElement.addEventListener("mousemove", (evt) => {
-      let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
-      let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
-      mouse.setX(((evt.clientX - rect.width * 0.5) / rect.width) * width);
-      mouse.setY(((rect.height * 0.5 - evt.clientY) / rect.height) * height);
-    });
-    renderer.domElement.addEventListener(
-      "touchstart",
-      (ev) => {
-        ev.preventDefault();
-      },
-      { passive: false }
-    );
-    renderer.domElement.addEventListener(
-      "touchmove",
-      (evt) => {
-        evt.preventDefault();
-        let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
-        let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
-        mouse.setX(
-          ((evt.touches[0].clientX - rect.width * 0.5) / rect.width) * width
-        );
-        mouse.setY(
-          ((rect.height * 0.5 - evt.touches[0].clientY) / rect.height) * height
-        );
-      },
-      { passive: false }
-    );
-    this.mini.onLoop(() => {
-      this.balls[0].positionLast.copy(this.balls[0].position);
-      this.balls[0].position.copy(mouse);
-    });
-  }
+  async interaction() {}
   async setupSimulator() {
-    let scope = this;
+    let mouse = await this.mini.get("mouse");
     let renderer = await this.mini.get("renderer");
     let scene = await this.mini.get("scene");
 
@@ -127,7 +64,22 @@ export class Simulator {
         }
       }
     };
+
     prepInitTexture();
+    let eachBallCode = `
+    `;
+
+    for (let i = 0; i < this.balls.length; i++) {
+      let ball = this.balls[i];
+      eachBallCode += `collision(pos, vel,
+        vec3(${ball.position.x.toFixed(3)}, ${ball.position.y.toFixed(
+        3
+      )}, ${ball.position.z.toFixed(3)}),
+        ${ball.radius.toFixed(3)},
+
+        ${i === 0.0}
+      );`;
+    }
 
     this.shaderCode = /* glsl */ `
       #include <common>
@@ -139,10 +91,27 @@ export class Simulator {
       uniform float dT;
       uniform float eT;
 
-      const int colliders = COLLIDERS;
-      uniform vec3[colliders] collidersPosition;
-      uniform vec3[colliders] collidersPositionLast;
-      uniform float[colliders] collidersRadius;
+      uniform sampler2D collidersPositionTex;
+      uniform sampler2D collidersRadiusTex;
+
+      uniform vec3 mouseNow;
+      uniform vec3 mouseLast;
+
+      void collision (inout vec4 pos, inout vec3 vel, vec3 colliderPos, float radius, bool useMouse) {
+        vec3 dif = (colliderPos) - pos.xyz;
+        if (useMouse) {
+          dif = (mouseNow) - pos.xyz;;
+        }
+        vec3 mouseForce = mouseNow - mouseLast;
+        float extraForce = 2.0;
+        if( length( dif ) < radius ){
+          vel -= normalize(dif) * dT * 1.0;
+
+          if (useMouse) {
+            vel += mouseForce * dT * extraForce;
+          }
+        }
+      }
 
       void main(void) {
         vec2 uv = gl_FragCoord.xy / resolution.xy;
@@ -152,6 +121,7 @@ export class Simulator {
         vec4 oPos = texture2D(lastPosTex, uv);
 
         float life = pos.w;
+
         vec3 vel = pos.xyz - oPos.xyz;
 
         life -= .01 * ( rand( uv ) + .1 );
@@ -182,19 +152,7 @@ export class Simulator {
         // wind
         vel += vec3( 0.001 * life, 0.0, 0.0 );
 
-        for( int i = 0; i < colliders; i++ ){
-          vec3 colliderPos = collidersPosition[i];
-          vec3 colliderPosLast = collidersPositionLast[i];
-          float radius = collidersRadius[i];
-
-          vec3 dif = colliderPos - pos.xyz;
-          vec3 ballVel = colliderPos - colliderPosLast;
-          float extraForce = 2.0;
-          if( length( dif ) < radius ){
-            vel -= normalize(dif) * dT * 1.0;
-            vel += ballVel * dT * extraForce;
-          }
-        }
+        ${eachBallCode}
 
         vel *= .96; // dampening
 
@@ -208,34 +166,42 @@ export class Simulator {
 
     let geoBall = new SphereBufferGeometry(1, 80, 80);
     let matBall = new MeshNormalMaterial();
-    this.balls.forEach((ball) => {
+    this.balls.forEach((ball, idx) => {
       let ballMesh = new Mesh(geoBall, matBall);
       scene.add(ballMesh);
 
       this.mini.onLoop(() => {
         ballMesh.scale.set(ball.radius, ball.radius, ball.radius);
         ballMesh.position.copy(ball.position);
+
+        if (idx === 0.0) {
+          ball.position.copy(mouseNow);
+          ballMesh.position.copy(mouseNow);
+        }
       });
     });
 
+    let mouseNow = new Vector3().copy(mouse);
+    let mouseLast = new Vector3().copy(mouse);
+
+    this.mini.onLoop(() => {
+      mouseLast.copy(mouseNow);
+      mouseNow.copy(mouse);
+    });
+
     this.filter0 = this.gpuCompute.createShaderMaterial(this.shaderCode, {
+      mouseNow: {
+        value: mouseNow,
+      },
+      mouseLast: {
+        value: mouseLast,
+      },
       //
       collidersPosition: {
-        type: "v3v",
-        get value() {
-          return scope.balls.map((b) => b.position);
-        },
-      },
-      collidersPositionLast: {
-        type: "v3v",
-        get value() {
-          return scope.balls.map((b) => b.positionLast);
-        },
+        value: null,
       },
       collidersRadius: {
-        get value() {
-          return scope.balls.map((b) => b.radius);
-        },
+        value: null,
       },
 
       //
@@ -245,15 +211,6 @@ export class Simulator {
       dT: { value: 0 },
       eT: { value: 0 },
     });
-
-    this.filter0.defines = {
-      resolution: `vec2(${SIZE.toFixed(1)}, ${SIZE.toFixed(1)})`,
-      get COLLIDERS() {
-        return `${scope.filter0.uniforms.collidersPosition.value.length.toFixed(
-          0
-        )}`;
-      },
-    };
 
     this.rtt0 = this.gpuCompute.createRenderTarget();
     this.rtt1 = this.gpuCompute.createRenderTarget();
@@ -277,11 +234,15 @@ export class Simulator {
     let uv = [];
     for (let y = 0; y < this.SIZE; y++) {
       for (let x = 0; x < this.SIZE; x++) {
-        uv.push(y / this.SIZE, x / this.SIZE);
+        uv.push(y / this.SIZE, x / this.SIZE, 0.0);
       }
     }
-    geoPt.setAttribute("uv", new BufferAttribute(new Float32Array(uv), 2));
-    geoPt.setAttribute("position", geoPt.attributes.uv.clone());
+
+    geoPt.setAttribute("uv", new BufferAttribute(new Float32Array(uv), 3));
+    geoPt.setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(uv), 3)
+    );
     let matPt = new ShaderMaterial({
       uniforms: {
         nowPosTex: {
