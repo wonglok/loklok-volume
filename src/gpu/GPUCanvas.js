@@ -2,14 +2,16 @@ import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
 import { Simulator } from "./Simulator";
-import { SceneControls } from "../shared/SceneControls";
+// import { SceneControls } from "../shared/SceneControls";
 
 export const GPUCanvas = () => {
   const ref = useRef(null);
   //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let mods = [new Base(mini), new Simulator(mini), new SceneControls(mini)];
+    let mods = [new Base(mini), new Simulator(mini)];
+
+    //, new SceneControls(mini)
 
     let rAFID = 0;
 
