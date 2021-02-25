@@ -71,12 +71,15 @@ export class Simulator {
       let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
       let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
       mouse.setX(((evt.clientX - rect.width * 0.5) / rect.width) * width);
-      mouse.setY(
-        (((rect.height * 0.5 - evt.clientY) / rect.height) * height) /
-          camera.aspect
-      );
+      mouse.setY(((rect.height * 0.5 - evt.clientY) / rect.height) * height);
     });
-
+    renderer.domElement.addEventListener(
+      "touchstart",
+      (ev) => {
+        ev.preventDefault();
+      },
+      { passive: false }
+    );
     renderer.domElement.addEventListener(
       "touchmove",
       (evt) => {
@@ -87,9 +90,7 @@ export class Simulator {
           ((evt.touches[0].clientX - rect.width * 0.5) / rect.width) * width
         );
         mouse.setY(
-          (((rect.height * 0.5 - evt.touches[0].clientY) / rect.height) *
-            height) /
-            camera.aspect
+          ((rect.height * 0.5 - evt.touches[0].clientY) / rect.height) * height
         );
       },
       { passive: false }
