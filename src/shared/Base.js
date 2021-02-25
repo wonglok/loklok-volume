@@ -17,9 +17,21 @@ export class Base {
       0.1,
       10000
     );
+
+    let sceneUI = new Scene();
+    let cameraUI = camera.clone();
+
+    mini.set("sceneUI", sceneUI);
+    mini.set("cameraUI", cameraUI);
+
     onResize(() => {
       camera.aspect = this.rect.width / this.rect.height;
       camera.updateProjectionMatrix();
+      cameraUI.aspect = this.rect.width / this.rect.height;
+      cameraUI.updateProjectionMatrix();
+    });
+    onLoop(() => {
+      cameraUI.position.z = camera.position.z;
     });
 
     const renderer = new WebGLRenderer();

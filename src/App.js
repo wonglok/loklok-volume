@@ -1,7 +1,10 @@
 import "./App.css";
 import React from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { VolumeCanvas } from "./volume/VolumeCanvas";
+import { SlicerCanvas } from "./slicer/SlicerCanvas";
+import { VoxelCanvas } from "./voxel/VoxelCanvas";
+import { GPUCanvas } from "./gpu/GPUCanvas";
 
 function App() {
   return (
@@ -10,11 +13,31 @@ function App() {
         <Route exact path="/about">
           <div>About</div>
         </Route>
-        <Route exact path="/users">
-          <div>Users</div>
+        <Route exact path="/gpu">
+          <GPUCanvas></GPUCanvas>
+        </Route>
+        <Route exact path="/slicer">
+          <SlicerCanvas></SlicerCanvas>
+        </Route>
+        <Route exact path="/volume">
+          <VolumeCanvas></VolumeCanvas>
+        </Route>
+        <Route exact path="/voxel">
+          <VoxelCanvas></VoxelCanvas>
         </Route>
         <Route exact path="/">
-          <VolumeCanvas></VolumeCanvas>
+          <div className={"m-5"}>
+            <Link to={"/volume"}>Volume</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/slicer"}>Slicer</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/voxel"}>Voxel</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/gpu"}>GPU</Link>
+          </div>
         </Route>
       </Switch>
     </Router>

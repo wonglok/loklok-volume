@@ -1,30 +1,17 @@
 import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
-import { SDFTexture } from "./SDFTexture";
-import { VolumeVisualiser } from "./VolumeVisualiser";
-import { VolumeControls } from "./VolumeControls";
+import { SDFSlicer } from "./SDFSlicer";
+import { SceneControls } from "./SceneControls";
 
-export const VolumeCanvas = () => {
+export const SlicerCanvas = () => {
   const ref = useRef(null);
+  //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let mods = [
-      new Base(mini),
-      new VolumeControls(mini),
-      new SDFTexture(mini),
-      new VolumeVisualiser(mini),
-    ];
+    let mods = [new Base(mini), new SDFSlicer(mini), new SceneControls(mini)];
 
     let rAFID = 0;
-
-    // let renderer = false;
-    // let camera = false;
-    // let scene = false;
-
-    // mini.get("renderer").then((v) => (renderer = v));
-    // mini.get("camera").then((v) => (camera = v));
-    // mini.get("scene").then((v) => (scene = v));
 
     let workDisplay = () => {};
     Promise.all([
@@ -32,6 +19,7 @@ export const VolumeCanvas = () => {
       mini.get("camera"),
       mini.get("scene"),
     ]).then(([renderer, camera, scene]) => {
+      camera.position.z = 50;
       workDisplay = () => {
         renderer.render(scene, camera);
       };

@@ -1,6 +1,6 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-export class Controls {
+export class VolumeControls {
   constructor({ onLoop, onResize, getRect, onClean, ...mini }) {
     this.mini = {
       onLoop,

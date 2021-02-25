@@ -1,46 +1,40 @@
 import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
-import { SDFTexture } from "./SDFTexture";
-import { VolumeVisualiser } from "./VolumeVisualiser";
-import { VolumeControls } from "./VolumeControls";
+import { Simulator } from "./Simulator";
+import { SceneControls } from "../shared/SceneControls";
 
-export const VolumeCanvas = () => {
+export const GPUCanvas = () => {
   const ref = useRef(null);
+  //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let mods = [
-      new Base(mini),
-      new VolumeControls(mini),
-      new SDFTexture(mini),
-      new VolumeVisualiser(mini),
-    ];
+    let mods = [new Base(mini), new Simulator(mini), new SceneControls(mini)];
 
     let rAFID = 0;
-
-    // let renderer = false;
-    // let camera = false;
-    // let scene = false;
-
-    // mini.get("renderer").then((v) => (renderer = v));
-    // mini.get("camera").then((v) => (camera = v));
-    // mini.get("scene").then((v) => (scene = v));
 
     let workDisplay = () => {};
     Promise.all([
       mini.get("renderer"),
       mini.get("camera"),
       mini.get("scene"),
-    ]).then(([renderer, camera, scene]) => {
+      mini.get("sceneUI"),
+      mini.get("cameraUI"),
+    ]).then(([renderer, camera, scene, sceneUI, cameraUI]) => {
+      camera.position.z = 500;
+      renderer.autoClear = false;
       workDisplay = () => {
+        renderer.clear(true, true, true);
         renderer.render(scene, camera);
+        renderer.render(sceneUI, cameraUI);
       };
     });
 
     let rAF = () => {
       rAFID = requestAnimationFrame(rAF);
-      mini.work();
       workDisplay();
+
+      mini.work();
     };
     rAFID = requestAnimationFrame(rAF);
 
