@@ -80,7 +80,7 @@ export class Simulator {
       {
         type: "static-box",
         position: new Vector3(0.0, -6.0, 0.0),
-        boxSize: new Vector3(10.0, 0.3, 10.0),
+        boxSize: new Vector3(5.0, 0.2, 5.0),
       },
     ];
 
@@ -210,7 +210,7 @@ export class Simulator {
         vec3 p = (colliderBoxPosition) - particlePos.xyz;
 
         if( sdBox(p, boxSize) < 0.0){
-          float EPSILON_A = 0.0001;
+          float EPSILON_A = 0.0000001;
 
           vec3 boxNormal = normalize(vec3(
               sdBox(vec3(p.x + EPSILON_A, p.y, p.z), boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
@@ -221,6 +221,8 @@ export class Simulator {
           particleVel -= boxNormal * dT * 1.0;
         }
       }
+
+      // 0001
 
       void handleCollision (inout vec4 pos, inout vec3 vel) {
         ${collisionCode}
@@ -313,9 +315,9 @@ export class Simulator {
 
         this.mini.onLoop(() => {
           entryMesh.scale.set(
-            entry.boxSize.x,
-            entry.boxSize.y,
-            entry.boxSize.z
+            entry.boxSize.x * 2,
+            entry.boxSize.y * 2,
+            entry.boxSize.z * 2
           );
           entryMesh.position.set(
             entry.position.x,
