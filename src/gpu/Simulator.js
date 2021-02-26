@@ -210,7 +210,7 @@ export class Simulator {
         vec3 p = (colliderBoxPosition) - particlePos.xyz;
 
         if( sdBox(p, boxSize) < 0.0){
-          float EPSILON_A = 0.0000001;
+          float EPSILON_A = 0.001;
 
           vec3 boxNormal = normalize(vec3(
               sdBox(vec3(p.x + EPSILON_A, p.y, p.z), boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
