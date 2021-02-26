@@ -11,6 +11,7 @@ import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
 import { MathUtils } from "three/src/Three";
+import { BoxBufferGeometry } from "three/src/Three";
 
 export const Ballify = /* glsl */ `
 #define M_PI 3.1415926535897932384626433832795
@@ -58,20 +59,28 @@ export class Simulator {
 
     this.balls = [
       {
-        position: new Vector3(0.0, 0.0, 0.0),
+        type: "mouse-sphere",
         radius: 1.5,
       },
       {
-        position: new Vector3(0.5, 0.0, 0.0),
+        type: "static-sphere",
+        position: new Vector3(0.9, 0.0, 0.0),
         radius: 0.35,
       },
       {
+        type: "static-sphere",
         position: new Vector3(2.0, -2.0, 0.0),
         radius: 1.4,
       },
       {
+        type: "static-sphere",
         position: new Vector3(-1.5, -4.0, 0.0),
         radius: 1.4,
+      },
+      {
+        type: "static-box",
+        position: new Vector3(0.0, -6.0, 0.0),
+        boxSize: new Vector3(10.0, 0.3, 10.0),
       },
     ];
 
@@ -101,6 +110,14 @@ export class Simulator {
     let renderer = await this.mini.get("renderer");
     let scene = await this.mini.get("scene");
 
+    let mouseNow = new Vector3().copy(mouse);
+    let mouseLast = new Vector3().copy(mouse);
+
+    this.mini.onLoop(() => {
+      mouseLast.copy(mouseNow);
+      mouseNow.copy(mouse);
+    });
+
     let SIZE = this.SIZE;
     this.tick = 0;
     this.clock = new Clock();
@@ -109,18 +126,47 @@ export class Simulator {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
-    let eachBallCode = ``;
+    let collisionCode = ``;
 
     for (let i = 0; i < this.balls.length; i++) {
       let ball = this.balls[i];
-      eachBallCode += `collision(pos, vel,
-        vec3(${ball.position.x.toFixed(3)}, ${ball.position.y.toFixed(
-        3
-      )}, ${ball.position.z.toFixed(3)}),
-        ${ball.radius.toFixed(3)},
+      if (ball.type === "mouse-sphere") {
+        collisionCode += `collisionMouseSphere(
+          pos,
+          vel,
+          ${ball.radius.toFixed(3)}
+        );`;
+      }
 
-        ${i === 0.0}
-      );`;
+      if (ball.type === "static-sphere") {
+        collisionCode += `collisionStaticSphere(
+          pos,
+          vel,
+          vec3(
+            ${ball.position.x.toFixed(3)},
+            ${ball.position.y.toFixed(3)},
+            ${ball.position.z.toFixed(3)}
+          ),
+          ${ball.radius.toFixed(3)}
+        );`;
+      }
+
+      if (ball.type === "static-box") {
+        collisionCode += `collisionStaticBox(
+          pos,
+          vel,
+          vec3(
+            ${ball.position.x.toFixed(3)},
+            ${ball.position.y.toFixed(3)},
+            ${ball.position.z.toFixed(3)}
+          ),
+          vec3(
+            ${ball.boxSize.x.toFixed(3)},
+            ${ball.boxSize.y.toFixed(3)},
+            ${ball.boxSize.z.toFixed(3)}
+          )
+        );`;
+      }
     }
 
     this.shaderCode = /* glsl */ `
@@ -132,29 +178,52 @@ export class Simulator {
       uniform float dT;
       uniform float eT;
 
-      uniform sampler2D collidersPositionTex;
-      uniform sampler2D collidersRadiusTex;
-
-      uniform mat4 sceneModelViewMatrix;
-
       uniform vec3 mouseNow;
       uniform vec3 mouseLast;
 
       ${Ballify}
 
-      void collision (inout vec4 position, inout vec3 velocity, vec3 colliderPosition, float radius, bool isMouse) {
-        vec3 dif = (colliderPosition) - position.xyz;
-        if (isMouse) {
-          dif = (mouseNow) - position.xyz;;
+      float sdBox( vec3 p, vec3 b )
+      {
+        vec3 q = abs(p) - b;
+        return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+      }
+
+      void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
+        vec3 dif = (colliderSpherePosition) - particlePos.xyz;
+        if( length( dif ) < sphereRadius ){
+          particleVel -= normalize(dif) * dT * 1.0;
         }
-        vec3 mouseForce = mouseNow - mouseLast;
-        float extraForce = 2.0;
-        if( length( dif ) < radius ){
-          velocity -= normalize(dif) * dT * 1.0;
-          if (isMouse) {
-            velocity += mouseForce * dT * extraForce;
-          }
+      }
+
+      void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+        vec3 dif = (mouseNow) - particlePos.xyz;
+
+        if( length( dif ) < sphereRadius ){
+          particleVel -= normalize(dif) * dT * 1.0;
+          vec3 mouseForce = mouseNow - mouseLast;
+          particleVel += mouseForce * dT * 2.0;
         }
+      }
+
+      void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
+        vec3 p = (colliderBoxPosition) - particlePos.xyz;
+
+        if( sdBox(p, boxSize) < 0.0){
+          float EPSILON_A = 0.0001;
+
+          vec3 boxNormal = normalize(vec3(
+              sdBox(vec3(p.x + EPSILON_A, p.y, p.z), boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
+              sdBox(vec3(p.x, p.y + EPSILON_A, p.z), boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
+              sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
+          ));
+
+          particleVel -= boxNormal * dT * 1.0;
+        }
+      }
+
+      void handleCollision (inout vec4 pos, inout vec3 vel) {
+        ${collisionCode}
       }
 
       void main(void) {
@@ -177,8 +246,7 @@ export class Simulator {
             -0.5 + rand(uv + 0.3)
           );
 
-          pos.xyz *= 0.5;
-          pos.xyz = ballify(pos.xyz, 0.3);
+          pos.xyz = ballify(pos.xyz, 0.5);
           pos.y += 2.0;
           life = .99;
         }
@@ -192,8 +260,7 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz *= 0.5;
-          pos.xyz = ballify(pos.xyz, 0.3);
+          pos.xyz = ballify(pos.xyz, 0.5);
           pos.y += 2.0;
           life = 1.1;
         }
@@ -204,7 +271,7 @@ export class Simulator {
         // wind
         vel += vec3( 0.001 * life, 0.0, 0.0 );
 
-        ${eachBallCode}
+        handleCollision(pos, vel);
 
         vel *= .96; // dampening
 
@@ -217,28 +284,46 @@ export class Simulator {
     // scene;
 
     let geoBall = new SphereBufferGeometry(1, 80, 80);
-    let matBall = new MeshNormalMaterial();
-    this.balls.forEach((ball, idx) => {
-      let ballMesh = new Mesh(geoBall, matBall);
-      scene.add(ballMesh);
+    let geoBox = new BoxBufferGeometry(1, 1, 1);
+    let matNormal = new MeshNormalMaterial({ opacity: 0.5, transparent: true });
+    this.balls.forEach((entry, idx) => {
+      if (entry.type === "mouse-sphere") {
+        let entryMesh = new Mesh(geoBall, matNormal);
+        scene.add(entryMesh);
 
-      this.mini.onLoop(() => {
-        ballMesh.scale.set(ball.radius, ball.radius, ball.radius);
-        ballMesh.position.copy(ball.position);
+        this.mini.onLoop(() => {
+          entryMesh.position.copy(mouseNow);
+          entryMesh.scale.set(entry.radius, entry.radius, entry.radius);
+        });
+      }
 
-        if (idx === 0.0) {
-          ball.position.copy(mouseNow);
-          ballMesh.position.copy(mouseNow);
-        }
-      });
-    });
+      if (entry.type === "static-sphere") {
+        let entryMesh = new Mesh(geoBall, matNormal);
+        scene.add(entryMesh);
 
-    let mouseNow = new Vector3().copy(mouse);
-    let mouseLast = new Vector3().copy(mouse);
+        this.mini.onLoop(() => {
+          entryMesh.scale.set(entry.radius, entry.radius, entry.radius);
+          entryMesh.position.copy(entry.position);
+        });
+      }
 
-    this.mini.onLoop(() => {
-      mouseLast.copy(mouseNow);
-      mouseNow.copy(mouse);
+      if (entry.type === "static-box") {
+        let entryMesh = new Mesh(geoBox, matNormal);
+        scene.add(entryMesh);
+
+        this.mini.onLoop(() => {
+          entryMesh.scale.set(
+            entry.boxSize.x,
+            entry.boxSize.y,
+            entry.boxSize.z
+          );
+          entryMesh.position.set(
+            entry.position.x,
+            entry.position.y,
+            entry.position.z
+          );
+        });
+      }
     });
 
     this.filter0 = this.gpuCompute.createShaderMaterial(this.shaderCode, {
@@ -248,15 +333,7 @@ export class Simulator {
       mouseLast: {
         value: mouseLast,
       },
-      //
-      collidersPosition: {
-        value: null,
-      },
-      collidersRadius: {
-        value: null,
-      },
 
-      //
       nowPosTex: { value: null },
       lastPosTex: { value: null },
       dT: { value: 0 },
@@ -270,9 +347,9 @@ export class Simulator {
     this.loopRTT = [this.rtt0, this.rtt1, this.rtt2];
 
     let prepInitTexture = () => {
-      var initTexture = this.gpuCompute.createTexture();
+      var tex = this.gpuCompute.createTexture();
       let idx = 0;
-      let data = initTexture.image.data;
+      let data = tex.image.data;
       for (let y = 0; y < SIZE; y++) {
         for (let x = 0; x < SIZE; x++) {
           data[idx * 4 + 0] = Math.random() - 0.5;
@@ -283,9 +360,9 @@ export class Simulator {
         }
       }
 
-      this.gpuCompute.renderTexture(initTexture, this.loopRTT[0]);
-      this.gpuCompute.renderTexture(initTexture, this.loopRTT[1]);
-      this.gpuCompute.renderTexture(initTexture, this.loopRTT[2]);
+      this.gpuCompute.renderTexture(tex, this.loopRTT[0]);
+      this.gpuCompute.renderTexture(tex, this.loopRTT[1]);
+      this.gpuCompute.renderTexture(tex, this.loopRTT[2]);
     };
 
     prepInitTexture();
@@ -367,26 +444,3 @@ export class Simulator {
     console.log("cleanup Simulator");
   }
 }
-
-/*
-
-    // Originally sourced from https://www.shadertoy.com/view/ldfSWs
-    // Thank you Iñigo :)
-
-    vec3 calcNormal(vec3 pos, float eps) {
-      const vec3 v1 = vec3( 1.0,-1.0,-1.0);
-      const vec3 v2 = vec3(-1.0,-1.0, 1.0);
-      const vec3 v3 = vec3(-1.0, 1.0,-1.0);
-      const vec3 v4 = vec3( 1.0, 1.0, 1.0);
-
-      return normalize( v1 * map( pos + v1*eps ).x +
-      v2 * map( pos + v2*eps ).x +
-      v3 * map( pos + v3*eps ).x +
-      v4 * map( pos + v4*eps ).x );
-    }
-
-    vec3 calcNormal(vec3 pos) {
-      return calcNormal(pos, 0.002);
-    }
-
-    */
