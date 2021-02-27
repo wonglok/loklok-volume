@@ -71,7 +71,6 @@ export class Bubbles {
 
         varying float vDepth;
 
-        const float EPS = 0.001;
 
         vec4 pack1K ( float depth ) {
           depth /= 1000.0;
@@ -87,6 +86,7 @@ export class Bubbles {
           return dot( color, bitSh ) * 1000.0;
         }
 
+        const float EPS = 0.001;
         void main() {
           vec2 toCenter = (gl_PointCoord.xy - 0.5) * 2.0;
           float isVisible = step(-1.0 + EPS, -length(toCenter));
@@ -139,10 +139,12 @@ export class Bubbles {
           return dot( color, bitSh ) * 1000.0;
         }
 
+        const float EPS = 0.001;
         void main() {
-          if(length(gl_PointCoord.xy - 0.5) > 0.5) discard;
-
           vec2 toCenter = (gl_PointCoord.xy - 0.5) * 2.0;
+          float isVisible = step(-1.0 + EPS, -length(toCenter));
+          if(isVisible < 0.5) discard;
+
           float z = sqrt(1.0 - toCenter.x * toCenter.x - toCenter.y * toCenter.y) * radius * 0.5;
 
           vec4 depth = texture2D(uDepthTexture, gl_FragCoord.xy / uResolution );
