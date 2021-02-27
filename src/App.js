@@ -5,6 +5,8 @@ import { VolumeCanvas } from "./volume/VolumeCanvas";
 import { SlicerCanvas } from "./slicer/SlicerCanvas";
 import { VoxelCanvas } from "./voxel/VoxelCanvas";
 import { GPUCanvas } from "./gpu/GPUCanvas";
+import { EnergyCanvas } from "./energy/EnergyCanvas";
+import { BubbleCanvas } from "./bubble/BubbleCanvas";
 
 function App() {
   return (
@@ -16,6 +18,9 @@ function App() {
         <Route exact path="/gpu">
           <GPUCanvas></GPUCanvas>
         </Route>
+        <Route exact path="/energy">
+          <EnergyCanvas></EnergyCanvas>
+        </Route>
         <Route exact path="/slicer">
           <SlicerCanvas></SlicerCanvas>
         </Route>
@@ -24,6 +29,9 @@ function App() {
         </Route>
         <Route exact path="/voxel">
           <VoxelCanvas></VoxelCanvas>
+        </Route>
+        <Route exact path="/bubble">
+          <BubbleCanvas></BubbleCanvas>
         </Route>
         <Route exact path="/">
           <div className={"m-5"}>
@@ -37,6 +45,12 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/gpu"}>GPU</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/energy"}>Energy</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/bubble"}>Bubble</Link>
           </div>
         </Route>
       </Switch>

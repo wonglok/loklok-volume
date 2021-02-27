@@ -49,8 +49,8 @@ vec3 ballify (vec3 pos, float r) {
   );
 }
 `;
-export class Simulator {
-  constructor({ ...mini }, name = "Simulator") {
+export class EnergySimulator {
+  constructor({ ...mini }, name = "EnergySimulator") {
     this.mini = {
       ...mini,
     };
@@ -80,7 +80,13 @@ export class Simulator {
       {
         type: "static-box",
         position: new Vector3(0.0, -6.0, 0.0),
-        boxSize: new Vector3(5.0, 0.2, 5.0),
+        boxSize: new Vector3(5.0, 0.15, 5.0),
+      },
+
+      {
+        type: "static-box",
+        position: new Vector3(0.9, 0.8, 0.0),
+        boxSize: new Vector3(1.0, 0.1, 1.0),
       },
     ];
 
@@ -119,7 +125,6 @@ export class Simulator {
     });
 
     let SIZE = this.SIZE;
-
     this.tick = 0;
     this.clock = new Clock();
     this.gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
@@ -211,12 +216,12 @@ export class Simulator {
         vec3 p = (colliderBoxPosition) - particlePos.xyz;
 
         if(sdBox(p, boxSize) < 0.0){
-          float EPSILON_A = 0.01;
+          float EPSILON_A = 0.05;
 
           vec3 boxNormal = normalize(vec3(
-              sdBox(vec3(p.x + EPSILON_A, p.y, p.z), boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
-              sdBox(vec3(p.x, p.y + EPSILON_A, p.z), boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
-              sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
+            sdBox(vec3(p.x + EPSILON_A, p.y, p.z),  boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
+            sdBox(vec3(p.x, p.y + EPSILON_A, p.z),  boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
+            sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
           ));
 
           particleVel -= boxNormal * dT * 1.0;
@@ -249,7 +254,7 @@ export class Simulator {
             -0.5 + rand(uv + 0.3)
           );
 
-          pos.xyz = ballify(pos.xyz, 0.5);
+          pos.xyz = ballify(pos.xyz, 1.0);
           pos.y += 2.0;
           life = .99;
         }
@@ -263,7 +268,7 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz = ballify(pos.xyz, 0.5);
+          pos.xyz = ballify(pos.xyz, 1.0);
           pos.y += 2.0;
           life = 1.1;
         }
