@@ -18,13 +18,22 @@ import { Quad } from "../shared/Quad";
 export class Bubbles {
   constructor(mini) {
     this.mini = mini;
-    this.WIDTH = window.innerWidth;
-    this.HEIGHT = window.innerHeight;
+
     this.PT_RADIUS = 50.0;
+
     this.uResolution = new Vector2(this.WIDTH, this.HEIGHT);
 
+    this.WIDTH = window.innerWidth;
+    this.HEIGHT = window.innerHeight;
     this.rttDepth = new WebGLRenderTarget(this.WIDTH, this.HEIGHT);
     this.rttAdd = new WebGLRenderTarget(this.WIDTH, this.HEIGHT);
+
+    this.mini.onResize(() => {
+      this.WIDTH = window.innerWidth;
+      this.HEIGHT = window.innerHeight;
+      this.rttDepth.setSize(this.WIDTH, this.HEIGHT);
+      this.rttAdd.setSize(this.WIDTH, this.HEIGHT);
+    });
 
     this.setup();
   }
@@ -204,7 +213,7 @@ export class Bubbles {
     this.previewShader = new MeshBasicMaterial({ map: this.rttAdd.texture });
     this.quadPreview = new Quad({ material: this.previewShader });
 
-    camera.position.z = 150;
+    camera.position.z = 20;
     this.mini.onLoop(() => {
       // bubbles.rotation.y += 0.001;
       // bubbles.rotation.x += 0.001;
