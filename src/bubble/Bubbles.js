@@ -19,7 +19,8 @@ export class Bubbles {
   constructor(mini) {
     this.mini = mini;
 
-    this.PT_RADIUS = 50.0;
+    this.PT_RADIUS = 150.0;
+    this.PT_INSET = 2.0;
 
     this.uResolution = new Vector2(this.WIDTH, this.HEIGHT);
 
@@ -41,13 +42,15 @@ export class Bubbles {
   async setup() {
     let geoPt = new BufferGeometry();
     let dataPos = [];
+
     for (let i = 0; i < 1500; i++) {
       dataPos.push(
-        MathUtils.randFloatSpread(100.0),
-        MathUtils.randFloatSpread(100.0),
-        MathUtils.randFloatSpread(10.0)
+        MathUtils.randFloatSpread(50.0),
+        MathUtils.randFloatSpread(50.0),
+        MathUtils.randFloatSpread(10.0) + 5.0
       );
     }
+
     geoPt.setAttribute(
       "position",
       new BufferAttribute(new Float32Array(dataPos), 3)
@@ -71,39 +74,22 @@ export class Bubbles {
         void main (void) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = radius;
+
           vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
           vDepth = -mvPosition.z;
         }
 
       `,
       fragmentShader: /* glsl */ `
-
         varying float vDepth;
-
-
-        vec4 pack1K ( float depth ) {
-          depth /= 1000.0;
-          const vec4 bitSh = vec4( 256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0 );
-          const vec4 bitMsk = vec4( 0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0 );
-          vec4 res = fract( depth * bitSh );
-          res -= res.xxyz * bitMsk;
-          return res;
-        }
-
-        float unpack1K ( vec4 color ) {
-          const vec4 bitSh = vec4( 1.0 / ( 256.0 * 256.0 * 256.0 ), 1.0 / ( 256.0 * 256.0 ), 1.0 / 256.0, 1.0 );
-          return dot( color, bitSh ) * 1000.0;
-        }
 
         const float EPS = 0.001;
         void main() {
           vec2 toCenter = (gl_PointCoord.xy - 0.5) * 2.0;
           float isVisible = step(-1.0 + EPS, -length(toCenter));
           if(isVisible < 0.5) discard;
-
-          gl_FragColor = vec4(vDepth, vDepth, gl_FragCoord.z, vDepth);
+          gl_FragColor = vec4(vec2(0.0), gl_FragCoord.z, vDepth);
         }
-
       `,
     });
 
@@ -111,42 +97,31 @@ export class Bubbles {
       transparent: true,
       blending: AdditiveBlending,
       uniforms: {
-        uDepthTexture: { value: this.rttDepth.texture },
+        uInset: { value: this.PT_INSET },
+        uDepth: { value: this.rttDepth.texture },
         uResolution: { value: this.uResolution },
         radius: { value: this.PT_RADIUS },
       },
       vertexShader: /* glsl */ `
         varying float vDepth;
+        varying float vHalfSize;
         uniform float radius;
 
         void main (void) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = radius;
           vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
           vDepth = -mvPosition.z;
+          gl_PointSize = position.z / length( mvPosition.xyz ) * radius;
+          vHalfSize = gl_PointSize * 0.5;
         }
-
       `,
       fragmentShader: /* glsl */ `
-
+        varying float vHalfSize;
         varying float vDepth;
         uniform vec2 uResolution;
+        uniform float uInset;
         uniform float radius;
-        uniform sampler2D uDepthTexture;
-
-        vec4 pack1K ( float depth ) {
-          depth /= 1000.0;
-          const vec4 bitSh = vec4( 256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0 );
-          const vec4 bitMsk = vec4( 0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0 );
-          vec4 res = fract( depth * bitSh );
-          res -= res.xxyz * bitMsk;
-          return res;
-        }
-
-        float unpack1K ( vec4 color ) {
-          const vec4 bitSh = vec4( 1.0 / ( 256.0 * 256.0 * 256.0 ), 1.0 / ( 256.0 * 256.0 ), 1.0 / 256.0, 1.0 );
-          return dot( color, bitSh ) * 1000.0;
-        }
+        uniform sampler2D uDepth;
 
         const float EPS = 0.001;
         void main() {
@@ -154,13 +129,13 @@ export class Bubbles {
           float isVisible = step(-1.0 + EPS, -length(toCenter));
           if(isVisible < 0.5) discard;
 
-          float z = sqrt(1.0 - toCenter.x * toCenter.x - toCenter.y * toCenter.y) * radius * 0.5;
+          float centerZ = texture2D( uDepth, gl_FragCoord.xy  / uResolution ).a;
+          float zLength = sqrt(1.0 - toCenter.x * toCenter.x - toCenter.y * toCenter.y) * vHalfSize;
+          float z = centerZ - vDepth + zLength + 2.0;
 
-          vec4 depth = texture2D(uDepthTexture, gl_FragCoord.xy / uResolution );
-          float dz = depth.b - vDepth + z;
-
-          // toCenter.xy *= dz * (1.0);
-          gl_FragColor = vec4((toCenter * 0.5 + 0.5) / dz, dz, 1.0 );
+          // isVisible *= step(EPS, z);
+          // toCenter.xy *= z * (1.0 + uInset);
+          gl_FragColor = vec4(toCenter * 0.5 + 0.5, z, z / zLength );// * isVisible;
         }
       `,
     });
@@ -168,6 +143,7 @@ export class Bubbles {
     this.renderMat = new ShaderMaterial({
       transparent: true,
       uniforms: {
+        uInset: { value: this.PT_INSET },
         uDepth: { value: this.rttDepth.texture },
         uAdditive: { value: this.rttAdd.texture },
         uResolution: { value: this.uResolution },
@@ -185,23 +161,42 @@ export class Bubbles {
         }
       `,
       fragmentShader: /* glsl */ `
+        precision highp float;
+        uniform float uInset;
         uniform vec2 uResolution;
         uniform sampler2D uDepth;
         uniform sampler2D uAdditive;
         uniform sampler2D uSphereMap;
+
         varying vec2 vUv;
+
+        // #define saturate(a) clamp( a, 0.0, 1.0 )
+        // #define whiteCompliment(a) ( 1.0 - saturate( a ) )
+
+        vec3 blendOverlay(vec3 base, vec3 blend) {
+            return mix(1.0 - 2.0 * (1.0 - base) * (1.0 - blend), 2.0 * base * blend, step(base, vec3(0.5)));
+        }
+        float uWashout = 0.5;
 
         void main (void) {
           vec4 merged = texture2D( uAdditive, vUv );
-
           float alpha = smoothstep(0.0, 1.0, merged.w);
           if(alpha < 0.001) discard;
 
-          merged.xy = merged.xy / merged.z;
+          // debug
+          vec4 inner = texture2D( uAdditive, vUv );
+          inner.xyz = normalize(inner.xyz);
+          vec4 base = texture2D( uSphereMap, (inner.xy) / inner.z  );
 
-          vec4 color = texture2D( uSphereMap, (merged.xy * 0.5 + 0.5) );
+          vec4 outer = texture2D( uAdditive, vUv );
+          outer.xy /= -outer.z * (1.0 + uInset);
+          outer.z = sqrt(1.0 - outer.x * outer.x - outer.y * outer.y);
+          outer.xyz = normalize(outer.xyz);
+          vec4 blend = texture2D( uSphereMap, outer.xy * 0.5 + 0.5 );
 
-          gl_FragColor = vec4(color.rgb, alpha);
+          gl_FragColor.rgb = blendOverlay(base.rgb, blend.rgb);
+          gl_FragColor.a = alpha;
+
         }
       `,
     });
@@ -213,11 +208,8 @@ export class Bubbles {
     this.previewShader = new MeshBasicMaterial({ map: this.rttAdd.texture });
     this.quadPreview = new Quad({ material: this.previewShader });
 
-    camera.position.z = 20;
+    camera.position.z = 15;
     this.mini.onLoop(() => {
-      // bubbles.rotation.y += 0.001;
-      // bubbles.rotation.x += 0.001;
-
       renderer.setRenderTarget(this.rttDepth);
       renderer.clear();
       bubbles.material = matPtDpeth;
