@@ -34,9 +34,9 @@ export class Bubbles {
     let dataPos = [];
     for (let i = 0; i < 1500; i++) {
       dataPos.push(
-        MathUtils.randFloatSpread(500.0),
-        MathUtils.randFloatSpread(500.0),
-        MathUtils.randFloatSpread(500.0)
+        MathUtils.randFloatSpread(100.0),
+        MathUtils.randFloatSpread(100.0),
+        MathUtils.randFloatSpread(10.0)
       );
     }
     geoPt.setAttribute(
@@ -47,9 +47,6 @@ export class Bubbles {
     let scene = await this.mini.get("scene");
     let renderer = await this.mini.get("renderer");
     let camera = await this.mini.get("camera");
-
-    this.previewShader = new MeshBasicMaterial({ map: this.rttAdd.texture });
-    this.quadPreview = new Quad({ material: this.previewShader });
 
     let matPtDpeth = new ShaderMaterial({
       transparent: true,
@@ -74,6 +71,8 @@ export class Bubbles {
 
         varying float vDepth;
 
+        const float EPS = 0.001;
+
         vec4 pack1K ( float depth ) {
           depth /= 1000.0;
           const vec4 bitSh = vec4( 256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0 );
@@ -89,8 +88,11 @@ export class Bubbles {
         }
 
         void main() {
-          if(length(gl_PointCoord.xy - 0.5) > 0.5) discard;
-          gl_FragColor = pack1K(vDepth);
+          vec2 toCenter = (gl_PointCoord.xy - 0.5) * 2.0;
+          float isVisible = step(-1.0 + EPS, -length(toCenter));
+          if(isVisible < 0.5) discard;
+
+          gl_FragColor = vec4(vDepth, vDepth, gl_FragCoord.z, vDepth);
         }
 
       `,
@@ -141,10 +143,13 @@ export class Bubbles {
           if(length(gl_PointCoord.xy - 0.5) > 0.5) discard;
 
           vec2 toCenter = (gl_PointCoord.xy - 0.5) * 2.0;
-          float z = sqrt(1.0 - toCenter.x * toCenter.x - toCenter.y * toCenter.y) * radius;
-          float dz = unpack1K(texture2D( uDepthTexture, gl_FragCoord.xy / uResolution )) - vDepth + z;
+          float z = sqrt(1.0 - toCenter.x * toCenter.x - toCenter.y * toCenter.y) * radius * 0.5;
 
-          gl_FragColor = vec4(toCenter * 0.5 + 0.5, dz, 1.0 );
+          vec4 depth = texture2D(uDepthTexture, gl_FragCoord.xy / uResolution );
+          float dz = depth.b - vDepth + z;
+
+          // toCenter.xy *= dz * (1.0);
+          gl_FragColor = vec4((toCenter * 0.5 + 0.5) / dz, dz, 1.0 );
         }
       `,
     });
@@ -175,21 +180,17 @@ export class Bubbles {
         uniform sampler2D uSphereMap;
         varying vec2 vUv;
 
-
         void main (void) {
           vec4 merged = texture2D( uAdditive, vUv );
 
-
           float alpha = smoothstep(0.0, 1.0, merged.w);
-
           if(alpha < 0.001) discard;
-          vec4 outer = merged;
 
-          merged.xy = merged.xy;
+          merged.xy = merged.xy / merged.z;
 
-          vec4 color = texture2D( uSphereMap, merged.xy );
+          vec4 color = texture2D( uSphereMap, (merged.xy * 0.5 + 0.5) );
 
-          gl_FragColor = vec4(color);
+          gl_FragColor = vec4(color.rgb, alpha);
         }
       `,
     });
@@ -198,9 +199,13 @@ export class Bubbles {
     let bubbles = new Points(geoPt, matPtDpeth);
     scene.add(bubbles);
 
+    this.previewShader = new MeshBasicMaterial({ map: this.rttAdd.texture });
+    this.quadPreview = new Quad({ material: this.previewShader });
+
+    camera.position.z = 150;
     this.mini.onLoop(() => {
-      bubbles.rotation.y += 0.001;
-      bubbles.rotation.x += 0.001;
+      // bubbles.rotation.y += 0.001;
+      // bubbles.rotation.x += 0.001;
 
       renderer.setRenderTarget(this.rttDepth);
       renderer.clear();
@@ -212,21 +217,14 @@ export class Bubbles {
       bubbles.material = matPtAdd;
       renderer.render(scene, camera);
 
+      renderer.setRenderTarget(null);
+      renderer.clear();
+      this.quadRender.render({ renderer });
+
       // debug
       // renderer.setRenderTarget(null);
       // renderer.clear();
       // this.quadPreview.render({ renderer });
-
-      renderer.setRenderTarget(null);
-      renderer.clear();
-
-      this.quadRender.render({ renderer });
-      // this.quadPreview.render({ renderer });
-
-      // renderer.clear();
-
-      // this.quadNormal
-      //
     });
   }
 

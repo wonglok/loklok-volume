@@ -12,21 +12,8 @@ export const BubbleCanvas = () => {
     let mods = [new Base(mini), new Bubbles(mini), new SceneControls(mini)];
 
     let rAFID = 0;
-
-    // let workDisplay = () => {};
-    // Promise.all([
-    //   mini.get("renderer"),
-    //   mini.get("camera"),
-    //   mini.get("scene"),
-    //   mini.get("sceneUI"),
-    //   mini.get("cameraUI"),
-    // ]).then(([renderer, camera, scene, sceneUI, cameraUI]) => {
-    //   workDisplay = () => {};
-    // });
-
     let rAF = () => {
       rAFID = requestAnimationFrame(rAF);
-      // workDisplay();
       mini.work();
     };
     rAFID = requestAnimationFrame(rAF);
