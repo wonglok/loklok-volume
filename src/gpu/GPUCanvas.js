@@ -66,7 +66,24 @@ export const GPUCanvas = () => {
     return cleaner;
   }, []);
 
-  return <div className="w-full h-full" ref={ref}></div>;
+  return (
+    <div className="w-full h-full" ref={ref}>
+      <div className="absolute bottom-0 left-0 bg-white p-2 text-xs">
+        <a
+          href="https://cineshader.com/view/3sySRK"
+          target="blank"
+          className="underline"
+        >
+          Meta Ball By Edan Kwan Cine Shader ⤴️
+        </a>
+      </div>
+      <div className="absolute top-0 right-0 bg-white p-2 text-xs">
+        <a href="/" className="underline">
+          樂樂到此一遊
+        </a>
+      </div>
+    </div>
+  );
 };
 
 if (module.hot) {
