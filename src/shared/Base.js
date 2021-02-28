@@ -70,8 +70,9 @@ export class Base {
       rect = renderer.domElement.getBoundingClientRect();
     });
     renderer.domElement.addEventListener("mousemove", (evt) => {
-      let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
-      let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
+      let height =
+        visibleHeightAtZDepth(camera.position.length(), camera) * 0.5;
+      let width = visibleWidthAtZDepth(camera.position.length(), camera) * 0.5;
       mouse.setX(((evt.clientX - rect.width * 0.5) / rect.width) * width);
       mouse.setY(((rect.height * 0.5 - evt.clientY) / rect.height) * height);
     });
@@ -87,8 +88,10 @@ export class Base {
       "touchmove",
       (evt) => {
         evt.preventDefault();
-        let height = visibleHeightAtZDepth(camera.position.z, camera) * 0.5;
-        let width = visibleWidthAtZDepth(camera.position.z, camera) * 0.5;
+        let height =
+          visibleHeightAtZDepth(camera.position.length(), camera) * 0.5;
+        let width =
+          visibleWidthAtZDepth(camera.position.length(), camera) * 0.5;
         mouse.setX(
           ((evt.touches[0].clientX - rect.width * 0.5) / rect.width) * width
         );

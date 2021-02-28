@@ -123,7 +123,7 @@ export class Simulator {
 
     this.geoMetaBall = new BufferGeometry();
     let dataMetaPos = [];
-    let detail = 80;
+    let detail = 128;
     for (let z = 0; z < detail; z++) {
       for (let y = 0; y < detail; y++) {
         for (let x = 0; x < detail; x++) {
