@@ -64,6 +64,7 @@ export class Base {
       renderer.domElement.remove();
     });
 
+    let vp = new Vector3(0, 0, 0);
     let mouse = new Vector3(0, 0, 0);
     let rect = renderer.domElement.getBoundingClientRect();
     onResize(() => {
@@ -73,6 +74,11 @@ export class Base {
       let height =
         visibleHeightAtZDepth(camera.position.length(), camera) * 0.5;
       let width = visibleWidthAtZDepth(camera.position.length(), camera) * 0.5;
+
+      vp.x = width;
+      vp.y = height;
+      vp.z = camera.position.length();
+
       mouse.setX(((evt.clientX - rect.width * 0.5) / rect.width) * width);
       mouse.setY(((rect.height * 0.5 - evt.clientY) / rect.height) * height);
     });
@@ -92,6 +98,11 @@ export class Base {
           visibleHeightAtZDepth(camera.position.length(), camera) * 0.5;
         let width =
           visibleWidthAtZDepth(camera.position.length(), camera) * 0.5;
+
+        vp.x = width;
+        vp.y = height;
+        vp.z = camera.position.length();
+
         mouse.setX(
           ((evt.touches[0].clientX - rect.width * 0.5) / rect.width) * width
         );
@@ -107,6 +118,7 @@ export class Base {
     // const cube = new Mesh(geometry, material);
     // scene.add(cube);
 
+    mini.set("viewport", vp);
     mini.set("mouse", mouse);
     mini.set("camera", camera);
     mini.set("scene", scene);

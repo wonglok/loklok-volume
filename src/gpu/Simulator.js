@@ -1,6 +1,14 @@
 // import { Geometry } from "three/examples/jsm/deprecated/Geometry";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer";
-import { HalfFloatType, Vector2 } from "three";
+import {
+  Camera,
+  HalfFloatType,
+  MeshBasicMaterial,
+  PlaneBufferGeometry,
+  TextureLoader,
+  Vector2,
+  WebGLRenderTarget,
+} from "three";
 import { Clock } from "three";
 import { Points } from "three";
 import { ShaderMaterial } from "three";
@@ -11,6 +19,7 @@ import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
 import { BoxBufferGeometry } from "three";
+import { Quad } from "../shared/Quad";
 
 export const Ballify = /* glsl */ `
 #define M_PI 3.1415926535897932384626433832795
@@ -113,13 +122,95 @@ export class Simulator {
     this.setupSimulator();
     this.particles();
     this.interaction();
-    this.metaBallPts();
+    // this.metaBallPts();
+    this.metaBallTrace();
   }
-  async metaBallPts() {
-    let iRes = new Vector2(window.innerWidth, window.innerHeight);
-    this.mini.onResize(() => {
-      iRes.set(window.innerWidth, window.innerHeight);
+
+  async metaBallTrace() {
+    let viewport = await this.mini.get("viewport");
+    let metaBallMat = new ShaderMaterial({
+      transparent: true,
+      uniforms: {
+        matcap: {
+          value: new TextureLoader().load(
+            require("./img/matcap_plastic.jpg").default
+          ),
+        },
+        iViewport: { value: viewport },
+        iResolution: { value: new Vector2(1024, 1024) },
+        eT: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main (void) {
+          vUv = uv;
+          gl_Position = vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform vec2 iResolution;
+        varying vec2 vUv;
+        uniform float eT;
+        uniform sampler2D matcap;
+        ${this.metaBallGLSL()}
+
+        void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+            vec2 uv = fragCoord/iResolution.xy;
+
+          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(10.0, 10.0), 1.0);
+          vec3 rayDir = vec3(0.0, 0.0, -1.0);
+
+          float depth = 0.0;
+          vec3 p;
+
+          for(int i = 0; i < 32; i++) {
+            p = rayOri + rayDir * depth;
+            float dist = sdMetaBall(p);
+            depth += dist;
+            if (dist < 1e-6) {
+              break;
+            }
+          }
+
+          vec3 n = calcNormal(p);
+          vec4 matCapColor = texture2D(matcap, n.xy * 0.5 + 0.5);
+
+          fragColor = vec4(matCapColor.rgb, 2.0 - (depth - 0.5) / 2.0);
+        }
+
+        void main (void) {
+          mainImage(gl_FragColor, gl_FragCoord.xy);
+        }
+      `,
     });
+    this.metaClock = new Clock();
+    this.mini.onLoop(() => {
+      metaBallMat.uniforms.eT.value = this.metaClock.getElapsedTime();
+    });
+    let metaBallRTT = new WebGLRenderTarget(1024, 1024);
+    let quadRender = new Quad({ material: metaBallMat });
+    let renderer = await this.mini.get("renderer");
+    this.mini.onLoop(() => {
+      renderer.setRenderTarget(metaBallRTT);
+      quadRender.render({ renderer });
+      renderer.setRenderTarget(null);
+    });
+
+    let geoDisplay = new PlaneBufferGeometry(10, 10);
+
+    let matDisplay = new MeshBasicMaterial({
+      map: metaBallRTT.texture,
+      transparent: true,
+    });
+    let meshDisplay = new Mesh(geoDisplay, matDisplay);
+
+    this.mini.get("scene").then((scene) => {
+      scene.add(meshDisplay);
+    });
+  }
+
+  async metaBallPts() {
+    let iRes = this.iResolution;
 
     this.geoMetaBall = new BufferGeometry();
     let dataMetaPos = [];
