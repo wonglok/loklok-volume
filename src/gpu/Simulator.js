@@ -49,7 +49,7 @@ vec3 ballify (vec3 pos, float r) {
 }
 `;
 
-const visibleHeightAtZDepth = (depth, camera) => {
+export const visibleHeightAtZDepth = (depth, camera) => {
   // compensate for cameras not positioned at z=0
   const cameraOffset = camera.position.z;
   if (depth < cameraOffset) depth -= cameraOffset;
@@ -62,7 +62,7 @@ const visibleHeightAtZDepth = (depth, camera) => {
   return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
 };
 
-const visibleWidthAtZDepth = (depth, camera) => {
+export const visibleWidthAtZDepth = (depth, camera) => {
   const height = visibleHeightAtZDepth(depth, camera);
   return height * camera.aspect;
 };
