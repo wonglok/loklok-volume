@@ -176,7 +176,11 @@ export class Simulator {
           vec4 matCapColor = texture2D(matcap, n.xy * 0.5 + 0.5);
           float alpha = 2.0 - (depth - 0.5) / 2.0;
 
-          fragColor = vec4(matCapColor.rgb, alpha * 0.5);
+          fragColor = vec4(matCapColor.rgb, alpha);
+
+          if (alpha < 0.01) {
+            discard;
+          }
         }
 
         void main (void) {
@@ -324,7 +328,7 @@ export class Simulator {
           d = opSmoothUnion(
                   sdSphere(p + sin(time + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 0.8), mix(0.5, 1.0, fract(fi * 412.531 + 0.5124))),
             d,
-            1.0
+            0.7
           );
         }
         return d;
