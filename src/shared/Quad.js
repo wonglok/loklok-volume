@@ -7,7 +7,7 @@ export class Quad {
     var camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     var geometry = new PlaneBufferGeometry(2, 2);
     var mesh = new Mesh(geometry, material);
-
+    mesh.frustumCulled = false;
     this.render = ({ renderer }) => {
       renderer.render(mesh, camera);
     };

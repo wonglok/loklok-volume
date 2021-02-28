@@ -3,10 +3,10 @@ import React from "react";
 import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
 import { VolumeCanvas } from "./volume/VolumeCanvas";
 import { SlicerCanvas } from "./slicer/SlicerCanvas";
-import { VoxelCanvas } from "./voxel/VoxelCanvas";
 import { GPUCanvas } from "./gpu/GPUCanvas";
 import { EnergyCanvas } from "./energy/EnergyCanvas";
 import { BubbleCanvas } from "./bubble/BubbleCanvas";
+import { VolumeCanvas as VolumeScanCanvas } from "./volume-scan/VolumeCanvas";
 
 function App() {
   return (
@@ -27,8 +27,8 @@ function App() {
         <Route exact path="/volume">
           <VolumeCanvas></VolumeCanvas>
         </Route>
-        <Route exact path="/voxel">
-          <VoxelCanvas></VoxelCanvas>
+        <Route exact path="/volume-scan">
+          <VolumeScanCanvas></VolumeScanCanvas>
         </Route>
         <Route exact path="/bubble">
           <BubbleCanvas></BubbleCanvas>
@@ -41,9 +41,6 @@ function App() {
             <Link to={"/slicer"}>Slicer</Link>
           </div>
           <div className={"m-5"}>
-            <Link to={"/voxel"}>Voxel</Link>
-          </div>
-          <div className={"m-5"}>
             <Link to={"/gpu"}>GPU</Link>
           </div>
           <div className={"m-5"}>
@@ -51,6 +48,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/bubble"}>Bubble</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/volume-scan"}>Volume Scan</Link>
           </div>
         </Route>
       </Switch>

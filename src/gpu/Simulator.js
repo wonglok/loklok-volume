@@ -1,6 +1,6 @@
 // import { Geometry } from "three/examples/jsm/deprecated/Geometry";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer";
-import { HalfFloatType } from "three";
+import { HalfFloatType, Vector2 } from "three";
 import { Clock } from "three";
 import { Points } from "three";
 import { ShaderMaterial } from "three";
@@ -10,7 +10,6 @@ import { Vector3 } from "three";
 import { Mesh } from "three";
 import { SphereBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
-import { MathUtils } from "three";
 import { BoxBufferGeometry } from "three";
 
 export const Ballify = /* glsl */ `
@@ -49,6 +48,25 @@ vec3 ballify (vec3 pos, float r) {
   );
 }
 `;
+
+const visibleHeightAtZDepth = (depth, camera) => {
+  // compensate for cameras not positioned at z=0
+  const cameraOffset = camera.position.z;
+  if (depth < cameraOffset) depth -= cameraOffset;
+  else depth += cameraOffset;
+
+  // vertical fov in radians
+  const vFOV = (camera.fov * Math.PI) / 180;
+
+  // Math.abs to ensure the result is always positive
+  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+};
+
+const visibleWidthAtZDepth = (depth, camera) => {
+  const height = visibleHeightAtZDepth(depth, camera);
+  return height * camera.aspect;
+};
+
 export class Simulator {
   constructor({ ...mini }, name = "Simulator") {
     this.mini = {
@@ -56,27 +74,28 @@ export class Simulator {
     };
 
     this.mini.set(name, this);
-
+    this.clock = new Clock();
+    this.renderClock = new Clock();
     this.balls = [
       {
         type: "mouse-sphere",
-        radius: 1.5,
+        radius: 2.0,
       },
-      {
-        type: "static-sphere",
-        position: new Vector3(0.9, 0.0, 0.0),
-        radius: 0.35,
-      },
-      {
-        type: "static-sphere",
-        position: new Vector3(2.0, -2.0, 0.0),
-        radius: 1.4,
-      },
-      {
-        type: "static-sphere",
-        position: new Vector3(-1.5, -4.0, 0.0),
-        radius: 1.4,
-      },
+      // {
+      //   type: "static-sphere",
+      //   position: new Vector3(0.9, 0.0, 0.0),
+      //   radius: 0.35,
+      // },
+      // {
+      //   type: "static-sphere",
+      //   position: new Vector3(2.0, -2.0, 0.0),
+      //   radius: 1.4,
+      // },
+      // {
+      //   type: "static-sphere",
+      //   position: new Vector3(-1.5, -4.0, 0.0),
+      //   radius: 1.4,
+      // },
       {
         type: "static-box",
         position: new Vector3(0.0, -6.0, 0.0),
@@ -86,23 +105,181 @@ export class Simulator {
 
     this.SIZE = 256;
 
+    this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
+    this.mini.onResize(() => {
+      this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
+    });
+
     this.setupSimulator();
     this.particles();
     this.interaction();
+    this.metaBallPts();
   }
-  async interaction() {
-    let mouse = await this.mini.get("mouse");
-    let camera = await this.mini.get("camera");
+  async metaBallPts() {
+    let iRes = new Vector2(window.innerWidth, window.innerHeight);
+    this.mini.onResize(() => {
+      iRes.set(window.innerWidth, window.innerHeight);
+    });
 
-    window.addEventListener("wheel", (ev) => {
-      ev.preventDefault();
-      camera.position.z += ev.deltaY * 0.01;
+    this.geoMetaBall = new BufferGeometry();
+    let dataMetaPos = [];
+    let detail = 80;
+    for (let z = 0; z < detail; z++) {
+      for (let y = 0; y < detail; y++) {
+        for (let x = 0; x < detail; x++) {
+          let dx = (x / detail - 0.5) * 2.0;
+          let dy = (y / detail - 0.5) * 2.0;
+          let dz = (z / detail - 0.5) * 2.0;
+
+          dataMetaPos.push(dx * 5, dy * 5, dz * 5);
+        }
+      }
+    }
+
+    this.geoMetaBall.setAttribute(
+      "position",
+      new BufferAttribute(new Float32Array(dataMetaPos), 3)
+    );
+
+    this.matMetaBall = new ShaderMaterial({
+      transparent: true,
+      uniforms: {
+        resolution: {
+          get value() {
+            return iRes;
+          },
+        },
+        eT: {
+          value: 0,
+        },
+        dT: {
+          value: 0,
+        },
+      },
+      vertexShader: /* glsl */ `
+        precision highp float;
+        varying float vSize;
+        varying vec3 vPos;
+
+        uniform float eT;
+        uniform float dT;
+        ${this.metaBallGLSL()}
+
+        void main (void) {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          vPos = position;
+
+          float dist = sdMetaBall(vec3(position.x, position.y, position.z));
+
+          if (dist < 0.0) {
+            gl_PointSize = 5.0;
+          } else {
+            gl_PointSize = 0.0;
+          }
+
+          vSize = gl_PointSize;
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        precision highp float;
+
+        varying float vSize;
+        varying vec3 vPos;
+
+        uniform float eT;
+        uniform float dT;
+        ${this.metaBallGLSL()}
+
+        void main (void) {
+          if (vSize < 0.01 || length(gl_PointCoord.xy - 0.5) > 0.5) {
+            discard;
+          } else {
+            gl_FragColor = vec4(calcNormal(vPos), 1.0);
+          }
+        }
+      `,
     });
 
     this.mini.onLoop(() => {
-      camera.position.x = MathUtils.lerp(camera.position.x, mouse.x, 0.5);
-      camera.lookAt(0.0, 0.0, 0.0);
+      this.matMetaBall.uniforms.dT.value = this.renderClock.getDelta();
+      this.matMetaBall.uniforms.eT.value = this.renderClock.getElapsedTime();
     });
+
+    let meshMetaBall = new Points(this.geoMetaBall, this.matMetaBall);
+    this.mini.get("scene").then((scene) => {
+      scene.add(meshMetaBall);
+    });
+  }
+
+  metaBallGLSL() {
+    return /* glsl */ `
+      // https://www.shadertoy.com/view/3sySRK
+      // from cine shader by edan kwan
+      float opSmoothUnion( float d1, float d2, float k )
+      {
+          float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
+          return mix( d2, d1, h ) - k*h*(1.0-h);
+      }
+
+      float sdSphere( vec3 p, float s )
+      {
+        return length(p)-s;
+      }
+
+      // float sdMetaBall(vec3 p)
+      // {
+      //   float d = 0.0;
+
+      //   for (int i = 0; i < 8; i++)
+      //   {
+      //     float fi = float(i);
+      //     float dtime = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 3.0;
+      //     d = opSmoothUnion(
+      //           sdSphere(p + sin(dtime + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 1.8), mix(0.2, 0.75, fract(fi * 412.531 + 0.5124))),
+      //       d,
+      //       0.4
+      //     );
+      //   }
+      //   return d;
+      // }
+
+      float sdMetaBall(vec3 p)
+      {
+        float d = 2.0;
+        for (int i = 0; i < 16; i++) {
+          float fi = float(i);
+          float time = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
+          d = opSmoothUnion(
+                  sdSphere(p + sin(time + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 0.8), mix(0.5, 1.0, fract(fi * 412.531 + 0.5124))),
+            d,
+            0.4
+          );
+        }
+        return d;
+      }
+
+      vec3 calcNormal( in vec3 p )
+      {
+          const float h = 1e-5; // or some other value
+          const vec2 k = vec2(1,-1);
+          return normalize( k.xyy*sdMetaBall( p + k.xyy*h ) +
+                            k.yyx*sdMetaBall( p + k.yyx*h ) +
+                            k.yxy*sdMetaBall( p + k.yxy*h ) +
+                            k.xxx*sdMetaBall( p + k.xxx*h ) );
+      }
+    `;
+  }
+  async interaction() {
+    // let mouse = await this.mini.get("mouse");
+    // let camera = await this.mini.get("camera");
+    // window.addEventListener("wheel", (ev) => {
+    //   ev.preventDefault();
+    //   camera.position.z += ev.deltaY * 0.01;
+    // });
+    // this.mini.onLoop(() => {
+    //   camera.position.x = MathUtils.lerp(camera.position.x, mouse.x, 0.5);
+    //   camera.lookAt(0.0, 0.0, 0.0);
+    // });
   }
 
   async setupSimulator() {
@@ -121,7 +298,7 @@ export class Simulator {
     let SIZE = this.SIZE;
 
     this.tick = 0;
-    this.clock = new Clock();
+
     this.gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
     if (/iPad|iPhone|iPod/.test(navigator.platform)) {
       this.gpuCompute.setDataType(HalfFloatType);
@@ -223,9 +400,23 @@ export class Simulator {
         }
       }
 
+      ${this.metaBallGLSL()}
+
+      void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
+        vec3 p = particlePos.xyz;
+
+        if(sdMetaBall(p) < 0.0){
+
+          vec3 myNormal = calcNormal(p);
+
+          particleVel += myNormal * dT * 1.0;
+        }
+      }
+
       // 0001
 
       void handleCollision (inout vec4 pos, inout vec3 vel) {
+        collisionMetaBalls(pos, vel);
         ${collisionCode}
       }
 
@@ -238,6 +429,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
+        float sourceRadius = 1.0;
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -249,8 +441,9 @@ export class Simulator {
             -0.5 + rand(uv + 0.3)
           );
 
-          pos.xyz = ballify(pos.xyz, 0.5);
-          pos.y += 2.0;
+          pos.xyz = ballify(pos.xyz, sourceRadius);
+          pos.y += 5.0;
+          pos.x -= 2.0;
           life = .99;
         }
 
@@ -263,8 +456,9 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz = ballify(pos.xyz, 0.5);
-          pos.y += 2.0;
+          pos.xyz = ballify(pos.xyz, sourceRadius);
+          pos.y += 5.0;
+          pos.x -= 2.0;
           life = 1.1;
         }
 
@@ -272,7 +466,7 @@ export class Simulator {
         vel += vec3( 0.0 , -.003 , 0. );
 
         // wind
-        vel += vec3( 0.001 * life, 0.0, 0.0 );
+        vel += vec3( 0.00151 * life, 0.0, 0.0 );
 
         handleCollision(pos, vel);
 

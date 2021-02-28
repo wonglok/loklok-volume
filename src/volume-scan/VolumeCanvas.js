@@ -1,26 +1,49 @@
 import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
-import { SDFVoxel } from "./SDFVoxel";
-import { SceneControls } from "./SceneControls";
+import { SDFTexture } from "./SDFTexture";
+import { VolumeVisualiser } from "./VolumeVisualiser";
+import { VolumeControls } from "./VolumeControls";
 
-export const VoxelCanvas = () => {
+export const VolumeCanvas = () => {
   const ref = useRef(null);
-  //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let mods = [new Base(mini), new SDFVoxel(mini), new SceneControls(mini)];
+    let mods = [
+      new Base(mini),
+      new VolumeControls(mini),
+      new SDFTexture(mini),
+      new VolumeVisualiser(mini),
+    ];
 
     let rAFID = 0;
+
+    // let renderer = false;
+    // let camera = false;
+    // let scene = false;
+
+    // mini.get("renderer").then((v) => (renderer = v));
+    // mini.get("camera").then((v) => (camera = v));
+    // mini.get("scene").then((v) => (scene = v));
 
     let workDisplay = () => {};
     Promise.all([
       mini.get("renderer"),
       mini.get("camera"),
       mini.get("scene"),
-    ]).then(([renderer, camera, scene]) => {
+      mini.get("VolumeVisualiser"),
+      mini.get("SDFTexture"),
+    ]).then(([renderer, camera, scene, vol, sdf]) => {
       camera.position.z = 50;
+
       workDisplay = () => {
+        if (sdf.compute) {
+          sdf.compute();
+        }
+        if (vol.compute) {
+          vol.compute();
+        }
+
         renderer.render(scene, camera);
       };
     });

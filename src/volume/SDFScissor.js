@@ -1,17 +1,8 @@
-import { Color, Mesh } from "three";
+import { Mesh } from "three";
 import { WebGLRenderTarget } from "three";
-import { ArrayCamera } from "three";
-import { MeshBasicMaterial } from "three";
-import { DoubleSide } from "three";
-import { TorusKnotBufferGeometry } from "three";
 import { MeshNormalMaterial } from "three";
-import { OrthographicCamera } from "three";
-import { ShaderMaterial } from "three";
 import { Scene } from "three";
-import { DirectionalLight } from "three";
 import { PerspectiveCamera } from "three";
-import { Vector4 } from "three";
-import { PlaneBufferGeometry } from "three";
 import { BoxBufferGeometry } from "three";
 
 export class SDFTexture {

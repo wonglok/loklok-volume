@@ -1,18 +1,29 @@
 import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
-import { Simulator } from "./Simulator";
+// import { VolumeControls } from "../shared/VolumeControls";
+import { SceneControls } from "../shared/SceneControls";
 
-//
-// import { SceneControls } from "../shared/SceneControls";
+import { Simulator } from "./Simulator";
 
 export const GPUCanvas = () => {
   const ref = useRef(null);
   //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let mods = [new Base(mini), new Simulator(mini)];
+    let mods = [
+      new Base(mini),
+      new Simulator(mini),
+      // new VolumeControls(mini),
+      new SceneControls(mini),
+    ];
 
+    mini.get("SceneControls").then((mod) => {
+      mod.controls.enableRotate = false;
+      // window.addEventListener("touchstart", () => {
+      //   mod.controls.enabled = false;
+      // });
+    });
     //, new SceneControls(mini)
 
     let rAFID = 0;
@@ -22,15 +33,10 @@ export const GPUCanvas = () => {
       mini.get("renderer"),
       mini.get("camera"),
       mini.get("scene"),
-      mini.get("sceneUI"),
-      mini.get("cameraUI"),
-    ]).then(([renderer, camera, scene, sceneUI, cameraUI]) => {
+    ]).then(([renderer, camera, scene]) => {
       camera.position.z = 15;
-      renderer.autoClear = false;
       workDisplay = () => {
-        renderer.clear();
         renderer.render(scene, camera);
-        renderer.render(sceneUI, cameraUI);
       };
     });
 

@@ -135,7 +135,8 @@ export class Bubbles {
 
           // isVisible *= step(EPS, z);
           // toCenter.xy *= z * (1.0 + uInset);
-          gl_FragColor = vec4(toCenter * 0.5 + 0.5, z, z / zLength );// * isVisible;
+
+          gl_FragColor = vec4((toCenter * 0.5 + 0.5), z, z / zLength );// * isVisible;
         }
       `,
     });
