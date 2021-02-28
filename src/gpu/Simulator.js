@@ -126,6 +126,7 @@ export class Simulator {
   }
 
   async metaBallTrace() {
+    let metaBallRTT = new WebGLRenderTarget(320, 320);
     let viewport = await this.mini.get("viewport");
     let metaBallMat = new ShaderMaterial({
       transparent: true,
@@ -136,7 +137,7 @@ export class Simulator {
           ),
         },
         iViewport: { value: viewport },
-        iResolution: { value: new Vector2(1024, 1024) },
+        iResolution: { value: new Vector2(320, 320) },
         eT: { value: 0 },
       },
       vertexShader: `
@@ -167,20 +168,21 @@ export class Simulator {
 
             float dist = sdMetaBall(p);
             depth += dist;
-            if (dist < 1e-6) {
-              break;
-            }
+            // if (dist < 1e-6) {
+            //   break;
+            // }
+          }
+
+          float alpha = 2.0 - (depth - 0.5) / 2.0;
+          if (alpha < 0.01) {
+            discard;
+            fragColor = vec4(0.0);
+            return;
           }
 
           vec3 n = calcNormal(p);
           vec4 matCapColor = texture2D(matcap, n.xy * 0.5 + 0.5);
-          float alpha = 2.0 - (depth - 0.5) / 2.0;
-
           fragColor = vec4(matCapColor.rgb, alpha);
-
-          if (alpha < 0.01) {
-            discard;
-          }
         }
 
         void main (void) {
@@ -192,7 +194,6 @@ export class Simulator {
     this.mini.onLoop(() => {
       metaBallMat.uniforms.eT.value = this.metaClock.getElapsedTime();
     });
-    let metaBallRTT = new WebGLRenderTarget(1024, 1024);
     let quadRender = new Quad({ material: metaBallMat });
     let renderer = await this.mini.get("renderer");
     this.mini.onLoop(() => {
