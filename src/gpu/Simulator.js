@@ -172,7 +172,7 @@ export class Simulator {
           float dist = sdMetaBall(vec3(position.x, position.y, position.z));
 
           if (dist < 0.0) {
-            gl_PointSize = (dist) * -20.0;
+            gl_PointSize = (dist) * -15.0;
           } else {
             gl_PointSize = 0.0;
           }
@@ -191,7 +191,7 @@ export class Simulator {
         ${this.metaBallGLSL()}
 
         void main (void) {
-          if (vSize < 0.01 || length(gl_PointCoord.xy - 0.5) > 0.5) {
+          if (vSize < 0.1 || length(gl_PointCoord.xy - 0.5) > 0.5) {
             discard;
           } else {
             gl_FragColor = vec4(normalize(vPos) + 0.5, 1.0);
