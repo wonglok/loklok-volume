@@ -172,7 +172,7 @@ export class Simulator {
           float dist = sdMetaBall(vec3(position.x, position.y, position.z));
 
           if (dist < 0.0) {
-            gl_PointSize = 5.0;
+            gl_PointSize = (dist) * -20.0;
           } else {
             gl_PointSize = 0.0;
           }
@@ -194,7 +194,7 @@ export class Simulator {
           if (vSize < 0.01 || length(gl_PointCoord.xy - 0.5) > 0.5) {
             discard;
           } else {
-            gl_FragColor = vec4(calcNormal(vPos), 1.0);
+            gl_FragColor = vec4(normalize(vPos) + 0.5, 1.0);
           }
         }
       `,
@@ -226,29 +226,12 @@ export class Simulator {
         return length(p)-s;
       }
 
-      // float sdMetaBall(vec3 p)
-      // {
-      //   float d = 0.0;
-
-      //   for (int i = 0; i < 8; i++)
-      //   {
-      //     float fi = float(i);
-      //     float dtime = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 3.0;
-      //     d = opSmoothUnion(
-      //           sdSphere(p + sin(dtime + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 1.8), mix(0.2, 0.75, fract(fi * 412.531 + 0.5124))),
-      //       d,
-      //       0.4
-      //     );
-      //   }
-      //   return d;
-      // }
-
       float sdMetaBall(vec3 p)
       {
         float d = 2.0;
         for (int i = 0; i < 16; i++) {
           float fi = float(i);
-          float time = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
+          float time = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 3.0;
           d = opSmoothUnion(
                   sdSphere(p + sin(time + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 0.8), mix(0.5, 1.0, fract(fi * 412.531 + 0.5124))),
             d,
