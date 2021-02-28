@@ -164,6 +164,7 @@ export class Simulator {
 
           for(int i = 0; i < 32; i++) {
             p = rayOri + rayDir * depth;
+
             float dist = sdMetaBall(p);
             depth += dist;
             if (dist < 1e-6) {
@@ -173,8 +174,9 @@ export class Simulator {
 
           vec3 n = calcNormal(p);
           vec4 matCapColor = texture2D(matcap, n.xy * 0.5 + 0.5);
+          float alpha = 2.0 - (depth - 0.5) / 2.0;
 
-          fragColor = vec4(matCapColor.rgb, 2.0 - (depth - 0.5) / 2.0);
+          fragColor = vec4(matCapColor.rgb, alpha * 0.5);
         }
 
         void main (void) {
