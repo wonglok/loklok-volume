@@ -1,7 +1,6 @@
 // import { Geometry } from "three/examples/jsm/deprecated/Geometry";
 import { GPUComputationRenderer } from "three/examples/jsm/misc/GPUComputationRenderer";
 import {
-  Camera,
   HalfFloatType,
   MeshBasicMaterial,
   PlaneBufferGeometry,
