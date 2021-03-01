@@ -514,7 +514,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = 2.5;
+        float sourceRadius = 1.5;
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
