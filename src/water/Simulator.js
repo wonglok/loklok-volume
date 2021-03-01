@@ -111,7 +111,11 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 16;
+    this.SIZE = 5;
+
+    if (window.innerWidth > 500) {
+      this.SIZE = 10;
+    }
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
     this.mini.onResize(() => {
@@ -121,8 +125,8 @@ export class Simulator {
     this.setupSimulator();
     // this.particles();
     this.interaction();
-    // this.metaBallPts();
-    this.metaBallTrace();
+    this.metaBallPts();
+    // this.metaBallTrace();
     this.particleRayTrace();
   }
 
@@ -222,7 +226,7 @@ export class Simulator {
 
     this.geoMetaBall = new BufferGeometry();
     let dataMetaPos = [];
-    let detail = 128;
+    let detail = 32;
 
     for (let z = 0; z < detail; z++) {
       for (let y = 0; y < detail; y++) {
@@ -272,7 +276,7 @@ export class Simulator {
           float dist = sdMetaBall(vec3(position.x, position.y, position.z));
 
           if (dist < 0.0) {
-            gl_PointSize = (dist) * -15.0;
+            gl_PointSize = (dist) * -30.0;
           } else {
             gl_PointSize = 0.0;
           }
@@ -685,8 +689,8 @@ export class Simulator {
 
         float sdMetaBall(vec3 p) {
           float d = 2.0;
-          for (int y = 0; y < ${this.SIZE.toFixed(0)}; y++) {
-            for (int x = 0; x < ${this.SIZE.toFixed(0)}; x++) {
+          for (float y = 0.0; y < ${this.SIZE.toFixed(1)}; y++) {
+            for (float x = 0.0; x < ${this.SIZE.toFixed(1)}; x++) {
 
               float xx = float(x);
               float yy = float(y);
@@ -697,7 +701,7 @@ export class Simulator {
               vec4 pos = texture2D(simulation, lookup);
 
               d = opSmoothUnion(
-                sdSphere(p - pos.xyz, 0.25),
+                sdSphere(p - pos.xyz, 0.5),
                 d,
                 0.7
               );
