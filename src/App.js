@@ -6,6 +6,7 @@ import { SlicerCanvas } from "./slicer/SlicerCanvas";
 import { GPUCanvas } from "./gpu/GPUCanvas";
 import { EnergyCanvas } from "./energy/EnergyCanvas";
 import { BubbleCanvas } from "./bubble/BubbleCanvas";
+import { WaterCanvas } from "./water/WaterCanvas";
 import { VolumeCanvas as VolumeScanCanvas } from "./volume-scan/VolumeCanvas";
 
 function App() {
@@ -14,6 +15,9 @@ function App() {
       <Switch>
         <Route exact path="/about">
           <div>About</div>
+        </Route>
+        <Route exact path="/water">
+          <WaterCanvas></WaterCanvas>
         </Route>
         <Route exact path="/gpu">
           <GPUCanvas></GPUCanvas>
@@ -51,6 +55,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/volume-scan"}>Volume Scan</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/water"}>Water</Link>
           </div>
         </Route>
       </Switch>

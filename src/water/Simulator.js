@@ -111,7 +111,7 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 256;
+    this.SIZE = 16;
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
     this.mini.onResize(() => {
@@ -119,10 +119,11 @@ export class Simulator {
     });
 
     this.setupSimulator();
-    this.particles();
+    // this.particles();
     this.interaction();
     // this.metaBallPts();
     this.metaBallTrace();
+    this.particleRayTrace();
   }
 
   async metaBallTrace() {
@@ -643,6 +644,147 @@ export class Simulator {
     prepInitTexture();
   }
 
+  async particleRayTrace() {
+    let metaBallRTT = new WebGLRenderTarget(512, 512);
+    let viewport = await this.mini.get("viewport");
+    let metaBallMat = new ShaderMaterial({
+      transparent: true,
+      uniforms: {
+        matcap: {
+          value: new TextureLoader().load(require("./img/matcap.jpg").default),
+        },
+        iViewport: { value: viewport },
+        iResolution: { value: new Vector2(512, 512) },
+        simulation: { value: null },
+        eT: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main (void) {
+          vUv = uv;
+          gl_Position = vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform vec2 iResolution;
+        varying vec2 vUv;
+        uniform float eT;
+        uniform sampler2D matcap;
+        uniform sampler2D simulation;
+
+        // https://www.shadertoy.com/view/3sySRK
+        // from cine shader by edan kwan
+        float opSmoothUnion( float d1, float d2, float k ) {
+            float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
+            return mix( d2, d1, h ) - k*h*(1.0-h);
+        }
+
+        float sdSphere( vec3 p, float s ) {
+          return length(p)-s;
+        }
+
+        float sdMetaBall(vec3 p) {
+          float d = 2.0;
+          for (int y = 0; y < ${this.SIZE.toFixed(0)}; y++) {
+            for (int x = 0; x < ${this.SIZE.toFixed(0)}; x++) {
+
+              float xx = float(x);
+              float yy = float(y);
+
+              vec2 lookup = vec2(xx / ${this.SIZE.toFixed(
+                1
+              )}, yy / ${this.SIZE.toFixed(1)});
+              vec4 pos = texture2D(simulation, lookup);
+
+              d = opSmoothUnion(
+                sdSphere(p - pos.xyz, 0.25),
+                d,
+                0.7
+              );
+            }
+          }
+          return d;
+        }
+
+        vec3 calcNormal( in vec3 p ) {
+            const float h = 1e-5; // or some other value
+            const vec2 k = vec2(1,-1);
+            return normalize( k.xyy * sdMetaBall( p + k.xyy*h ) +
+                              k.yyx * sdMetaBall( p + k.yyx*h ) +
+                              k.yxy * sdMetaBall( p + k.yxy*h ) +
+                              k.xxx * sdMetaBall( p + k.xxx*h ) );
+        }
+
+        void mainImage( out vec4 fragColor, in vec2 fragCoord ){
+          vec2 uv = fragCoord/iResolution.xy;
+
+          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(20.0, 20.0), 1.0);
+          vec3 rayDir = vec3(0.0, 0.0, -1.0);
+
+          float depth = 0.0;
+          vec3 p;
+
+          for(int i = 0; i < 32; i++) {
+            p = rayOri + rayDir * depth;
+
+            float dist = sdMetaBall(p);
+            depth += dist;
+            if (dist < 1e-6) {
+              break;
+            }
+          }
+
+          float alpha = 2.0 - (depth - 0.5) / 2.0;
+          if (alpha < 0.01) {
+            discard;
+            fragColor = vec4(0.0);
+            return;
+          }
+
+          vec3 n = calcNormal(p);
+          vec4 matCapColor = texture2D(matcap, n.xy * 0.5 + 0.5);
+          fragColor = vec4(matCapColor.rgb, alpha);
+        }
+
+        void main (void) {
+          mainImage(gl_FragColor, gl_FragCoord.xy);
+        }
+      `,
+    });
+    this.metaClock = new Clock();
+    this.mini.onLoop(() => {
+      metaBallMat.uniforms.eT.value = this.metaClock.getElapsedTime();
+    });
+    let quadRender = new Quad({ material: metaBallMat });
+    let renderer = await this.mini.get("renderer");
+    this.mini.onLoop(() => {
+      renderer.setRenderTarget(metaBallRTT);
+      quadRender.render({ renderer });
+      renderer.setRenderTarget(null);
+    });
+
+    let geoDisplay = new PlaneBufferGeometry(20, 20);
+
+    let matDisplay = new MeshBasicMaterial({
+      map: metaBallRTT.texture,
+      transparent: true,
+    });
+
+    let meshDisplay = new Mesh(geoDisplay, matDisplay);
+
+    this.mini.get("scene").then((scene) => {
+      scene.add(meshDisplay);
+    });
+
+    this.mini.onLoop(() => {
+      if (this.filter0) {
+        this.compute();
+        let outdata = this.loopRTT[2];
+        metaBallMat.uniforms.simulation.value = outdata.texture;
+      }
+    });
+  }
+
   async particles() {
     let scene = await this.mini.get("scene");
 
@@ -674,7 +816,7 @@ export class Simulator {
           void main (void) {
             vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            gl_PointSize = 1.0;
+            gl_PointSize = 10.0;
           }
           `,
       fragmentShader: /* glsl */ `
@@ -683,6 +825,7 @@ export class Simulator {
           }
           `,
     });
+
     let particles = new Points(geoPt, matPt);
     particles.frustumCulled = false;
     scene.add(particles);
