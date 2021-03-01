@@ -112,9 +112,8 @@ export class Simulator {
     ];
 
     this.SIZE = 5;
-    this.IS_DESKTOP = window.innerWidth > 500;
 
-    if (this.IS_DESKTOP) {
+    if (window.innerWidth > 500) {
       this.SIZE = 12;
     }
 
@@ -515,7 +514,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = ${this.IS_DESKTOP ? "2.5" : "1.5"};
+        float sourceRadius = 2.5;
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -535,7 +534,7 @@ export class Simulator {
 
         float bottomLimit = -7.0 + rand(uv + 0.1);
 
-        if( pos.y <= bottomLimit ){
+        if( life < 0. || pos.y <= bottomLimit ){
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
@@ -703,7 +702,7 @@ export class Simulator {
               )}, yy / ${this.SIZE.toFixed(1)});
               vec4 pos = texture2D(simulation, lookup);
 
-              float waterDropletRadius = ${this.IS_DESKTOP ? "0.38" : "0.8"};
+              float waterDropletRadius = 0.48;
 
               d = opSmoothUnion(
                 sdSphere(p - pos.xyz, waterDropletRadius),
