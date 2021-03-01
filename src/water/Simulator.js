@@ -115,7 +115,7 @@ export class Simulator {
     this.IS_DESKTOP = window.innerWidth > 500;
 
     if (this.IS_DESKTOP) {
-      this.SIZE = 10;
+      this.SIZE = 12;
     }
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
