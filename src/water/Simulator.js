@@ -112,8 +112,9 @@ export class Simulator {
     ];
 
     this.SIZE = 5;
+    this.IS_DESKTOP = window.innerWidth > 500;
 
-    if (window.innerWidth > 500) {
+    if (this.IS_DESKTOP) {
       this.SIZE = 10;
     }
 
@@ -330,6 +331,7 @@ export class Simulator {
 
       float sdMetaBall(vec3 p) {
         float d = 2.0;
+
         for (int i = 0; i < 16; i++) {
           float fi = float(i);
           float time = eT * (fract(fi * 412.531 + 0.513) - 0.5) * 3.0;
@@ -339,6 +341,7 @@ export class Simulator {
             0.7
           );
         }
+
         return d;
       }
 
@@ -512,7 +515,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = 1.0;
+        float sourceRadius = ${this.IS_DESKTOP ? "2.5" : "1.5"};
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -532,7 +535,7 @@ export class Simulator {
 
         float bottomLimit = -7.0 + rand(uv + 0.1);
 
-        if( life < 0. || pos.y <= bottomLimit ){
+        if( pos.y <= bottomLimit ){
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
@@ -700,8 +703,10 @@ export class Simulator {
               )}, yy / ${this.SIZE.toFixed(1)});
               vec4 pos = texture2D(simulation, lookup);
 
+              float waterDropletRadius = ${this.IS_DESKTOP ? "0.38" : "0.8"};
+
               d = opSmoothUnion(
-                sdSphere(p - pos.xyz, 0.5),
+                sdSphere(p - pos.xyz, waterDropletRadius),
                 d,
                 0.7
               );
