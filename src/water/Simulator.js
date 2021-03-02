@@ -111,7 +111,7 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 5;
+    this.SIZE = 6;
     this.IS_DESKTOP = window.innerWidth > 500;
 
     if (this.IS_DESKTOP) {
@@ -733,7 +733,7 @@ export class Simulator {
           float depth = 0.0;
           vec3 p;
 
-          for(int i = 0; i < 32; i++) {
+          for(int i = 0; i < 12; i++) {
             p = rayOri + rayDir * depth;
 
             float dist = sdMetaBall(p);
