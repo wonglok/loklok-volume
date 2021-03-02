@@ -42,6 +42,7 @@ export class Human {
     }
     let geometry = new PlaneGeometry(2.0, 2.0);
     let material = new RawShaderMaterial({
+      transparent: true,
       uniforms: {
         matcap: {
           value: new TextureLoader().load(
@@ -86,18 +87,25 @@ export class Human {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
       },
     });
+
     pose.setOptions({
       upperBodyOnly: false,
       smoothLandmarks: true,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5,
     });
+
     let temp4 = new Vector4();
+    let m = new Matrix4();
+    m.identity();
+    m.makeRotationY(Math.PI * -0.5);
     let onResults = (results) => {
       if (results && results.poseLandmarks) {
         results.poseLandmarks.forEach((pt, idx) => {
-          temp4.set(pt.x * 2.0 - 1.0, pt.y - 1.5, pt.z, 1.0);
-          poseData[idx].lerp(temp4, 0.2);
+          // console.log(pt);
+          temp4.set(pt.x * 2.0 - 1.0, pt.y - 1.5, pt.z, pt.visibility);
+          temp4.applyMatrix4(m);
+          poseData[idx].lerp(temp4, 0.35);
         });
       }
     };
@@ -120,8 +128,8 @@ export class Human {
       onFrame: async () => {
         await pose.send({ image: videoElement });
       },
-      width: 1280 / 2,
-      height: 720 / 2,
+      width: 1280 / 4,
+      height: 720 / 4,
     });
     webCamera.start();
   }

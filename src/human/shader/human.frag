@@ -15,31 +15,31 @@ const float EPS = 0.01;
 const float OFFSET = EPS * 100.0;
 const vec3 lightDir = vec3( -0.48666426339228763, 0.8111071056538127, -0.3244428422615251 );
 
-// distance functions
-vec3 opRep( vec3 p, float interval ) {
+// // distance functions
+// vec3 opRep( vec3 p, float interval ) {
 
-  vec2 q = mod( p.xz, interval ) - interval * 0.5;
-  return vec3( q.x, p.y, q.y );
+//   vec2 q = mod( p.xz, interval ) - interval * 0.5;
+//   return vec3( q.x, p.y, q.y );
 
-}
+// }
 
-float sphereDist( vec3 p, float r ) {
+// float sphereDist( vec3 p, float r ) {
 
-  return length( opRep( p, 3.0 ) ) - r;
+//   return length( opRep( p, 3.0 ) ) - r;
 
-}
+// }
 
-float floorDist( vec3 p ){
+// float floorDist( vec3 p ){
 
-  return dot(p, vec3( 0.0, 1.0, 0.0 ) ) + 1.0;
+//   return dot(p, vec3( 0.0, 1.0, 0.0 ) ) + 1.0;
 
-}
+// }
 
-vec4 minVec4( vec4 a, vec4 b ) {
+// vec4 minVec4( vec4 a, vec4 b ) {
 
-  return ( a.a < b.a ) ? a : b;
+//   return ( a.a < b.a ) ? a : b;
 
-}
+// }
 
 float checkeredPattern( vec3 p ) {
 
@@ -99,19 +99,15 @@ mat4 rotationZ( in float angle ) {
 }
 
 
-float sdMetaBall(vec3 p) {
+float sdMetaBall (vec3 p) {
   float d = 2.0;
 
   for (int i = 0; i < 33; i++) {
     vec4 pos = poseData[i];
-
-    pos = pos * rotationY(3.141592 * -0.5);
-
-    // float time = 1.0 * (fract(fi * 412.531 + 0.513) - 0.5) * 3.0;
     d = opSmoothUnion(
-        sdSphere(p + pos.xyz, 0.1),
+      sdSphere(p + pos.xyz, 0.065),
       d,
-      0.1
+      0.15
     );
   }
 
@@ -128,17 +124,7 @@ vec3 calcNormal( in vec3 p ) {
 }
 
 float sceneDist( vec3 p ) {
-  return sdMetaBall( p);
-}
-
-vec4 sceneColor( vec3 p ) {
-
-  return minVec4(
-    // 3 * 6 / 2 = 9
-    vec4( hsv2rgb(vec3( ( p.z + p.x ) / 9.0, 1.0, 1.0 ) ), sphereDist( p, 1.0 ) ),
-    vec4( vec3( 0.5 ) * checkeredPattern( p ), floorDist( p ) )
-  );
-
+  return sdMetaBall(p);
 }
 
 vec3 getNormal( vec3 p ) {
@@ -151,27 +137,37 @@ vec3 getNormal( vec3 p ) {
 
 }
 
-float getShadow( vec3 ro, vec3 rd ) {
+// vec4 sceneColor( vec3 p ) {
 
-  float h = 0.0;
-  float c = 0.0;
-  float r = 1.0;
-  float shadowCoef = 0.5;
+//   return minVec4(
+//     // 3 * 6 / 2 = 9
+//     vec4( hsv2rgb(vec3( ( p.z + p.x ) / 9.0, 1.0, 1.0 ) ), sphereDist( p, 1.0 ) ),
+//     vec4( vec3( 0.5 ) * checkeredPattern( p ), floorDist( p ) )
+//   );
 
-  for ( float t = 0.0; t < 5.0; t++ ) {
+// }
 
-    h = sceneDist( ro + rd * c );
+// float getShadow( vec3 ro, vec3 rd ) {
 
-    if ( h < EPS ) return shadowCoef;
+//   float h = 0.0;
+//   float c = 0.0;
+//   float r = 1.0;
+//   float shadowCoef = 0.5;
 
-    r = min( r, h * 16.0 / c );
-    c += h;
+//   for ( float t = 0.0; t < 5.0; t++ ) {
 
-  }
+//     h = sceneDist( ro + rd * c );
 
-  return 1.0 - shadowCoef + r * shadowCoef;
+//     if ( h < EPS ) return shadowCoef;
 
-}
+//     r = min( r, h * 16.0 / c );
+//     c += h;
+
+//   }
+
+//   return 1.0 - shadowCoef + r * shadowCoef;
+
+// }
 
 vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool hit ) {
 
@@ -180,7 +176,7 @@ vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool
   float depth = 0.0;
   pos = origin;
 
-  for ( int i = 0; i < 64; i++ ){
+  for ( int i = 0; i < 24; i++ ){
 
     dist = sceneDist( pos );
     depth += dist;
@@ -198,8 +194,6 @@ vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool
     normal = getNormal( pos );
     color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
 
-
-
     // float diffuse = clamp( dot( lightDir, normal ), 0.1, 1.0 );
     // float specular = pow( clamp( dot( reflect( lightDir, normal ), ray ), 0.0, 1.0 ), 10.0 );
     // float shadow = getShadow( pos + normal * OFFSET, lightDir );
@@ -213,7 +207,7 @@ vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool
 
   }
 
-  return color - pow( clamp( 0.05 * depth, 0.0, 0.6 ), 2.0 );
+  return color;// - pow( clamp( 0.05 * depth, 0.0, 0.6 ), 2.0 );
 
 }
 
@@ -238,17 +232,14 @@ void main(void) {
   bool hit;
   float alpha = 1.0;
 
-  for ( int i = 0; i < 3; i++ ) {
-
+  for ( int i = 0; i < 2; i++ ) {
     color += alpha * getRayColor( cPos, ray, pos, normal, hit );
     alpha *= 0.3;
     ray = normalize( reflect( ray, normal ) );
     cPos = pos + normal * OFFSET;
-
     if ( !hit ) break;
-
   }
 
-  gl_FragColor = vec4( color, 1.0 );
+  gl_FragColor = vec4( color, length(color) );
 
 }
