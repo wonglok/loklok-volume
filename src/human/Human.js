@@ -100,6 +100,9 @@ export class Human {
     `;
 
     let div = document.createElement("div");
+    div.style.position = "absolute";
+    div.style.top = "0px";
+    div.style.left = "0px";
     div.style.overflow = "hidden";
     div.innerHTML = videoHTML;
     renderer.domElement.parentElement.appendChild(div);
