@@ -37,7 +37,7 @@ export const GravitySDFCanvas = () => {
       mini.get("camera"),
       mini.get("scene"),
     ]).then(([renderer, camera, scene]) => {
-      camera.position.z = 15;
+      camera.position.z = 10;
       workDisplay = () => {
         renderer.render(scene, camera);
       };

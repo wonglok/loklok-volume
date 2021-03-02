@@ -111,7 +111,7 @@ export class Simulator {
       // },
     ];
 
-    this.SIZE = 256;
+    this.SIZE = 512;
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
     this.mini.onResize(() => {
