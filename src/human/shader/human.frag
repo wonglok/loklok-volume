@@ -8,6 +8,7 @@ uniform vec3 cameraPosition;
 uniform mat4 cameraWorldMatrix;
 uniform mat4 cameraProjectionMatrixInverse;
 
+uniform sampler2D matcap;
 uniform vec4 poseData[33];
 
 const float EPS = 0.01;
@@ -195,7 +196,9 @@ vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool
   if ( abs(dist) < EPS ) {
 
     normal = getNormal( pos );
-    color = normal;
+    color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
+
+
 
     // float diffuse = clamp( dot( lightDir, normal ), 0.1, 1.0 );
     // float specular = pow( clamp( dot( reflect( lightDir, normal ), ray ), 0.0, 1.0 ), 10.0 );

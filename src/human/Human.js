@@ -7,6 +7,7 @@ import {
   PlaneGeometry,
   RawShaderMaterial,
   RGBAFormat,
+  TextureLoader,
   Vector2,
   Vector4,
 } from "three";
@@ -42,6 +43,11 @@ export class Human {
     let geometry = new PlaneGeometry(2.0, 2.0);
     let material = new RawShaderMaterial({
       uniforms: {
+        matcap: {
+          value: new TextureLoader().load(
+            require("./img/matcap_plastic.jpg").default
+          ),
+        },
         poseData: {
           value: poseData,
         },
