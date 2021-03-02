@@ -111,10 +111,10 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 5;
+    this.SIZE = 10;
 
     if (window.innerWidth > 500) {
-      this.SIZE = 12;
+      this.SIZE = 20;
     }
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
@@ -173,9 +173,9 @@ export class Simulator {
 
             float dist = sdMetaBall(p);
             depth += dist;
-            // if (dist < 1e-6) {
-            //   break;
-            // }
+            if (dist < 1e-3) {
+              break;
+            }
           }
 
           float alpha = 2.0 - (depth - 0.5) / 2.0;
@@ -345,7 +345,7 @@ export class Simulator {
       }
 
       vec3 calcNormal( in vec3 p ) {
-          const float h = 1e-5; // or some other value
+          const float h = 1e-3; // or some other value
           const vec2 k = vec2(1,-1);
           return normalize( k.xyy * sdMetaBall( p + k.xyy*h ) +
                             k.yyx * sdMetaBall( p + k.yyx*h ) +
@@ -651,7 +651,7 @@ export class Simulator {
   }
 
   async particleRayTrace() {
-    let metaBallRTT = new WebGLRenderTarget(512, 512);
+    let metaBallRTT = new WebGLRenderTarget(480, 480);
     let viewport = await this.mini.get("viewport");
     let metaBallMat = new ShaderMaterial({
       transparent: true,
@@ -660,7 +660,7 @@ export class Simulator {
           value: new TextureLoader().load(require("./img/matcap.jpg").default),
         },
         iViewport: { value: viewport },
-        iResolution: { value: new Vector2(512, 512) },
+        iResolution: { value: new Vector2(480, 480) },
         simulation: { value: null },
         eT: { value: 0 },
       },
@@ -715,7 +715,7 @@ export class Simulator {
         }
 
         vec3 calcNormal( in vec3 p ) {
-            const float h = 1e-5; // or some other value
+            const float h = 1e-3; // or some other value
             const vec2 k = vec2(1,-1);
             return normalize( k.xyy * sdMetaBall( p + k.xyy*h ) +
                               k.yyx * sdMetaBall( p + k.yyx*h ) +
@@ -726,26 +726,25 @@ export class Simulator {
         void mainImage( out vec4 fragColor, in vec2 fragCoord ){
           vec2 uv = fragCoord/iResolution.xy;
 
-          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(20.0, 20.0), 1.0);
+          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(15.0, 15.0), 1.0);
           vec3 rayDir = vec3(0.0, 0.0, -1.0);
 
           float depth = 0.0;
           vec3 p;
 
-          for(int i = 0; i < 32; i++) {
+          for(int i = 0; i < 6; i++) {
             p = rayOri + rayDir * depth;
 
             float dist = sdMetaBall(p);
             depth += dist;
-            if (dist < 1e-6) {
+            if (dist < 1e-3) {
               break;
             }
           }
 
-          float alpha = 2.0 - (depth - 0.5) / 2.0;
-          if (alpha < 0.01) {
+          float alpha = 1.0 - (depth - 0.5) / 1.0;
+          if (alpha < 1e-3) {
             discard;
-            fragColor = vec4(0.0);
             return;
           }
 
@@ -771,7 +770,7 @@ export class Simulator {
       renderer.setRenderTarget(null);
     });
 
-    let geoDisplay = new PlaneBufferGeometry(20, 20);
+    let geoDisplay = new PlaneBufferGeometry(15, 15);
 
     let matDisplay = new MeshBasicMaterial({
       map: metaBallRTT.texture,
