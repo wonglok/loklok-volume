@@ -1,12 +1,9 @@
 import {
-  Clock,
-  DataTexture,
   Group,
   Matrix4,
   Mesh,
   PlaneGeometry,
   RawShaderMaterial,
-  RGBAFormat,
   TextureLoader,
   Vector2,
   Vector4,

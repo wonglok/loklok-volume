@@ -41,22 +41,22 @@ const vec3 lightDir = vec3( -0.48666426339228763, 0.8111071056538127, -0.3244428
 
 // }
 
-float checkeredPattern( vec3 p ) {
+// float checkeredPattern( vec3 p ) {
 
-  float u = 1.0 - floor( mod( p.x, 2.0 ) );
-  float v = 1.0 - floor( mod( p.z, 2.0 ) );
+//   float u = 1.0 - floor( mod( p.x, 2.0 ) );
+//   float v = 1.0 - floor( mod( p.z, 2.0 ) );
 
-  if ( ( u == 1.0 && v < 1.0 ) || ( u < 1.0 && v == 1.0 ) ) {
+//   if ( ( u == 1.0 && v < 1.0 ) || ( u < 1.0 && v == 1.0 ) ) {
 
-    return 0.2;
+//     return 0.2;
 
-  } else {
+//   } else {
 
-    return 1.0;
+//     return 1.0;
 
-  }
+//   }
 
-}
+// }
 
 vec3 hsv2rgb( vec3 c ) {
 
@@ -79,7 +79,7 @@ float sdSphere( vec3 p, float s ) {
 
 mat4 rotationX( in float angle ) {
 	return mat4(	1.0,		0,			0,			0,
-			 		0, 	cos(angle),	-sin(angle),		0,
+			 	  0, 	cos(angle),	-sin(angle),		0,
 					0, 	sin(angle),	 cos(angle),		0,
 					0, 			0,			  0, 		1);
 }
@@ -134,64 +134,49 @@ vec3 getNormal( vec3 p ) {
   //   sceneDist(p + vec3( 0.0, EPS, 0.0 ) ) - sceneDist(p + vec3( 0.0, -EPS, 0.0 ) ),
   //   sceneDist(p + vec3( 0.0, 0.0, EPS ) ) - sceneDist(p + vec3( 0.0, 0.0, -EPS ) )
   // ));
-
 }
 
 // vec4 sceneColor( vec3 p ) {
-
 //   return minVec4(
 //     // 3 * 6 / 2 = 9
 //     vec4( hsv2rgb(vec3( ( p.z + p.x ) / 9.0, 1.0, 1.0 ) ), sphereDist( p, 1.0 ) ),
 //     vec4( vec3( 0.5 ) * checkeredPattern( p ), floorDist( p ) )
 //   );
-
 // }
 
 // float getShadow( vec3 ro, vec3 rd ) {
-
 //   float h = 0.0;
 //   float c = 0.0;
 //   float r = 1.0;
 //   float shadowCoef = 0.5;
-
 //   for ( float t = 0.0; t < 5.0; t++ ) {
-
 //     h = sceneDist( ro + rd * c );
-
 //     if ( h < EPS ) return shadowCoef;
-
 //     r = min( r, h * 16.0 / c );
 //     c += h;
-
 //   }
-
 //   return 1.0 - shadowCoef + r * shadowCoef;
-
 // }
 
 vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool hit ) {
-
   // marching loop
   float dist;
   float depth = 0.0;
   pos = origin;
 
-  for ( int i = 0; i < 24; i++ ){
-
+  for ( int i = 0; i < 18; i++ ){
     dist = sceneDist( pos );
     depth += dist;
     pos = origin + depth * ray;
 
     if ( abs(dist) < EPS ) break;
-
   }
 
   // hit check and calc color
   vec3 color;
 
-  if ( abs(dist) < EPS ) {
-
-    normal = getNormal( pos );
+  if (abs(dist) < EPS) {
+    normal = getNormal(pos);
     color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
 
     // float diffuse = clamp( dot( lightDir, normal ), 0.1, 1.0 );
