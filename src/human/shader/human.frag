@@ -212,19 +212,40 @@ void main(void) {
   vec3 cPos = cameraPosition;
 
   // cast ray
-  vec3 color = vec3( 0.0 );
-  vec3 pos, normal;
-  bool hit;
-  float alpha = 1.0;
+  // vec3 color = vec3( 0.0 );
+  // vec3 pos, normal;
+  // bool hit;
+  // float alpha = 1.0;
+  // for ( int i = 0; i < 3; i++ ) {
+  //   color += alpha * getRayColor(cPos, ray, pos, normal, hit);
+  //   alpha *= 1.0 / 3.0;
+  //   ray = normalize( reflect( ray, normal ) );
+  //   cPos = pos + normal * OFFSET;
+  //   if ( !hit ) break;
+  // }
 
-  for ( int i = 0; i < 3; i++ ) {
-    color += alpha * getRayColor(cPos, ray, pos, normal, hit);
-    alpha *= 1.0 / 3.0;
-    ray = normalize( reflect( ray, normal ) );
-    cPos = pos + normal * OFFSET;
-    if ( !hit ) break;
+  float depth = 1.0;
+  vec3 pos = cPos;
+
+  float dist = 0.0;
+
+  for ( int i = 0; i < 15; i++ ){
+    dist = sceneDist(pos);
+    depth += dist;
+    pos = cPos + depth * ray;
+
+    if (dist < 0.0) {
+      break;
+    }
   }
 
-  gl_FragColor = vec4( color, length(color) );
-
+  float alpha = 1.0 - max(min(dist, 1.0), 0.0);
+  if (alpha > 0.0) {
+    vec3 normal = getNormal(pos);
+    vec3 color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
+    gl_FragColor = vec4(color, alpha);
+  } else {
+    // gl_FragColor = vec4(0.0);
+    discard;
+  }
 }

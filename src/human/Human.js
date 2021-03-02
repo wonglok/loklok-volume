@@ -62,6 +62,7 @@ export class Human {
       vertexShader: humanV,
       fragmentShader: humanF,
     });
+
     let mesh = new Mesh(geometry, material);
     mesh.frustumCulled = false;
     scene.add(mesh);
