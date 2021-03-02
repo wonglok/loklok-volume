@@ -112,6 +112,7 @@ export class Human {
     };
 
     pose.onResults(onResults);
+
     let videoHTML = /* html */ `
       <video playsinline class="input_video"></video>
     `;
@@ -125,6 +126,7 @@ export class Human {
     renderer.domElement.parentElement.appendChild(div);
 
     const videoElement = document.getElementsByClassName("input_video")[0];
+
     const webCamera = new Camera(videoElement, {
       onFrame: async () => {
         await pose.send({ image: videoElement });
