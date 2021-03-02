@@ -183,8 +183,11 @@ vec4 sampleAs3DTexture (vec3 pos) {
   float alpha = sdMetaBall(p);
   alpha = min(1.0, max(0.0, alpha));
 
-  vec3 uv = vec3(calcNormal(p) * 0.5 + 0.5);
-  vec4 color = texture2D(matcap, uv.xy);
+  vec4 color = vec4(0.0);
+  if (1.0 - alpha > 0.0) {
+    vec3 uv = vec3(calcNormal(p) * 0.5 + 0.5);
+    color = texture2D(matcap, uv.xy);
+  }
 
   return vec4(color.rgb * 1.5, 1.0 - alpha);
 }
@@ -228,10 +231,9 @@ vec4 colorSample;
 float alphaSample;
 
 //Perform the ray marching iterations
-for(int i = 0; i < ${STEPS.toFixed(0)}; i++)
-{
+for (int i = 0; i < ${STEPS.toFixed(0)}; i++) {
   //Get the voxel intensity value from the 3D texture.
-  colorSample = sampleAs3DTexture( currentPosition );
+  colorSample = sampleAs3DTexture(currentPosition);
 
   //Allow the alpha correction customization
   alphaSample = colorSample.a * alphaCorrection;
@@ -247,9 +249,10 @@ for(int i = 0; i < ${STEPS.toFixed(0)}; i++)
   accumulatedLength += deltaDirectionLength;
 
   //If the length traversed is more than the ray length, or if the alpha accumulated reaches 1.0 then exit.
-  if (accumulatedLength >= rayLength || accumulatedAlpha >= 1.0)
-  // if (accumulatedAlpha >= 1.0)
+  if (accumulatedLength >= rayLength || accumulatedAlpha >= 1.0) {
     break;
+  }
+  // if (accumulatedAlpha >= 1.0)
 }
 
 gl_FragColor  = accumulatedColor;
@@ -323,6 +326,9 @@ gl_FragColor  = accumulatedColor;
     volumeCamera.position.z = 2.5;
 
     this.mini.set("VolumeCamera", volumeCamera);
+    this.mini.get("VolumeControls").then((controls) => {
+      controls.minDistance = 1.0;
+    });
 
     this.compute = () => {
       let time = window.performance.now() * 0.001;

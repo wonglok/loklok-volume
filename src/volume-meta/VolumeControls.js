@@ -19,5 +19,6 @@ export class VolumeControls {
     this.mini.onLoop(() => {
       controls.update();
     });
+    this.mini.set("VolumeControls", controls);
   }
 }
