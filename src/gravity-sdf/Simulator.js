@@ -87,7 +87,7 @@ export class Simulator {
     this.balls = [
       {
         type: "mouse-sphere",
-        radius: 2.0,
+        radius: 3.0,
       },
       // {
       //   type: "static-sphere",
@@ -361,7 +361,7 @@ export class Simulator {
   }
 
   async setupSimulator() {
-    let mouse = await this.mini.get("mouse");
+    let mouse = await this.mini.get("screen");
     let renderer = await this.mini.get("renderer");
     let scene = await this.mini.get("scene");
 
@@ -513,7 +513,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = 0.5;
+        float sourceRadius = 1.5;
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -524,9 +524,10 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
+          pos.xyz *= 3.0;
 
-          pos.xyz = ballify(pos.xyz, sourceRadius);
-          pos.y += 5.0;
+          // pos.xyz = ballify(pos.xyz, sourceRadius);
+          pos.y += 0.0;
           // pos.x -= 2.0;
           life = .99;
         }
@@ -540,14 +541,18 @@ export class Simulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz = ballify(pos.xyz, sourceRadius);
-          pos.y += 5.0;
+
+          pos.xyz *= 3.0;
+
+          // pos.xyz = ballify(pos.xyz, sourceRadius);
+          pos.y += 0.0;
           // pos.x -= 2.0;
           life = 1.1;
         }
 
         // gravity
         vel += vec3( 0.0 , -.001 , 0. );
+        // vel += vec3(normalize(uv * 2.0 + 1.0) * dt * 0.1, 1.0);
 
         // wind
         // vel += vec3( 0.00151 * life, 0.0, 0.0 );

@@ -135,11 +135,12 @@ export class Base {
       let mouser = mosuer.copy(mouse);
       mouser.x /= vp.x;
       mouser.y /= vp.y;
+      clickerMesh.lookAt(camera.position);
       raycaster.setFromCamera(mouser, camera);
       let res = raycaster.intersectObjects([clickerMesh]);
 
       if (res && res[0]) {
-        screen.copy(res[0].point);
+        screen.copy(res[0].point.multiplyScalar(2));
       }
     });
 
