@@ -96,15 +96,16 @@ export class Human {
     });
 
     let temp4 = new Vector4();
-    let m = new Matrix4();
-    m.identity();
-    m.makeRotationY(Math.PI * -0.5);
+    let m4 = new Matrix4();
+    m4.identity();
+    m4.makeRotationY(Math.PI * -0.5);
+
     let onResults = (results) => {
       if (results && results.poseLandmarks) {
         results.poseLandmarks.forEach((pt, idx) => {
           // console.log(pt);
           temp4.set(pt.x * 2.0 - 1.0, pt.y - 1.5, pt.z, pt.visibility);
-          temp4.applyMatrix4(m);
+          temp4.applyMatrix4(m4);
           poseData[idx].lerp(temp4, 0.35);
         });
       }
