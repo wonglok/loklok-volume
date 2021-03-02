@@ -514,7 +514,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = 1.5;
+        float sourceRadius = 2.5;
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -732,7 +732,7 @@ export class Simulator {
           float depth = 0.0;
           vec3 p;
 
-          for(int i = 0; i < 6; i++) {
+          for(int i = 0; i <= 5; i++) {
             p = rayOri + rayDir * depth;
 
             float dist = sdMetaBall(p);
@@ -814,6 +814,9 @@ export class Simulator {
     );
     let matPt = new ShaderMaterial({
       uniforms: {
+        matcap: {
+          value: new TextureLoader().load(require("./img/matcap.jpg").default),
+        },
         nowPosTex: {
           value: null,
         },
@@ -823,12 +826,19 @@ export class Simulator {
           void main (void) {
             vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            gl_PointSize = 10.0;
+            gl_PointSize = 50.0;
           }
           `,
       fragmentShader: /* glsl */ `
+          uniform sampler2D matcap;
           void main (void) {
-            gl_FragColor = vec4(0.7, 0.7, 1.0, 1.0);
+
+            if (length(gl_PointCoord.xy - 0.5) < 0.5) {
+              vec2 lookup = gl_PointCoord.xy;
+              gl_FragColor = texture2D(matcap, lookup);
+            } else {
+              discard;
+            }
           }
           `,
     });
