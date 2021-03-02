@@ -9,6 +9,7 @@ import { BubbleCanvas } from "./bubble/BubbleCanvas";
 import { WaterCanvas } from "./water/WaterCanvas";
 import { VolumeMetaCanvas } from "./volume-meta/VolumeMetaCanvas";
 import { HumanCanvas } from "./human/HumanCanvas";
+import { SDFVolumeCanvas } from "./sdf-texture/SDFVolumeCanvas";
 
 function App() {
   return (
@@ -41,6 +42,10 @@ function App() {
         <Route exact path="/human">
           <HumanCanvas></HumanCanvas>
         </Route>
+        <Route exact path="/sdf-renderer">
+          <SDFVolumeCanvas></SDFVolumeCanvas>
+        </Route>
+
         <Route exact path="/">
           <div className={"m-5"}>
             <Link to={"/volume"}>Volume</Link>
@@ -65,6 +70,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/human"}>Human</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/sdf-renderer"}>SDF Texture Renderer</Link>
           </div>
         </Route>
       </Switch>

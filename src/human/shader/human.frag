@@ -66,17 +66,6 @@ vec3 hsv2rgb( vec3 c ) {
 
 }
 
-// https://www.shadertoy.com/view/3sySRK
-// from cine shader by edan kwan
-float opSmoothUnion( float d1, float d2, float k ) {
-    float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
-    return mix( d2, d1, h ) - k*h*(1.0-h);
-}
-
-float sdSphere( vec3 p, float s ) {
-  return length(p)-s;
-}
-
 mat4 rotationX( in float angle ) {
 	return mat4(	1.0,		0,			0,			0,
 			 	  0, 	cos(angle),	-sin(angle),		0,
@@ -96,6 +85,17 @@ mat4 rotationZ( in float angle ) {
 			 		sin(angle),		cos(angle),		0,	0,
 							0,				0,		1,	0,
 							0,				0,		0,	1);
+}
+
+// https://www.shadertoy.com/view/3sySRK
+// from cine shader by edan kwan
+float opSmoothUnion( float d1, float d2, float k ) {
+    float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
+    return mix( d2, d1, h ) - k*h*(1.0-h);
+}
+
+float sdSphere( vec3 p, float s ) {
+  return length(p)-s;
 }
 
 
@@ -158,43 +158,42 @@ vec3 getNormal( vec3 p ) {
 //   return 1.0 - shadowCoef + r * shadowCoef;
 // }
 
-vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool hit ) {
-  // marching loop
-  float dist;
-  float depth = 0.0;
-  pos = origin;
+// vec3 getRayColor( vec3 origin, vec3 ray, out vec3 pos, out vec3 normal, out bool hit ) {
+//   // marching loop
+//   float dist;
+//   float depth = 0.0;
+//   pos = origin;
 
-  for ( int i = 0; i < 18; i++ ){
-    dist = sceneDist( pos );
-    depth += dist;
-    pos = origin + depth * ray;
+//   for ( int i = 0; i < 18; i++ ){
+//     dist = sceneDist( pos );
+//     depth += dist;
+//     pos = origin + depth * ray;
 
-    if ( abs(dist) < EPS ) break;
-  }
+//     if ( abs(dist) < EPS ) break;
+//   }
 
-  // hit check and calc color
-  vec3 color;
+//   // hit check and calc color
+//   vec3 color;
 
-  if (abs(dist) < EPS) {
-    normal = getNormal(pos);
-    color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
+//   if (abs(dist) < EPS) {
+//     normal = getNormal(pos);
+//     color = texture2D(matcap, normal.xy * 0.5 + 0.5).rgb;
 
-    // float diffuse = clamp( dot( lightDir, normal ), 0.1, 1.0 );
-    // float specular = pow( clamp( dot( reflect( lightDir, normal ), ray ), 0.0, 1.0 ), 10.0 );
-    // float shadow = getShadow( pos + normal * OFFSET, lightDir );
-    // color = ( sceneColor( pos ).rgb * diffuse + vec3( 0.8 ) * specular );// * max( 0.5, shadow );
+//     // float diffuse = clamp( dot( lightDir, normal ), 0.1, 1.0 );
+//     // float specular = pow( clamp( dot( reflect( lightDir, normal ), ray ), 0.0, 1.0 ), 10.0 );
+//     // float shadow = getShadow( pos + normal * OFFSET, lightDir );
+//     // color = ( sceneColor( pos ).rgb * diffuse + vec3( 0.8 ) * specular );// * max( 0.5, shadow );
 
-    hit = true;
+//     hit = true;
 
-  } else {
+//   } else {
 
-    color = vec3( 0.0 );
+//     color = vec3( 0.0 );
 
-  }
+//   }
 
-  return color;// - pow( clamp( 0.05 * depth, 0.0, 0.6 ), 2.0 );
-
-}
+//   return color;// - pow( clamp( 0.05 * depth, 0.0, 0.6 ), 2.0 );
+// }
 
 void main(void) {
 
@@ -249,3 +248,7 @@ void main(void) {
     discard;
   }
 }
+
+//
+
+//
