@@ -19,9 +19,7 @@ export const GravitySDFCanvas = () => {
     ];
 
     mini.get("SceneControls").then((mod) => {
-      if (window.innerWidth < 500.0) {
-        mod.controls.enableRotate = true;
-      }
+      mod.controls.enableRotate = false;
       //
       // window.addEventListener("touchstart", () => {
       //   mod.controls.enabled = false;

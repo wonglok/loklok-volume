@@ -121,8 +121,8 @@ export class Simulator {
     this.setupSimulator();
     this.particles();
     this.interaction();
-    // this.metaBallPts();
-    this.metaBallTrace();
+    this.metaBallPts();
+    // this.metaBallTrace();
   }
 
   async metaBallTrace() {
@@ -271,7 +271,7 @@ export class Simulator {
           float dist = sdMetaBall(vec3(position.x, position.y, position.z));
 
           if (dist < 0.0) {
-            gl_PointSize = (dist) * -15.0;
+            gl_PointSize = (dist) * -5.0;
           } else {
             gl_PointSize = 0.0;
           }
@@ -685,7 +685,7 @@ export class Simulator {
           `,
       fragmentShader: /* glsl */ `
           void main (void) {
-            gl_FragColor = vec4(0.5, 0.5, 1.0, 0.5);
+            gl_FragColor = vec4(0.5, 0.5, 1.0, 1.0);
           }
           `,
     });
