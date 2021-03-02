@@ -115,7 +115,7 @@ export class Simulator {
     this.IS_DESKTOP = window.innerWidth > 500;
 
     if (this.IS_DESKTOP) {
-      this.SIZE = 10;
+      this.SIZE = 16;
     }
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
@@ -515,7 +515,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = ${this.IS_DESKTOP ? "2.5" : "1.5"};
+        float sourceRadius = ${this.IS_DESKTOP ? "2.0" : "1.5"};
 
         life -= .01 * ( rand( uv ) + 0.1 );
 

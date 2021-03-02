@@ -8,6 +8,7 @@ import { EnergyCanvas } from "./energy/EnergyCanvas";
 import { BubbleCanvas } from "./bubble/BubbleCanvas";
 import { WaterCanvas } from "./water/WaterCanvas";
 import { VolumeCanvas as VolumeScanCanvas } from "./volume-scan/VolumeCanvas";
+import { HumanCanvas } from "./human/HumanCanvas";
 
 function App() {
   return (
@@ -37,6 +38,9 @@ function App() {
         <Route exact path="/bubble">
           <BubbleCanvas></BubbleCanvas>
         </Route>
+        <Route exact path="/human">
+          <HumanCanvas></HumanCanvas>
+        </Route>
         <Route exact path="/">
           <div className={"m-5"}>
             <Link to={"/volume"}>Volume</Link>
@@ -58,6 +62,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/water"}>Water</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/human"}>Human</Link>
           </div>
         </Route>
       </Switch>

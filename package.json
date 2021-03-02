@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^6.1.1",
+    "@mediapipe/camera_utils": "^0.1.1606863050",
+    "@mediapipe/pose": "^0.2.1614566818",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
@@ -42,6 +44,7 @@
     "@tailwindcss/postcss7-compat": "^2.0.3",
     "autoprefixer": "^9",
     "postcss": "^7",
+    "raw-loader": "^4.0.2",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   },
   "peerDependencies": {}
