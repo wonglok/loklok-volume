@@ -651,7 +651,7 @@ export class Simulator {
   }
 
   async particleRayTrace() {
-    let metaBallRTT = new WebGLRenderTarget(480, 480);
+    let metaBallRTT = new WebGLRenderTarget(512, 512);
     let viewport = await this.mini.get("viewport");
     let metaBallMat = new ShaderMaterial({
       transparent: true,
@@ -660,7 +660,7 @@ export class Simulator {
           value: new TextureLoader().load(require("./img/matcap.jpg").default),
         },
         iViewport: { value: viewport },
-        iResolution: { value: new Vector2(480, 480) },
+        iResolution: { value: new Vector2(512, 512) },
         simulation: { value: null },
         eT: { value: 0 },
       },
