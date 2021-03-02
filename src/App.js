@@ -7,7 +7,7 @@ import { GPUCanvas } from "./gpu/GPUCanvas";
 import { EnergyCanvas } from "./energy/EnergyCanvas";
 import { BubbleCanvas } from "./bubble/BubbleCanvas";
 import { WaterCanvas } from "./water/WaterCanvas";
-import { VolumeCanvas as VolumeScanCanvas } from "./volume-scan/VolumeCanvas";
+import { VolumeMetaCanvas } from "./volume-meta/VolumeMetaCanvas";
 import { HumanCanvas } from "./human/HumanCanvas";
 
 function App() {
@@ -32,8 +32,8 @@ function App() {
         <Route exact path="/volume">
           <VolumeCanvas></VolumeCanvas>
         </Route>
-        <Route exact path="/volume-scan">
-          <VolumeScanCanvas></VolumeScanCanvas>
+        <Route exact path="/volume-meta">
+          <VolumeMetaCanvas></VolumeMetaCanvas>
         </Route>
         <Route exact path="/bubble">
           <BubbleCanvas></BubbleCanvas>
@@ -58,7 +58,7 @@ function App() {
             <Link to={"/bubble"}>Bubble</Link>
           </div>
           <div className={"m-5"}>
-            <Link to={"/volume-scan"}>Volume Scan</Link>
+            <Link to={"/volume-meta"}>Volume Meta</Link>
           </div>
           <div className={"m-5"}>
             <Link to={"/water"}>Water</Link>

@@ -1,18 +1,18 @@
 import { useEffect, useRef } from "react";
 import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
-import { SDFTexture } from "./SDFTexture";
+// import { SDFTexture } from "./SDFTexture";
 import { VolumeVisualiser } from "./VolumeVisualiser";
 import { VolumeControls } from "./VolumeControls";
 
-export const VolumeCanvas = () => {
+export const VolumeMetaCanvas = () => {
   const ref = useRef(null);
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
     let mods = [
       new Base(mini),
       new VolumeControls(mini),
-      new SDFTexture(mini),
+      // new SDFTexture(mini),
       new VolumeVisualiser(mini),
     ];
 
@@ -32,14 +32,15 @@ export const VolumeCanvas = () => {
       mini.get("camera"),
       mini.get("scene"),
       mini.get("VolumeVisualiser"),
-      mini.get("SDFTexture"),
-    ]).then(([renderer, camera, scene, vol, sdf]) => {
+      // mini.get("SDFTexture"),
+    ]).then(([renderer, camera, scene, vol]) => {
       camera.position.z = 50;
 
       workDisplay = () => {
-        if (sdf.compute) {
-          sdf.compute();
-        }
+        // if (sdf.compute) {
+        //   sdf.compute();
+        // }
+
         if (vol.compute) {
           vol.compute();
         }
