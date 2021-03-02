@@ -94,10 +94,12 @@ export class Human {
     });
     let temp4 = new Vector4();
     let onResults = (results) => {
-      results.poseLandmarks.forEach((pt, idx) => {
-        temp4.set(pt.x * 2.0 - 1.0, pt.y - 1.5, pt.z, 1.0);
-        poseData[idx].lerp(temp4, 0.2);
-      });
+      if (results && results.poseLandmarks) {
+        results.poseLandmarks.forEach((pt, idx) => {
+          temp4.set(pt.x * 2.0 - 1.0, pt.y - 1.5, pt.z, 1.0);
+          poseData[idx].lerp(temp4, 0.2);
+        });
+      }
     };
 
     pose.onResults(onResults);
