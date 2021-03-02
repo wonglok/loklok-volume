@@ -217,9 +217,9 @@ void main(void) {
   bool hit;
   float alpha = 1.0;
 
-  for ( int i = 0; i < 2; i++ ) {
-    color += alpha * getRayColor( cPos, ray, pos, normal, hit );
-    alpha *= 0.3;
+  for ( int i = 0; i < 3; i++ ) {
+    color += alpha * getRayColor(cPos, ray, pos, normal, hit);
+    alpha *= 1.0 / 3.0;
     ray = normalize( reflect( ray, normal ) );
     cPos = pos + normal * OFFSET;
     if ( !hit ) break;
