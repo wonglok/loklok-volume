@@ -1,7 +1,14 @@
-import { PerspectiveCamera } from "three";
+import {
+  Mesh,
+  MeshBasicMaterial,
+  PerspectiveCamera,
+  Raycaster,
+  Vector2,
+} from "three";
 import { Scene } from "three";
 import { WebGLRenderer } from "three";
 import { Vector3 } from "three";
+import { PlaneBufferGeometry } from "three/src/Three";
 
 const visibleHeightAtZDepth = (depth, camera) => {
   // compensate for cameras not positioned at z=0
@@ -70,6 +77,9 @@ export class Base {
     onResize(() => {
       rect = renderer.domElement.getBoundingClientRect();
     });
+
+    let raycaster = new Raycaster();
+
     renderer.domElement.addEventListener("mousemove", (evt) => {
       let height =
         visibleHeightAtZDepth(camera.position.length(), camera) * 0.5;
@@ -117,9 +127,25 @@ export class Base {
     // const material = new MeshBasicMaterial({ color: 0x00ff00 });
     // const cube = new Mesh(geometry, material);
     // scene.add(cube);
+    let clicker = new PlaneBufferGeometry(1000.0, 1000.0);
+    let clickerMesh = new Mesh(clicker, new MeshBasicMaterial());
+    let screen = new Vector3();
+    let mosuer = new Vector2();
+    onLoop(() => {
+      let mouser = mosuer.copy(mouse);
+      mouser.x /= vp.x;
+      mouser.y /= vp.y;
+      raycaster.setFromCamera(mouser, camera);
+      let res = raycaster.intersectObjects([clickerMesh]);
+
+      if (res && res[0]) {
+        screen.copy(res[0].point);
+      }
+    });
 
     mini.set("viewport", vp);
     mini.set("mouse", mouse);
+    mini.set("screen", screen);
     mini.set("camera", camera);
     mini.set("scene", scene);
     mini.set("renderer", renderer);

@@ -10,6 +10,7 @@ import { WaterCanvas } from "./water/WaterCanvas";
 import { VolumeMetaCanvas } from "./volume-meta/VolumeMetaCanvas";
 import { HumanCanvas } from "./human/HumanCanvas";
 import { SDFVolumeCanvas } from "./sdf-texture/SDFVolumeCanvas";
+import { GravitySDFCanvas } from "./gravity-sdf/GravitySDFCanvas";
 
 function App() {
   return (
@@ -45,6 +46,9 @@ function App() {
         <Route exact path="/sdf-renderer">
           <SDFVolumeCanvas></SDFVolumeCanvas>
         </Route>
+        <Route exact path="/sdf-gravity">
+          <GravitySDFCanvas></GravitySDFCanvas>
+        </Route>
 
         <Route exact path="/">
           <div className={"m-5"}>
@@ -73,6 +77,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/sdf-renderer"}>SDF Texture Renderer</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/sdf-gravity"}>Gravity SDF Canvas</Link>
           </div>
         </Route>
       </Switch>

@@ -61,7 +61,6 @@ vec3 calcNormal( in vec3 p ) {
                       k.xxx * sdMetaBall( p + k.xxx*h ) );
 }
 
-
 void main (void) {
   vec3 p = vec3(vUv.xy * 2.0 - 1.0, cameraPosition.z);
   p = p * 2.0;

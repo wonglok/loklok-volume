@@ -26,7 +26,8 @@ export class SDFTexture {
 
     this.mini.set(name, this);
 
-    const AMOUNT = 16;
+    const AMOUNT = 10;
+
     const SIZE = AMOUNT * AMOUNT;
     const ASPECT_RATIO = 1.0;
 
@@ -90,7 +91,10 @@ export class SDFTexture {
     });
 
     this.makeMesh();
-    this.makePreviewTexturePlane();
+
+    if (window.innerWidth > 500) {
+      this.makePreviewTexturePlane();
+    }
   }
 
   async makePreviewTexturePlane() {
@@ -98,7 +102,7 @@ export class SDFTexture {
     // const camera = await this.mini.get("camera");
     // const renderer = await this.mini.get("renderer");
 
-    const geometryPlane = new PlaneBufferGeometry(50, 50);
+    const geometryPlane = new PlaneBufferGeometry(25, 25);
     const materialPlane = new MeshBasicMaterial({
       color: 0xffffff,
       map: this.renderTarget.texture,
@@ -106,7 +110,7 @@ export class SDFTexture {
 
     const mesh = new Mesh(geometryPlane, materialPlane);
     // right
-    mesh.position.x = 50;
+    mesh.position.x = 25;
     mesh.position.z = 1.0;
     scene.add(mesh);
   }
