@@ -37,7 +37,10 @@ export const HumanCanvas = () => {
     ]).then(([renderer, camera, scene]) => {
       camera.position.z = 15;
       workDisplay = () => {
-        renderer.render(scene, camera);
+        if (window.innerWidth < 500) {
+        } else {
+          renderer.render(scene, camera);
+        }
       };
     });
 

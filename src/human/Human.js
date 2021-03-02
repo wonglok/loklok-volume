@@ -15,7 +15,6 @@ import { Camera } from "@mediapipe/camera_utils/camera_utils.js";
 export class Human {
   constructor(mini) {
     this.mini = mini;
-
     this.setup();
   }
   async setup() {

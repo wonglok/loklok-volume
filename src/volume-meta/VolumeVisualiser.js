@@ -75,9 +75,8 @@ void main()
       },
     };
 
-    this.rtTexture = new WebGLRenderTarget(1024, 1024);
-
-    this.rtTexture2 = new WebGLRenderTarget(1024, 1024);
+    this.rtTexture = new WebGLRenderTarget(512, 512);
+    this.rtTexture2 = new WebGLRenderTarget(512, 512);
 
     this.pass2 = {
       vs: `
@@ -180,13 +179,9 @@ vec3 calcNormal( in vec3 p ) {
 vec4 sampleAs3DTexture (vec3 pos) {
   vec3 p = (pos * 2.0 - 1.0) * 2.5;
   float alpha = sdMetaBall(p);
-
-
-
-  alpha = min(1.0, max(0.0, alpha * 2.0));
+  alpha = min(1.0, max(0.0, alpha));
 
   vec3 uv = vec3(calcNormal(p) * 0.5 + 0.5);
-
   vec4 color = texture2D(matcap, uv.xy);
 
   return vec4(color.rgb * 1.5, 1.0 - alpha);
@@ -230,9 +225,8 @@ float accumulatedLength = 0.0;
 vec4 colorSample;
 float alphaSample;
 
-int stepInt = int(steps);
 //Perform the ray marching iterations
-for(int i = 0; i < stepInt; i++)
+for(int i = 0; i < 15; i++)
 {
   //Get the voxel intensity value from the 3D texture.
   colorSample = sampleAs3DTexture( currentPosition );
@@ -311,7 +305,6 @@ gl_FragColor  = accumulatedColor;
     let box2 = new BoxBufferGeometry(1, 1, 1, 5, 5, 5);
     let drawable2 = new Mesh(box2, mat2);
     drawable2.frustumCulled = false;
-
     this.scenePass2.add(drawable2);
 
     let mat3 = new MeshBasicMaterial({
@@ -323,9 +316,9 @@ gl_FragColor  = accumulatedColor;
     mesh.frustumCulled = false;
     this.drawable.add(mesh);
 
-    let volumeCamera = new PerspectiveCamera(75, 1, 0.0001, 10000);
+    let volumeCamera = new PerspectiveCamera(45, 1, 0.1, 10000);
     volumeCamera.updateProjectionMatrix();
-    volumeCamera.position.z = 1.5;
+    volumeCamera.position.z = 5;
 
     this.mini.set("VolumeCamera", volumeCamera);
 
