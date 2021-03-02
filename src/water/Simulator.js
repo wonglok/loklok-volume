@@ -111,10 +111,11 @@ export class Simulator {
       },
     ];
 
-    this.SIZE = 10;
+    this.SIZE = 5;
+    this.IS_DESKTOP = window.innerWidth > 500;
 
-    if (window.innerWidth > 500) {
-      this.SIZE = 20;
+    if (this.IS_DESKTOP) {
+      this.SIZE = 10;
     }
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
@@ -173,9 +174,9 @@ export class Simulator {
 
             float dist = sdMetaBall(p);
             depth += dist;
-            if (dist < 1e-3) {
-              break;
-            }
+            // if (dist < 1e-6) {
+            //   break;
+            // }
           }
 
           float alpha = 2.0 - (depth - 0.5) / 2.0;
@@ -345,7 +346,7 @@ export class Simulator {
       }
 
       vec3 calcNormal( in vec3 p ) {
-          const float h = 1e-3; // or some other value
+          const float h = 1e-5; // or some other value
           const vec2 k = vec2(1,-1);
           return normalize( k.xyy * sdMetaBall( p + k.xyy*h ) +
                             k.yyx * sdMetaBall( p + k.yyx*h ) +
@@ -514,7 +515,7 @@ export class Simulator {
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
-        float sourceRadius = 2.5;
+        float sourceRadius = ${this.IS_DESKTOP ? "2.5" : "1.5"};
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -534,7 +535,7 @@ export class Simulator {
 
         float bottomLimit = -7.0 + rand(uv + 0.1);
 
-        if( life < 0. || pos.y <= bottomLimit ){
+        if( pos.y <= bottomLimit ){
           vel = vec3( 0. );
           pos.xyz = vec3(
             -0.5 + rand(uv + 0.1),
@@ -702,7 +703,7 @@ export class Simulator {
               )}, yy / ${this.SIZE.toFixed(1)});
               vec4 pos = texture2D(simulation, lookup);
 
-              float waterDropletRadius = 0.48;
+              float waterDropletRadius = ${this.IS_DESKTOP ? "0.38" : "0.8"};
 
               d = opSmoothUnion(
                 sdSphere(p - pos.xyz, waterDropletRadius),
@@ -715,7 +716,7 @@ export class Simulator {
         }
 
         vec3 calcNormal( in vec3 p ) {
-            const float h = 1e-3; // or some other value
+            const float h = 1e-5; // or some other value
             const vec2 k = vec2(1,-1);
             return normalize( k.xyy * sdMetaBall( p + k.xyy*h ) +
                               k.yyx * sdMetaBall( p + k.yyx*h ) +
@@ -726,25 +727,26 @@ export class Simulator {
         void mainImage( out vec4 fragColor, in vec2 fragCoord ){
           vec2 uv = fragCoord/iResolution.xy;
 
-          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(15.0, 15.0), 1.0);
+          vec3 rayOri = vec3((uv - 0.5) * vec2(iResolution.x/iResolution.y, 1.0) * vec2(20.0, 20.0), 1.0);
           vec3 rayDir = vec3(0.0, 0.0, -1.0);
 
           float depth = 0.0;
           vec3 p;
 
-          for(int i = 0; i <= 5; i++) {
+          for(int i = 0; i < 32; i++) {
             p = rayOri + rayDir * depth;
 
             float dist = sdMetaBall(p);
             depth += dist;
-            if (dist < 1e-3) {
+            if (dist < 1e-6) {
               break;
             }
           }
 
-          float alpha = 1.0 - (depth - 0.5) / 1.0;
-          if (alpha < 1e-3) {
+          float alpha = 2.0 - (depth - 0.5) / 2.0;
+          if (alpha < 0.01) {
             discard;
+            fragColor = vec4(0.0);
             return;
           }
 
@@ -770,7 +772,7 @@ export class Simulator {
       renderer.setRenderTarget(null);
     });
 
-    let geoDisplay = new PlaneBufferGeometry(15, 15);
+    let geoDisplay = new PlaneBufferGeometry(20, 20);
 
     let matDisplay = new MeshBasicMaterial({
       map: metaBallRTT.texture,
@@ -814,9 +816,6 @@ export class Simulator {
     );
     let matPt = new ShaderMaterial({
       uniforms: {
-        matcap: {
-          value: new TextureLoader().load(require("./img/matcap.jpg").default),
-        },
         nowPosTex: {
           value: null,
         },
@@ -826,19 +825,12 @@ export class Simulator {
           void main (void) {
             vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            gl_PointSize = 50.0;
+            gl_PointSize = 10.0;
           }
           `,
       fragmentShader: /* glsl */ `
-          uniform sampler2D matcap;
           void main (void) {
-
-            if (length(gl_PointCoord.xy - 0.5) < 0.5) {
-              vec2 lookup = gl_PointCoord.xy;
-              gl_FragColor = texture2D(matcap, lookup);
-            } else {
-              discard;
-            }
+            gl_FragColor = vec4(0.7, 0.7, 1.0, 1.0);
           }
           `,
     });
