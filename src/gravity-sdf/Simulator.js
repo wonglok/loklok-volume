@@ -87,7 +87,7 @@ export class Simulator {
     this.balls = [
       {
         type: "mouse-sphere",
-        radius: 3.0,
+        radius: 2.0,
       },
       // {
       //   type: "static-sphere",
@@ -111,7 +111,7 @@ export class Simulator {
       // },
     ];
 
-    this.SIZE = 512;
+    this.SIZE = 360;
 
     this.iResolution = new Vector2(window.innerWidth, window.innerHeight);
     this.mini.onResize(() => {
@@ -271,7 +271,7 @@ export class Simulator {
           float dist = sdMetaBall(vec3(position.x, position.y, position.z));
 
           if (dist < 0.0) {
-            gl_PointSize = (dist) * -5.0;
+            gl_PointSize = max(min(-dist, 1.0), 0.0) * 25.0;
           } else {
             gl_PointSize = 0.0;
           }
@@ -379,6 +379,13 @@ export class Simulator {
 
     this.gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
     if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      this.gpuCompute.setDataType(HalfFloatType);
+    }
+    const iPad =
+      navigator.userAgent.match(/(iPad)/) /* iOS pre 13 */ ||
+      (navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1); /* iPad OS 13 */
+    if (iPad) {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
@@ -491,9 +498,9 @@ export class Simulator {
         // }
 
         if (sdMetaBall(p) < 0.0) {
-          particleVel += calcNormal(p) * dT * 1.0;
+          particleVel += calcNormal(p) * dT * 0.5;
         } else {
-          particleVel -= calcNormal(p) * dT * 1.0;
+          particleVel -= calcNormal(p) * dT * 0.5;
         }
       }
 

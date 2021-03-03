@@ -17,9 +17,15 @@ export const GravitySDFCanvas = () => {
       // new VolumeControls(mini),
       new SceneControls(mini),
     ];
-
+    const iPad =
+      navigator.userAgent.match(/(iPad)/) /* iOS pre 13 */ ||
+      (navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1); /* iPad OS 13 */
     mini.get("SceneControls").then((mod) => {
       if (window.innerWidth < 500) {
+        mod.controls.enableRotate = false;
+      }
+      if (iPad) {
         mod.controls.enableRotate = false;
       }
       //
