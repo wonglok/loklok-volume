@@ -378,7 +378,7 @@ export class Simulator {
     this.tick = 0;
 
     this.gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
-    if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
@@ -718,7 +718,7 @@ export class Simulator {
 
     this.filter0.uniforms.nowPosTex.value = this.loopRTT[0].texture;
     this.filter0.uniforms.lastPosTex.value = this.loopRTT[1].texture;
-    this.filter0.uniforms.dT.value = this.clock.getDelta();
+    this.filter0.uniforms.dT.value = Math.min(this.clock.getDelta(), 0.167);
     this.filter0.uniforms.eT.value = this.clock.getElapsedTime();
 
     this.gpuCompute.doRenderTarget(this.filter0, this.loopRTT[2]);
