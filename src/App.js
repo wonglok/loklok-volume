@@ -11,6 +11,8 @@ import { VolumeMetaCanvas } from "./volume-meta/VolumeMetaCanvas";
 import { HumanCanvas } from "./human/HumanCanvas";
 import { SDFVolumeCanvas } from "./sdf-texture/SDFVolumeCanvas";
 import { GravitySDFCanvas } from "./gravity-sdf/GravitySDFCanvas";
+import { VolumeDisplayCanvas } from "./volume-display/VolumeDisplayCanvas";
+import { CloudCanvas } from "./cloud/CloudCanvas";
 
 function App() {
   return (
@@ -49,6 +51,12 @@ function App() {
         <Route exact path="/sdf-gravity">
           <GravitySDFCanvas></GravitySDFCanvas>
         </Route>
+        <Route exact path="/volume-display">
+          <VolumeDisplayCanvas></VolumeDisplayCanvas>
+        </Route>
+        <Route exact path="/cloud">
+          <CloudCanvas></CloudCanvas>
+        </Route>
 
         <Route exact path="/">
           <div className={"m-5"}>
@@ -80,6 +88,12 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/sdf-gravity"}>Gravity SDF Canvas</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/volume-display"}>Volume Display Canvas</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/cloud"}>Cloud Canvas</Link>
           </div>
         </Route>
       </Switch>

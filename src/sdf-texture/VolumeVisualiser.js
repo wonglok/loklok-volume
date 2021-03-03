@@ -299,11 +299,11 @@ gl_FragColor  = accumulatedColor;
 }`,
 
       uniforms: {
-        steps: { value: SDFTexture.info.NUM_ROW * 2.0 },
         alphaCorrection: { value: 0.85 },
         tex: { value: this.rtTexture.texture },
         time: { value: 0 },
 
+        steps: { value: SDFTexture.info.NUM_ROW * 2.0 },
         tex3D: { value: SDFTexture.renderTarget.texture },
         sliceSize: { value: SDFTexture.info.SLICE_SIZE_PX },
         numRows: { value: SDFTexture.info.NUM_ROW },
