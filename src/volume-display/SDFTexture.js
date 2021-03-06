@@ -17,7 +17,7 @@ export class SDFTexture {
 
     this.mini.set(name, this);
 
-    const AMOUNT = 10;
+    const AMOUNT = 8;
 
     const SIZE = AMOUNT * AMOUNT;
     const ASPECT_RATIO = 1.0;

@@ -33,7 +33,7 @@ export class VolumeBox {
       gl_Position = projectionMatrix * mvPosition;
     }*/
 
-    let STEPS = 100;
+    let STEPS = SDFTexture.info.NUM_ROW * 3.0;
     let matBox = new RawShaderMaterial({
       transparent: true,
       uniforms: {

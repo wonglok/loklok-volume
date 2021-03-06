@@ -92,14 +92,44 @@ void main () {
 
   vec4 color = vec4(0.0);
 
+  vec3 pos;
+
+  float tt = bounds.x;
   for (int i = 0; i < STEPS; i++) {
-    float d = sample1( p + 0.5 );
-    if ( d > threshold ) {
-      color.rgba = scan3DTextureValue(tex3D, p + 0.5, sliceSize, numRows, slicesPerRow);
-      break;
+    if (tt < bounds.y) {
+      pos = p;
+      pos *= 5.0;
+
+      // float d = sample1(pos);
+
+      // if (d < 0.0) {
+      //   color.rgb = calcNormal(pos) * 0.5 + 0.5;
+      //   color.a = 1.0 - d;
+      //   break;
+      // }
+
+      vec4 scanResult = scan3DTextureValue(tex3D, p + 0.5, sliceSize, numRows, slicesPerRow);
+      float d = scanResult.a;
+      if ( d > threshold ) {
+        color.rgba = scanResult.rgba;
+        break;
+      }
+
+      p += rayDir * delta;
+
+      tt += delta;
     }
-    p += rayDir * delta;
   }
+
+  // for (int i = 0; i < STEPS; i++) {
+  //   vec4 scanResult = scan3DTextureValue(tex3D, p + 0.5, sliceSize, numRows, slicesPerRow);
+  //   float d = scanResult.a;
+  //   if ( d > threshold ) {
+  //     color.rgba = scanResult.rgba;
+  //     break;
+  //   }
+  //   p += rayDir * delta;
+  // }
 
   if ( color.a == 0.0 ) discard;
 

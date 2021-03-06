@@ -82,7 +82,6 @@ export class EnergySimulator {
         position: new Vector3(0.0, -6.0, 0.0),
         boxSize: new Vector3(5.0, 0.15, 5.0),
       },
-
       {
         type: "static-box",
         position: new Vector3(0.9, 0.8, 0.0),
@@ -94,7 +93,7 @@ export class EnergySimulator {
 
     this.setupSimulator();
     this.particles();
-    this.interaction();
+    // this.interaction();
   }
   async interaction() {
     let mouse = await this.mini.get("mouse");
@@ -129,6 +128,14 @@ export class EnergySimulator {
     this.clock = new Clock();
     this.gpuCompute = new GPUComputationRenderer(SIZE, SIZE, renderer);
     if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+      this.gpuCompute.setDataType(HalfFloatType);
+    }
+    const iPad =
+      navigator.userAgent.match(/(iPad)/) /* iOS pre 13 */ ||
+      (navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1); /* iPad OS 13 */
+
+    if (iPad) {
       this.gpuCompute.setDataType(HalfFloatType);
     }
 
@@ -179,8 +186,8 @@ export class EnergySimulator {
       #include <common>
 
       precision highp float;
-      uniform sampler2D nowPosTex;
-      uniform sampler2D lastPosTex;
+      uniform highp sampler2D nowPosTex;
+      uniform highp sampler2D lastPosTex;
       uniform float dT;
       uniform float eT;
 
@@ -189,8 +196,7 @@ export class EnergySimulator {
 
       ${Ballify}
 
-      float sdBox( vec3 p, vec3 b )
-      {
+      float sdBox( vec3 p, vec3 b ) {
         vec3 q = abs(p) - b;
         return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
       }
@@ -254,8 +260,8 @@ export class EnergySimulator {
             -0.5 + rand(uv + 0.3)
           );
 
-          pos.xyz = ballify(pos.xyz, 1.0);
-          pos.y += 2.0;
+          pos.xyz = ballify(pos.xyz, 1.5);
+          pos.y += 5.0;
           life = .99;
         }
 
@@ -268,8 +274,8 @@ export class EnergySimulator {
             -0.5 + rand(uv + 0.2),
             -0.5 + rand(uv + 0.3)
           );
-          pos.xyz = ballify(pos.xyz, 1.0);
-          pos.y += 2.0;
+          pos.xyz = ballify(pos.xyz, 1.5);
+          pos.y += 5.0;
           life = 1.1;
         }
 
@@ -284,7 +290,7 @@ export class EnergySimulator {
         vel *= .96; // dampening
 
         vec3 p = pos.xyz + vel;
-        gl_FragColor = vec4( p , life );
+        gl_FragColor = vec4(p , life);
 
       }
       `;

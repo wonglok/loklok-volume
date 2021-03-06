@@ -13,6 +13,7 @@ import { SDFVolumeCanvas } from "./sdf-texture/SDFVolumeCanvas";
 import { GravitySDFCanvas } from "./gravity-sdf/GravitySDFCanvas";
 import { VolumeDisplayCanvas } from "./volume-display/VolumeDisplayCanvas";
 import { CloudCanvas } from "./cloud/CloudCanvas";
+import { DeferCanvas } from "./defer/DeferCanvas";
 
 function App() {
   return (
@@ -57,6 +58,11 @@ function App() {
         <Route exact path="/cloud">
           <CloudCanvas></CloudCanvas>
         </Route>
+        <Route exact path="/defer">
+          <DeferCanvas></DeferCanvas>
+        </Route>
+
+        {/* Energy Game SDF Physics */}
 
         <Route exact path="/">
           <div className={"m-5"}>
@@ -94,6 +100,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/cloud"}>Cloud Canvas</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/defer"}>Deferred Rendering (work in progress)</Link>
           </div>
         </Route>
       </Switch>

@@ -36,7 +36,6 @@ export class VolumeBox {
       uniforms: {
         eT: { value: 0 },
         steps: { value: STEPS },
-
         threshold: {
           value: 1.0,
         },
@@ -49,7 +48,7 @@ export class VolumeBox {
     });
 
     let meshBox = new Mesh(geoBox, matBox);
-    // meshBox.scale.set(3, 3, 3);
+    meshBox.scale.set(2, 2, 2);
 
     // let rttSmall = new WebGLRenderTarget(
     //   window.innerWidth * 1.0,

@@ -30,7 +30,7 @@ export class SDFTexture {
     this.mini.set(name, this);
 
     const AMOUNT = 16;
-    const SIZE = AMOUNT * AMOUNT;
+    const SIZE = AMOUNT * AMOUNT; // 256 = 16 * 16
     const ASPECT_RATIO = 1.0;
 
     const SCREEN_WIDTH = SIZE * AMOUNT;

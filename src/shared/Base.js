@@ -4,11 +4,11 @@ import {
   PerspectiveCamera,
   Raycaster,
   Vector2,
+  Scene,
+  PlaneBufferGeometry,
+  WebGLRenderer,
+  Vector3,
 } from "three";
-import { Scene } from "three";
-import { WebGLRenderer } from "three";
-import { Vector3 } from "three";
-import { PlaneBufferGeometry } from "three/src/Three";
 
 const visibleHeightAtZDepth = (depth, camera) => {
   // compensate for cameras not positioned at z=0
