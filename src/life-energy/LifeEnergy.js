@@ -98,8 +98,8 @@ export class LifeEnergy {
 
     // createOrbiter({ camera: camera, distance: 6 });
 
-    const texSizeX = 256;
-    const texSizeY = 256;
+    const texSizeX = 512;
+    const texSizeY = 512;
     const particleCount = texSizeX * texSizeY;
 
     const displayDataTextureCmd = {
@@ -401,7 +401,7 @@ export class LifeEnergy {
         },
       });
 
-      displayTexture({ texture: textures.pos0, slot: 0 });
+      displayTexture({ texture: textures.pos0, slot: 1 });
       tick += 1;
       vec3.set(mouseLast, mouseNow);
     });

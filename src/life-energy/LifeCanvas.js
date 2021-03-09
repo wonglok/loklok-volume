@@ -40,13 +40,13 @@ export const LifeCanvas = () => {
   return (
     <div className="w-full h-full" ref={ref}>
       <div className="absolute bottom-0 left-0 bg-white p-2 text-xs">
-        {/* <a
-          href="https://cineshader.com/view/3sySRK"
+        <a
+          href="https://www.linkedin.com/in/wonglok831/"
           target="blank"
           className="underline"
         >
-          Meta Ball By Edan Kwan Cine Shader ⤴️
-        </a> */}
+          Pex Example
+        </a>
       </div>
       <div className="absolute top-0 right-0 bg-white p-2 text-xs">
         <a href="/" className="underline">
