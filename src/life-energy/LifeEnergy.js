@@ -25,7 +25,7 @@ const quadFaces = [
   [0, 2, 3],
 ];
 
-var radius = 1.5;
+var radius = 4.0;
 var sphereGeo = require("primitive-sphere")(radius, {
   segments: 32,
 });
@@ -84,7 +84,7 @@ export class LifeEnergy {
     const camera = createCamera({
       fov: Math.PI * 0.5,
       aspect: this.rect.width / this.rect.height,
-      position: [0, 0.0, 15],
+      position: [0, 0.0, 10],
       target: [0, 0, 0],
       near: 0.1,
       far: 500,
@@ -93,11 +93,6 @@ export class LifeEnergy {
       this.rect = mini.getRect();
       camera.set({
         aspect: this.rect.width / this.rect.height,
-        // fov: Math.PI * 0.5,
-        // position: [0, 0.0, 15],
-        // target: [0, 0, 0],
-        // near: 0.1,
-        // far: 500,
       });
     });
 
@@ -327,9 +322,9 @@ export class LifeEnergy {
     // Sphere
     // ----- ----- -----
 
-    let drawBall = {
+    let cursor = {
       pipeline: ctx.pipeline({
-        depthTest: true,
+        // depthTest: true,
         vert: `
           attribute vec3 aPosition;
           attribute vec3 aNormal;
@@ -346,10 +341,11 @@ export class LifeEnergy {
           precision mediump float;
           varying vec3 vNormal;
           void main () {
-            gl_FragColor.rgb = vNormal;
-            gl_FragColor.a = 1.0;
+            gl_FragColor.rgb = (vNormal * 0.5 + 0.5) * 0.1;
+            gl_FragColor.a = 0.05;
           }
         `,
+        blend: true,
       }),
       attributes: {
         aPosition: ctx.vertexBuffer(sphereGeo.positions),
@@ -393,17 +389,11 @@ export class LifeEnergy {
         },
       });
       vec3.set(mouseNow, mouse);
-      vec3.set(mouseLast, mouseNow);
 
-      mat4.identity(drawBall.uniforms.uModelMatrix);
-      mat4.translate(drawBall.uniforms.uModelMatrix, [
-        mouse[0],
-        mouse[1],
-        0,
-        0,
-      ]);
+      mat4.identity(cursor.uniforms.uModelMatrix);
+      mat4.translate(cursor.uniforms.uModelMatrix, [mouse[0], mouse[1], 0, 0]);
 
-      ctx.submit(drawBall);
+      ctx.submit(cursor);
 
       ctx.submit(drawParticlesCmd, {
         uniforms: {
@@ -413,6 +403,7 @@ export class LifeEnergy {
 
       displayTexture({ texture: textures.pos0, slot: 0 });
       tick += 1;
+      vec3.set(mouseLast, mouseNow);
     });
   }
 }
