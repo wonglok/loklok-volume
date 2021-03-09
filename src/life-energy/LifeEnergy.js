@@ -1,10 +1,52 @@
 import createContext from "pex-context";
 import createCamera from "pex-cam/perspective";
-import createOrbiter from "pex-cam/orbiter";
 import mat4 from "pex-math/mat4";
-import createCube from "primitive-cube";
-import { Clock, Vector3 } from "three";
-var quad = require("primitive-quad")(1);
+// import createOrbiter from "pex-cam/orbiter";
+// import createCube from "primitive-cube";
+import { Clock } from "three";
+import vec3 from "pex-math/vec3";
+
+const quadPositions = [
+  [-1, -1],
+  [1, -1],
+  [1, 1],
+  [-1, 1],
+];
+
+const quadTexCoords = [
+  [0, 0],
+  [1, 0],
+  [1, 1],
+  [0, 1],
+];
+
+const quadFaces = [
+  [0, 1, 2],
+  [0, 2, 3],
+];
+
+var radius = 1.5;
+var sphereGeo = require("primitive-sphere")(radius, {
+  segments: 32,
+});
+
+const visibleHeightAtZDepth = (depth, zPos, fov) => {
+  // compensate for cameras not positioned at z=0
+  const cameraOffset = zPos;
+  if (depth < cameraOffset) depth -= cameraOffset;
+  else depth += cameraOffset;
+
+  // vertical fov in radians
+  const vFOV = fov;
+
+  // Math.abs to ensure the result is always positive
+  return 2 * Math.tan(vFOV / 2) * Math.abs(depth);
+};
+
+const visibleWidthAtZDepth = (depth, zPos, fov, aspect) => {
+  const height = visibleHeightAtZDepth(depth, zPos, fov, aspect);
+  return height * aspect;
+};
 
 export class LifeEnergy {
   constructor(mini) {
@@ -16,6 +58,7 @@ export class LifeEnergy {
       width: this.rect.width,
       height: this.rect.height,
     });
+    //
     mini.set("ctx", this.ctx);
     mini.onClean(() => {
       this.ctx.dispose();
@@ -39,46 +82,30 @@ export class LifeEnergy {
     let { ctx, mini } = this;
 
     const camera = createCamera({
-      fov: Math.PI / 1.5,
-      aspect: 1,
-      position: [0, 0.0, 6],
+      fov: Math.PI * 0.5,
+      aspect: this.rect.width / this.rect.height,
+      position: [0, 0.0, 15],
       target: [0, 0, 0],
       near: 0.1,
       far: 500,
     });
-
-    const camera2 = createCamera({
-      fov: Math.PI / 1.5,
-      aspect: 1,
-      position: [0, 0.0, 6],
-      target: [0, 0, 0],
-      near: 0.1,
-      far: 500,
+    mini.onResize(() => {
+      this.rect = mini.getRect();
+      camera.set({
+        aspect: this.rect.width / this.rect.height,
+        // fov: Math.PI * 0.5,
+        // position: [0, 0.0, 15],
+        // target: [0, 0, 0],
+        // near: 0.1,
+        // far: 500,
+      });
     });
 
-    createOrbiter({ camera: camera, distance: 6 });
-    createOrbiter({ camera: camera2, distance: 6 });
+    // createOrbiter({ camera: camera, distance: 6 });
 
-    const texSizeX = 512;
-    const texSizeY = 512;
+    const texSizeX = 256;
+    const texSizeY = 256;
     const particleCount = texSizeX * texSizeY;
-
-    const quadPositions = [
-      [-1, -1],
-      [1, -1],
-      [1, 1],
-      [-1, 1],
-    ];
-    const quadTexCoords = [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [0, 1],
-    ];
-    const quadFaces = [
-      [0, 1, 2],
-      [0, 2, 3],
-    ];
 
     const displayDataTextureCmd = {
       name: "displayDataTextureCmd",
@@ -96,6 +123,7 @@ export class LifeEnergy {
         uTexture: null,
       },
     };
+
     const displayTexture = ({ texture, slot }) => {
       ctx.submit(displayDataTextureCmd, {
         uniforms: {
@@ -135,13 +163,6 @@ export class LifeEnergy {
     });
 
     let makeEntry = (name) => {
-      // const depthMap = ctx.texture2D({
-      //   width: texSizeX,
-      //   height: texSizeY,
-      //   pixelFormat: ctx.PixelFormat.Depth,
-      //   encoding: ctx.Encoding.Linear,
-      // });
-
       let texture = ctx.texture2D({
         width: texSizeX,
         height: texSizeY,
@@ -169,42 +190,9 @@ export class LifeEnergy {
       };
     };
 
-    makeEntry("test");
-
-    //
     makeEntry("pos0");
     makeEntry("pos1");
     makeEntry("pos2");
-
-    // ----- ----- ----- //
-    // Draw a block
-    // ----- ----- ----- //
-
-    const floor = createCube(2, 0.1, 2);
-    const drawFloorCmd = {
-      name: "drawFloorCmd",
-      pipeline: ctx.pipeline({
-        vert: require("./shader/show-normals.vert"),
-        frag: require("./shader/show-normals-color.frag"),
-        depthTest: true,
-      }),
-      uniforms: {
-        uProjectionMatrix: camera.projectionMatrix,
-        uViewMatrix: camera.viewMatrix,
-        uModelMatrix: mat4.create(),
-      },
-      attributes: {
-        aPosition: {
-          buffer: ctx.vertexBuffer(floor.positions),
-        },
-        aNormal: {
-          buffer: ctx.vertexBuffer(floor.normals),
-        },
-      },
-      indices: {
-        buffer: ctx.indexBuffer(floor.cells),
-      },
-    };
 
     // ----- ----- -----
     // Simulate Position
@@ -258,8 +246,8 @@ export class LifeEnergy {
       },
       count: particleCount,
       uniforms: {
-        uProjectionMatrix: camera2.projectionMatrix,
-        uViewMatrix: camera2.viewMatrix,
+        uProjectionMatrix: camera.projectionMatrix,
+        uViewMatrix: camera.viewMatrix,
         uModelMatrix: mat4.create(),
         nowPosTex: null,
       },
@@ -268,13 +256,33 @@ export class LifeEnergy {
     // ----- ----- -----
     // Mouse
     // ----- ----- -----
-    let mouse = new Vector3(0.0, 0.0, 0.0);
-    let mouseNow = new Vector3(0.0, 0.0, 0.0);
-    let mouseLast = new Vector3(0.0, 0.0, 0.0);
+    let mouse = vec3.create();
+    let mouseNow = vec3.create();
+    let mouseLast = vec3.create();
+
     mini.domElement.addEventListener("mousemove", (evt) => {
       evt.preventDefault();
-      mouse.setX((evt.clientX - this.rect.width * 0.5) / this.rect.width);
-      mouse.setY((this.rect.height * 0.5 - evt.clientY) / this.rect.height);
+      let width = visibleWidthAtZDepth(
+        vec3.length(camera.position),
+        camera.position[2],
+        camera.fov,
+        camera.aspect
+      );
+      let height = visibleHeightAtZDepth(
+        vec3.length(camera.position),
+        camera.position[2],
+        camera.fov,
+        camera.aspect
+      );
+
+      mouse[0] =
+        ((evt.clientX - this.rect.width * 0.5) / this.rect.width) * width * 0.5;
+      mouse[1] =
+        ((this.rect.height * 0.5 - evt.clientY) / this.rect.height) *
+        height *
+        0.5;
+
+      // console.log(mouse);
     });
 
     mini.domElement.addEventListener(
@@ -289,19 +297,71 @@ export class LifeEnergy {
       "touchmove",
       (evt) => {
         evt.preventDefault();
-        mouse.setX(
-          (evt.touches[0].clientX - this.rect.width * 0.5) / this.rect.width
+        let width = visibleWidthAtZDepth(
+          vec3.length(camera.position),
+          camera.position[2],
+          camera.fov,
+          camera.aspect
         );
-        mouse.setY(
-          (this.rect.height * 0.5 - evt.touches[0].clientY) / this.rect.height
+        let height = visibleHeightAtZDepth(
+          vec3.length(camera.position),
+          camera.position[2],
+          camera.fov,
+          camera.aspect
         );
+
+        mouse[0] =
+          ((evt.touches[0].clientX - this.rect.width * 0.5) / this.rect.width) *
+          width *
+          0.5;
+        mouse[1] =
+          ((this.rect.height * 0.5 - evt.touches[0].clientY) /
+            this.rect.height) *
+          height *
+          0.5;
       },
       { passive: false }
     );
 
     // ----- ----- -----
-    // Mouse
+    // Sphere
     // ----- ----- -----
+
+    let drawBall = {
+      pipeline: ctx.pipeline({
+        depthTest: true,
+        vert: `
+          attribute vec3 aPosition;
+          attribute vec3 aNormal;
+          uniform mat4 uProjectionMatrix;
+          uniform mat4 uViewMatrix;
+          uniform mat4 uModelMatrix;
+          varying vec3 vNormal;
+          void main () {
+            gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
+            vNormal = aNormal;
+          }
+        `,
+        frag: `
+          precision mediump float;
+          varying vec3 vNormal;
+          void main () {
+            gl_FragColor.rgb = vNormal;
+            gl_FragColor.a = 1.0;
+          }
+        `,
+      }),
+      attributes: {
+        aPosition: ctx.vertexBuffer(sphereGeo.positions),
+        aNormal: ctx.vertexBuffer(sphereGeo.normals),
+      },
+      indices: ctx.indexBuffer(sphereGeo.cells),
+      uniforms: {
+        uProjectionMatrix: camera.projectionMatrix,
+        uViewMatrix: camera.viewMatrix,
+        uModelMatrix: mat4.create(),
+      },
+    };
 
     let tick = 0;
     let clock = new Clock();
@@ -310,12 +370,6 @@ export class LifeEnergy {
       let dT = clock.getDelta();
       let eT = clock.getElapsedTime();
       ctx.submit(clearScreenCmd);
-
-      //
-      db.test.simulate({
-        cmd: drawFloorCmd,
-        opts: {},
-      });
 
       if (tick % 3 === 0.0) {
         ioNames = ["pos0", "pos1", "pos2"];
@@ -333,11 +387,23 @@ export class LifeEnergy {
             eT,
             uTextureCurrent: textures[ioNames[1]],
             uTextureLast: textures[ioNames[2]],
-            mouseNow: mouseNow.copy(mouse).toArray(),
-            mouseLast: mouseLast.copy(mouseNow).toArray(),
+            mouseNow: mouseNow,
+            mouseLast: mouseLast,
           },
         },
       });
+      vec3.set(mouseNow, mouse);
+      vec3.set(mouseLast, mouseNow);
+
+      mat4.identity(drawBall.uniforms.uModelMatrix);
+      mat4.translate(drawBall.uniforms.uModelMatrix, [
+        mouse[0],
+        mouse[1],
+        0,
+        0,
+      ]);
+
+      ctx.submit(drawBall);
 
       ctx.submit(drawParticlesCmd, {
         uniforms: {
@@ -345,8 +411,7 @@ export class LifeEnergy {
         },
       });
 
-      displayTexture({ texture: textures.test, slot: 0 });
-      displayTexture({ texture: textures.pos0, slot: 1 });
+      displayTexture({ texture: textures.pos0, slot: 0 });
       tick += 1;
     });
   }

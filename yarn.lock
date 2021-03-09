@@ -5287,6 +5287,16 @@ getpass@^0.1.1:
   dependencies:
     assert-plus "^1.0.0"
 
+gl-mat4@^1.1.4:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/gl-mat4/-/gl-mat4-1.2.0.tgz#49d8a7636b70aa00819216635f4a3fd3f4669b26"
+  integrity sha512-sT5C0pwB1/e9G9AvAoLsoaJtbMGjfd/jfxo8jMCKqYYEnjZuFvqV5rehqar0538EmssjdDeiEWnKyBSTw7quoA==
+
+gl-vec3@^1.0.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/gl-vec3/-/gl-vec3-1.1.3.tgz#a47c62f918774a06cbed1b65bcd0288ecbb03826"
+  integrity sha512-jduKUqT0SGH02l8Yl+mV1yVsDfYgQAJyXGxkJQGyxPLHRiW25DwVIRPt6uvhrEMHftJfqhqKthRcyZqNEl9Xdw==
+
 glob-parent@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/glob-parent/-/glob-parent-3.1.0.tgz#9e6af6299d8d3bd2bd40430832bd113df906c5ae"
@@ -9017,6 +9027,14 @@ primitive-quad@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/primitive-quad/-/primitive-quad-2.0.0.tgz#c20993e4f9600238926bb500e529053043ef8aeb"
   integrity sha1-wgmT5PlgAjiSa7UA5SkFMEPvius=
+
+primitive-sphere@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/primitive-sphere/-/primitive-sphere-3.0.0.tgz#7609bda5f6f6c9252213efa3127060ee65e6f732"
+  integrity sha1-dgm9pfb2ySUiE++jEnBg7mXm9zI=
+  dependencies:
+    gl-mat4 "^1.1.4"
+    gl-vec3 "^1.0.3"
 
 process-nextick-args@~2.0.0:
   version "2.0.1"

@@ -51,6 +51,55 @@ float rand(vec2 n) {
 	return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
 
+float sdBox( vec3 p, vec3 b ) {
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
+  vec3 dif = (colliderSpherePosition) - particlePos.xyz;
+  if( length( dif ) < sphereRadius ){
+    particleVel -= normalize(dif) * dT * 1.0;
+  }
+}
+
+void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+  vec3 dif = (mouseNow) - particlePos.xyz;
+
+  if( length( dif ) < sphereRadius ){
+    particleVel -= normalize(dif) * dT * 1.0;
+    vec3 mouseForce = mouseNow - mouseLast;
+    particleVel += mouseForce * dT * 2.0;
+  }
+}
+
+void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
+  vec3 p = (colliderBoxPosition) - particlePos.xyz;
+
+  if(sdBox(p, boxSize) < 0.0){
+    float EPSILON_A = 0.05;
+
+    vec3 boxNormal = normalize(vec3(
+      sdBox(vec3(p.x + EPSILON_A, p.y, p.z),  boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
+      sdBox(vec3(p.x, p.y + EPSILON_A, p.z),  boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
+      sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
+    ));
+
+    particleVel -= boxNormal * dT * 1.0;
+  }
+}
+
+
+void handleCollision (inout vec4 pos, inout vec3 vel) {
+  //
+  collisionMouseSphere(
+    pos,
+    vel,
+    1.5
+  );
+}
+
+
 void main() {
   vec2 uv = gl_FragCoord.xy / resolution.xy;
   // uv = vTexCoord0.xy;
@@ -97,7 +146,7 @@ void main() {
   // wind
   vel += vec3( 0.001 * life, 0.0, 0.0 );
 
-  // handleCollision(pos, vel);
+  handleCollision(pos, vel);
 
   vel *= .96; // dampening
 
