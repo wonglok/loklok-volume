@@ -14,6 +14,8 @@ import { GravitySDFCanvas } from "./gravity-sdf/GravitySDFCanvas";
 import { VolumeDisplayCanvas } from "./volume-display/VolumeDisplayCanvas";
 import { CloudCanvas } from "./cloud/CloudCanvas";
 import { DeferCanvas } from "./defer/DeferCanvas";
+import { FluidCanvas } from "./water-fluid/FluidCanvas";
+import { LifeCanvas } from "./life-energy/LifeCanvas";
 
 function App() {
   return (
@@ -61,6 +63,12 @@ function App() {
         <Route exact path="/defer">
           <DeferCanvas></DeferCanvas>
         </Route>
+        <Route exact path="/fluid">
+          <FluidCanvas></FluidCanvas>
+        </Route>
+        <Route exact path="/life-energy">
+          <LifeCanvas></LifeCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -103,6 +111,12 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/defer"}>Deferred Rendering (work in progress)</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/fluid"}>Fluid Water</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/life-energy"}>Life Energy</Link>
           </div>
         </Route>
       </Switch>

@@ -130,6 +130,7 @@ export class EnergySimulator {
     if (/iPad|iPhone|iPod/.test(navigator.platform)) {
       this.gpuCompute.setDataType(HalfFloatType);
     }
+
     const iPad =
       navigator.userAgent.match(/(iPad)/) /* iOS pre 13 */ ||
       (navigator.platform === "MacIntel" &&
