@@ -6,6 +6,10 @@ import mat4 from "pex-math/mat4";
 import { Clock } from "three";
 import vec3 from "pex-math/vec3";
 
+const createCube = require("primitive-cube");
+
+var cube = createCube(5, 5, 5, 128, 128, 128);
+
 const quadPositions = [
   [-1, -1],
   [1, -1],
@@ -361,6 +365,87 @@ export class LifeEnergy {
       },
     };
 
+    let gridPts = [];
+    let iThree = 16;
+
+    for (let z = 0; z < iThree; z++) {
+      for (let y = 0; y < iThree; y++) {
+        for (let x = 0; x < iThree; x++) {
+          gridPts.push(
+            3.0 * ((x / iThree) * 2.0 - 1.0),
+            3.0 * ((y / iThree) * 2.0 - 1.0),
+            3.0 * ((z / iThree) * 2.0 - 1.0)
+          );
+        }
+      }
+    }
+
+    const drawStarGrid = {
+      name: "drawStarGrid",
+      pipeline: ctx.pipeline({
+        vert: `
+        precision highp float;
+        attribute vec3 aPosition;
+        // attribute vec3 aNormal;
+        uniform float eT;
+
+        uniform mat4 uProjectionMatrix;
+        uniform mat4 uViewMatrix;
+        uniform mat4 uModelMatrix;
+
+        ${require("./shader/metaball.common")}
+
+        varying vec3 vNormal;
+        varying float vSize;
+
+        void main () {
+
+          gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);
+          vNormal = normalize(gl_Position.xyz);
+          // vPos = aPosition;
+
+          float dist = sdMetaBall(vec3(aPosition.x, aPosition.y, aPosition.z));
+
+          if (dist < 0.0) {
+            gl_PointSize = max(min(-dist, 1.0), 0.0) * 10.0;
+            vSize = max(min(-dist, 1.0), 0.0);
+          } else {
+            gl_PointSize = 0.0;
+            vSize = 0.0;
+          }
+        }
+        `,
+        frag: `
+        precision highp float;
+          varying vec3 vNormal;
+          varying float vSize;
+
+          void main () {
+            if (length(gl_PointCoord.xy - 0.5) < 0.5) {
+              gl_FragColor.rgb = vec3(vNormal * 0.5 + 0.5);
+              gl_FragColor.rgb *= gl_FragColor.rgb;
+              gl_FragColor.a = 0.05 * vSize;
+            } else {
+              discard;
+            }
+          }
+        `,
+        primitive: ctx.Primitive.Points,
+        blend: true,
+      }),
+      attributes: {
+        aPosition: ctx.vertexBuffer(gridPts),
+      },
+      count: gridPts.length / 3,
+      uniforms: {
+        eT: 0,
+        uProjectionMatrix: camera.projectionMatrix,
+        uViewMatrix: camera.viewMatrix,
+        uModelMatrix: mat4.scale(mat4.create(), [1, 1, 1]),
+        nowPosTex: null,
+      },
+    };
+
     let tick = 0;
     let clock = new Clock();
     let ioNames = ["pos0", "pos2", "pos1"];
@@ -400,6 +485,12 @@ export class LifeEnergy {
       ctx.submit(drawParticlesCmd, {
         uniforms: {
           nowPosTex: textures[ioNames[0]],
+        },
+      });
+
+      ctx.submit(drawStarGrid, {
+        uniforms: {
+          eT,
         },
       });
 
