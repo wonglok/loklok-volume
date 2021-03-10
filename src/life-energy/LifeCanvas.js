@@ -39,7 +39,7 @@ export const LifeCanvas = () => {
 
   return (
     <div className="w-full h-full" ref={ref}>
-      <div className="absolute bottom-0 left-0 bg-white p-2 text-xs">
+      {/* <div className="absolute bottom-0 left-0 bg-white p-2 text-xs">
         <a
           href="https://www.linkedin.com/in/wonglok831/"
           target="blank"
@@ -47,10 +47,14 @@ export const LifeCanvas = () => {
         >
           Pex Example
         </a>
-      </div>
+      </div> */}
       <div className="absolute top-0 right-0 bg-white p-2 text-xs">
-        <a href="/" className="underline">
-          樂樂到此一遊
+        <a
+          href="https://www.linkedin.com/in/wonglok831/"
+          target="blank"
+          className="underline"
+        >
+          到樂樂 Linkedin 一遊
         </a>
       </div>
     </div>
