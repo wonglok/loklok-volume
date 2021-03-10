@@ -66,10 +66,12 @@ void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3
 void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
   vec3 dif = (mouseNow) - particlePos.xyz;
 
-  if( length( dif ) < sphereRadius ){
-    particleVel -= normalize(dif) * dT * 10.0;
+  if( (length( dif ) - sphereRadius) < 0.0 ){
     vec3 mouseForce = mouseNow - mouseLast;
-    particleVel += mouseForce * dT * 10.0;
+    particleVel += mouseForce * dT * -5.0;
+    particleVel += normalize(dif) * dT * -5.0;
+  } else {
+    // particleVel += normalize(dif) * dT * 5.0;
   }
 }
 
@@ -152,7 +154,7 @@ void handleCollision (inout vec4 pos, inout vec3 vel) {
   collisionMouseSphere(
     pos,
     vel,
-    4.0
+    1.5
   );
 }
 
@@ -177,9 +179,10 @@ void main() {
       -0.5 + rand(uv + 0.3)
     );
 
-    pos.xyz *= 5.0;
-    // pos.xyz = ballify(pos.xyz, 2.0);
-    // pos.y += 2.5;
+    pos.xyz *= 9.0;
+    // pos.z -= 0.0;
+    pos.xyz = ballify(pos.xyz, 1.0);
+    // pos.z += 1.5;
     life = .99;
   }
 
@@ -192,10 +195,11 @@ void main() {
       -0.5 + rand(uv + 0.2),
       -0.5 + rand(uv + 0.3)
     );
-    pos.xyz *= 5.0;
+    pos.xyz *= 9.0;
+    // pos.z -= 0.0;
 
-    // pos.xyz = ballify(pos.xyz, 2.0);
-    // pos.y += 2.5;
+    pos.xyz = ballify(pos.xyz, 1.0);
+    // pos.z += 1.5;
     life = 1.1;
   }
 

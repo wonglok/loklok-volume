@@ -25,7 +25,7 @@ const quadFaces = [
   [0, 2, 3],
 ];
 
-var radius = 4.0;
+var radius = 1.5;
 var sphereGeo = require("primitive-sphere")(radius, {
   segments: 32,
 });
@@ -227,6 +227,8 @@ export class LifeEnergy {
         lookup.push(x / texSizeX, y / texSizeY);
       }
     }
+
+    //
 
     const drawParticlesCmd = {
       name: "drawParticlesCmd",
