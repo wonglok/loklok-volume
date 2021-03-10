@@ -6,10 +6,6 @@ import mat4 from "pex-math/mat4";
 import { Clock } from "three";
 import vec3 from "pex-math/vec3";
 
-const createCube = require("primitive-cube");
-
-var cube = createCube(5, 5, 5, 128, 128, 128);
-
 const quadPositions = [
   [-1, -1],
   [1, -1],
@@ -450,6 +446,9 @@ export class LifeEnergy {
     let clock = new Clock();
     let ioNames = ["pos0", "pos2", "pos1"];
     mini.onLoop(() => {
+      vec3.set(mouseLast, mouseNow);
+      vec3.set(mouseNow, mouse);
+
       let dT = clock.getDelta();
       let eT = clock.getElapsedTime();
       ctx.submit(clearScreenCmd);
@@ -475,7 +474,6 @@ export class LifeEnergy {
           },
         },
       });
-      vec3.set(mouseNow, mouse);
 
       mat4.identity(cursor.uniforms.uModelMatrix);
       mat4.translate(cursor.uniforms.uModelMatrix, [mouse[0], mouse[1], 0, 0]);
@@ -494,9 +492,8 @@ export class LifeEnergy {
         },
       });
 
-      displayTexture({ texture: textures.pos0, slot: 1 });
+      displayTexture({ texture: textures.pos0, slot: 0 });
       tick += 1;
-      vec3.set(mouseLast, mouseNow);
     });
   }
 }
