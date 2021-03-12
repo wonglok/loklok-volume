@@ -5,6 +5,7 @@ import mat4 from "pex-math/mat4";
 // import createCube from "primitive-cube";
 import { Clock } from "three";
 import vec3 from "pex-math/vec3";
+// import createRenderer from "pex-renderer";
 
 const quadPositions = [
   [-1, -1],
@@ -58,6 +59,9 @@ export class LifeEnergy {
       width: this.rect.width,
       height: this.rect.height,
     });
+    // this.renderer = createRenderer({
+    //   ctx: this.ctx,
+    // });
     //
     mini.set("ctx", this.ctx);
     mini.onClean(() => {
@@ -124,7 +128,7 @@ export class LifeEnergy {
         uniforms: {
           uTexture: texture,
         },
-        viewport: [128 * slot, 0, 128, 128],
+        viewport: [200 * slot, 0, 200, 200],
       });
     };
 
@@ -256,15 +260,17 @@ export class LifeEnergy {
     let mouse = vec3.create();
     let mouseNow = vec3.create();
     let mouseLast = vec3.create();
-
-    mini.domElement.addEventListener("mousemove", (evt) => {
+    let canvas = this.ctx.gl.canvas;
+    canvas.addEventListener("mousemove", (evt) => {
       evt.preventDefault();
+
       let width = visibleWidthAtZDepth(
         vec3.length(camera.position),
         camera.position[2],
         camera.fov,
         camera.aspect
       );
+
       let height = visibleHeightAtZDepth(
         vec3.length(camera.position),
         camera.position[2],
@@ -282,7 +288,7 @@ export class LifeEnergy {
       // console.log(mouse);
     });
 
-    mini.domElement.addEventListener(
+    canvas.addEventListener(
       "touchstart",
       (ev) => {
         ev.preventDefault();
@@ -290,7 +296,7 @@ export class LifeEnergy {
       { passive: false }
     );
 
-    mini.domElement.addEventListener(
+    canvas.addEventListener(
       "touchmove",
       (evt) => {
         evt.preventDefault();
@@ -493,6 +499,7 @@ export class LifeEnergy {
       });
 
       displayTexture({ texture: textures.pos0, slot: 0 });
+
       tick += 1;
     });
   }

@@ -5237,6 +5237,11 @@ gensync@^1.0.0-beta.1:
   resolved "https://registry.yarnpkg.com/gensync/-/gensync-1.0.0-beta.2.tgz#32a6ee76c3d7f52d46b2b1ae5d93fea8580a25e0"
   integrity sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==
 
+geom-builder@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/geom-builder/-/geom-builder-2.1.0.tgz#d8eeed8fe011c24fd6965d313a71416d0acae2cb"
+  integrity sha512-AV4hbgA7UJNX65yi9lxGd3jJKM06yqMGAMgSUnCXlFCIOQQuPV68QXe+i8SAYATtCdOTUlqWgggikbpeYasZgA==
+
 get-caller-file@^2.0.1:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
@@ -5404,6 +5409,11 @@ gzip-size@5.1.1:
   dependencies:
     duplexer "^0.1.1"
     pify "^4.0.1"
+
+hammersley@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/hammersley/-/hammersley-1.0.0.tgz#0e82ed985f802ce14d2cc6ced73574b53aeaf1ae"
+  integrity sha1-DoLtmF+ALOFNLMbO1zV0tTrq8a4=
 
 handle-thing@^2.0.0:
   version "2.0.1"
@@ -5947,7 +5957,7 @@ is-binary-path@~2.1.0:
   dependencies:
     binary-extensions "^2.0.0"
 
-is-browser@^2.0.1:
+is-browser@^2.0.1, is-browser@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/is-browser/-/is-browser-2.1.0.tgz#fc084d59a5fced307d6708c59356bad7007371a9"
   integrity sha512-F5rTJxDQ2sW81fcfOR1GnCXT6sVJC104fCyfj+mjpwNEwaPYSn5fte5jiHmBg3DHsIoL/l8Kvw5VN5SsTRcRFQ==
@@ -6144,7 +6154,7 @@ is-plain-object@^2.0.3, is-plain-object@^2.0.4:
   dependencies:
     isobject "^3.0.1"
 
-is-plask@^1.1.1:
+is-plask@^1.1.0, is-plask@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/is-plask/-/is-plask-1.1.1.tgz#de639265761f28af77f49b41238b67a7f47cb208"
   integrity sha1-3mOSZXYfKK939JtBI4tnp/R8sgg=
@@ -8161,7 +8171,7 @@ pex-context@^2.10.4:
     pex-gl "^2.7.0"
     raf "^3.3.0"
 
-pex-geom@^2.0.1:
+pex-geom@^2.0.1, pex-geom@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/pex-geom/-/pex-geom-2.0.2.tgz#42a4e5aa541a8e0830e4428b27aff593c9a9b695"
   integrity sha512-DRdxdD1LF64RRTTX6/VEGhXxNuMFXdKSmLg7Lh5TvhvkMTXJxO4myRBqIj7yljnPntJ/TdAyUSaYoHRWk4R32w==
@@ -8176,10 +8186,51 @@ pex-gl@^2.7.0:
   dependencies:
     is-plask "^1.1.1"
 
+pex-io@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/pex-io/-/pex-io-2.1.0.tgz#6643831ce48615841d63a99794d30be449d230ff"
+  integrity sha512-dzct9DO6qptu7kC2yBU7BpxBFYrg7/74ucpDyxQE264hOFl7ns2gUhqRyJe4bw+hNBQpS2kAqNmSxN6S/VPGfg==
+  dependencies:
+    is-plask "^1.1.0"
+    plask-wrap "^1.0.0"
+
 pex-math@^2.0.0, pex-math@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/pex-math/-/pex-math-2.1.1.tgz#bda665b9f16931dbaae07f411509ad678f0f82f2"
   integrity sha512-ieBwiAavIo2kf13DRZfzR3aQ03bE62bvoO165Gw54f/TGCkVcORf9+urMckLZi3GreZVAZIaHSbVnF6zc6gAdA==
+
+pex-math@^3.0.0-2:
+  version "3.0.0-4"
+  resolved "https://registry.yarnpkg.com/pex-math/-/pex-math-3.0.0-4.tgz#937150739bd2f805a88796b047060181f11ac6ec"
+  integrity sha512-Ao4rbxwz8ideDQ0wJAnQ1G+GDLSQC0SnWEWcW+gJYH0q/uKk6JS/1W0e8sxMVOHhhd/WGbaJ2pMEmpnqcWisRA==
+
+pex-random@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/pex-random/-/pex-random-1.0.1.tgz#0b0a7d90e2e057d57777ed913a39b72255319be5"
+  integrity sha1-Cwp9kOLgV9V3d+2ROjm3IlUxm+U=
+  dependencies:
+    seedrandom "^2.3.10"
+    simplex-noise "2.1.1"
+
+pex-renderer@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/pex-renderer/-/pex-renderer-3.1.0.tgz#50aa5a793f50e6fec53ac20a5081387946996437"
+  integrity sha512-HhZkaT5GhkdzVQukfiP2xc7JRc6H1ujNaGAIZsqiZvJqguPjm9WF910Nlk2oh6hAy3JuhFZAdpP5icZSFWa6rA==
+  dependencies:
+    debug "^4.1.1"
+    geom-builder "^2.1.0"
+    hammersley "^1.0.0"
+    interpolate-angle "^1.0.2"
+    is-browser "^2.1.0"
+    latlon-to-xyz "^1.0.1"
+    mouse-event-offset "^3.0.2"
+    pex-geom "^2.0.2"
+    pex-io "^2.1.0"
+    pex-math "^3.0.0-2"
+    pex-random "^1.0.1"
+    primitive-quad "^2.0.0"
+    signals "^1.0.0"
+    xyz-to-latlon "^1.0.2"
 
 picomatch@^2.0.4, picomatch@^2.0.5, picomatch@^2.2.1, picomatch@^2.2.2:
   version "2.2.2"
@@ -8243,7 +8294,7 @@ pkg-up@3.1.0:
   dependencies:
     find-up "^3.0.0"
 
-plask-wrap@^1.0.1:
+plask-wrap@^1.0.0, plask-wrap@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/plask-wrap/-/plask-wrap-1.0.1.tgz#c5f5c1b5d874c1c7d9b717f772126f25abb31ddf"
   integrity sha1-xfXBtdh0wcfZtxf3chJvJauzHd8=
@@ -9995,6 +10046,11 @@ schema-utils@^3.0.0:
     ajv "^6.12.5"
     ajv-keywords "^3.5.2"
 
+seedrandom@^2.3.10:
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.4.tgz#b25ea98632c73e45f58b77cfaa931678df01f9ba"
+  integrity sha512-9A+PDmgm+2du77B5i0Ip2cxOqqHjgNxnBgglxLcX78A2D6c2rTo61z4jnVABpF4cKeDMDG+cmXXvdnqse2VqMA==
+
 select-hose@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/select-hose/-/select-hose-2.0.0.tgz#625d8658f865af43ec962bfc376a37359a4994ca"
@@ -10176,12 +10232,22 @@ signal-exit@^3.0.0, signal-exit@^3.0.2:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.3.tgz#a1410c2edd8f077b08b4e253c8eacfcaf057461c"
   integrity sha512-VUJ49FC8U1OxwZLxIbTTrDvLnf/6TDgxZcK8wxR8zs13xpx7xbG60ndBlhNrFi2EMuFRoeDoJO7wthSLq42EjA==
 
+signals@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/signals/-/signals-1.0.0.tgz#65f0c1599352b35372ecaae5a250e6107376ed69"
+  integrity sha1-ZfDBWZNSs1Ny7KrlolDmEHN27Wk=
+
 simple-swizzle@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/simple-swizzle/-/simple-swizzle-0.2.2.tgz#a4da6b635ffcccca33f70d17cb92592de95e557a"
   integrity sha1-pNprY1/8zMoz9w0Xy5JZLeleVXo=
   dependencies:
     is-arrayish "^0.3.1"
+
+simplex-noise@2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/simplex-noise/-/simplex-noise-2.1.1.tgz#92e6785f16a9b5a9f131d1e996c337abf5f4285d"
+  integrity sha1-kuZ4XxaptanxMdHplsM3q/X0KF0=
 
 sisteransi@^1.0.5:
   version "1.0.5"

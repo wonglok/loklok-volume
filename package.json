@@ -12,6 +12,7 @@
     "pex-cam": "^2.8.0",
     "pex-context": "^2.10.4",
     "pex-math": "^2.1.1",
+    "pex-renderer": "^3.1.0",
     "primitive-cube": "^2.0.1",
     "primitive-quad": "^2.0.0",
     "primitive-sphere": "^3.0.0",

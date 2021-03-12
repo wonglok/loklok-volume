@@ -26,6 +26,7 @@ vec3 fromBall(float r, float az, float el) {
     r * sin(el)
   );
 }
+
 void toBall(vec3 pos, out float az, out float el) {
   az = atan2(pos.y, pos.x);
   el = atan2(pos.z, sqrt(pos.x * pos.x + pos.y * pos.y));
@@ -96,6 +97,7 @@ ${require("./metaball.common")}
 
 void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
   vec3 p = particlePos.xyz;
+  p /= 1.25;
 
   // if(sdMetaBall(p) < 0.0){
 
@@ -105,9 +107,9 @@ void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
   // }
 
   if (sdMetaBall(p) < 0.0) {
-    particleVel += calcNormal(p) * dT * 1.5 * -sdMetaBall(p);
+    particleVel += calcNormal(p) * dT * 2.0 * -sdMetaBall(p);
   } else {
-    particleVel -= calcNormal(p) * dT * 1.5 * sdMetaBall(p);
+    particleVel -= calcNormal(p) * dT * 2.0 * sdMetaBall(p);
   }
 }
 
