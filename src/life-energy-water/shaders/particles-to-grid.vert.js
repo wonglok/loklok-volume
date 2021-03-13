@@ -5,7 +5,6 @@ attribute vec2 uv2;
 uniform sampler2D uParticlePosTex;
 uniform sampler2D uParticleVelTex;
 
-
 // uniform float size;
 // uniform float numRows;
 // uniform float slicesPerRow;
@@ -65,8 +64,15 @@ void main (void) {
   vZIndex = cellIndex.z + uZOffset; //offset into the right layer
 
   vec2 textureCoordinates = vec2(
-  vZIndex * (uFieldResSize.x + 1.0) + cellIndex.x + 0.5,
-  cellIndex.y + 0.5) / vec2((uFieldResSize.x + 1.0) * (uFieldResSize.z + 1.0), uFieldResSize.y + 1.0);
+        vZIndex * (uFieldResSize.x + 1.0)
+      + cellIndex.x + 0.5,
+        cellIndex.y + 0.5
+    )
+
+    /
+
+    vec2((uFieldResSize.x + 1.0) * (uFieldResSize.z + 1.0), uFieldResSize.y + 1.0
+  );
 
   gl_Position = vec4(textureCoordinates * 2.0 - 1.0, 0.0, 1.0);
 

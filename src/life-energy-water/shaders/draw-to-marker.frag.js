@@ -1,18 +1,23 @@
 module.exports = /* glsl */ `
 precision highp float;
 
+varying vec2 vUv;
 
-uniform mat4 uProjectionMatrix;
-uniform mat4 uViewMatrix;
+uniform sampler2D tex3DIndex;
 
-attribute vec3 uv3;
-
-uniform sampler2D tex3DVel;
-uniform sampler2D tex3DPos;
+uniform sampler2D tex3dInput0;
+uniform sampler2D tex3dInput1;
+uniform sampler2D tex3dInput2;
 
 uniform float size;
 uniform float numRows;
 uniform float slicesPerRow;
+uniform vec3 gridRes3;
+
+uniform float code;
+
+uniform float dT;
+uniform float eT;
 
 // tex is a texture with each slice of the cube placed in grid in a texture.
 // texCoord is a 3d texture coord
@@ -41,15 +46,38 @@ vec4 scan3DTextureValue (
   return mix(slice0Color, slice1Color, zOffset);
   return slice0Color;
 }
+//  vec3 uv3 = texture2D(tex3DIndex, vUv).rgb;
+//  vec3 lookupPos = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
+
+void code0 (void) {
+  vec3 currentPosition = texture2D(tex3dInput0, vUv).rgb;
+
+  gl_FragColor = vec4(currentPosition, 1.0);
+}
+
+void code1 (void) {
+  vec3 currentPosition = texture2D(tex3dInput0, vUv).rgb;
+
+  vec3 gravity = vec3(0.0, -0.5 * dT, 0.0);
+
+  gl_FragColor = vec4(currentPosition + gravity, 1.0);
+}
+
+void code2 (void) {
+  vec3 data = texture2D(tex3dInput0, vUv).rgb;
+
+  gl_FragColor = vec4(data, 1.0);
+}
 
 void main (void) {
-  vec3 position = scan3DTextureValue(tex3DPos, uv3, size, numRows, slicesPerRow).rgb;
-  // vec3 velocity = scan3DTextureValue(tex3DVel, uv3, size, numRows, slicesPerRow).rgb;
-
-  vec3 outputPos = position;// + velocity;
-  outputPos = outputPos * 2.0 - 1.0;
-
-  gl_Position = uProjectionMatrix * uViewMatrix * vec4(outputPos, 1.0);
-  gl_PointSize = 3.0;
+  if (code == 0.0) {
+    code0();
+  } else if (code == 1.0) {
+    code1();
+  } else if (code == 2.0) {
+    code2();
+  }
 }
+
+
 `;

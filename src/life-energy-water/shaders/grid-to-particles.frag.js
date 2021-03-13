@@ -1,14 +1,19 @@
 module.exports = /* glsl */ `
   ${require("./common.frag")}
-  //transfers velocities back to the particles
+//transfers velocities back to the particles
+
+// transferFromGridToPartcilesCmd
 
   varying vec2 v_coordinates;
 
-  uniform sampler2D u_particlePositionTexture;
-  uniform sampler2D u_particleVelocityTexture;
+  uniform sampler2D uParticlePos;
+  uniform sampler2D uParticleVel;
 
-  uniform sampler2D u_gridVelocityTexture;
-  uniform sampler2D u_originalGridVelocityTexture; //the grid velocities before the update
+//   uniform sampler2D u_particlePositionTexture;
+//   uniform sampler2D u_particleVelocityTexture;
+
+//   uniform sampler2D u_gridVelocityTexture;
+//   uniform sampler2D u_originalGridVelocityTexture; //the grid velocities before the update
 
   uniform vec3 uFieldResSize;
   uniform vec3 uFieldSize;
@@ -35,21 +40,26 @@ module.exports = /* glsl */ `
   }
 
   void main () {
-      vec3 particlePosition = texture2D(u_particlePositionTexture, v_coordinates).rgb;
-      particlePosition = (particlePosition / uFieldSize) * uFieldResSize;
 
-      vec3 particleVelocity = texture2D(u_particleVelocityTexture, v_coordinates).rgb;
+    //   vec3 particlePosition = texture2D(u_particlePositionTexture, v_coordinates).rgb;
+    //   particlePosition = (particlePosition / uFieldSize) * uFieldResSize;
 
-      vec3 currentVelocity = sampleVelocity(u_gridVelocityTexture, particlePosition);
-      vec3 originalVelocity = sampleVelocity(u_originalGridVelocityTexture, particlePosition);
+    //   vec3 particleVelocity = texture2D(u_particleVelocityTexture, v_coordinates).rgb;
 
-      vec3 velocityChange = currentVelocity - originalVelocity;
+    //   vec3 currentVelocity = sampleVelocity(u_gridVelocityTexture, particlePosition);
+    //   vec3 originalVelocity = sampleVelocity(u_originalGridVelocityTexture, particlePosition);
 
-      vec3 flipVelocity = particleVelocity + velocityChange;
-      vec3 picVelocity = currentVelocity;
+    //   vec3 velocityChange = currentVelocity - originalVelocity;
 
-      gl_FragColor = vec4(mix(picVelocity, flipVelocity, uFlipness),  0.0);
+    //   vec3 flipVelocity = particleVelocity + velocityChange;
+    //   vec3 picVelocity = currentVelocity;
 
-      gl_FragColor = vec4(1.0);
+    //   gl_FragColor = vec4(mix(picVelocity, flipVelocity, uFlipness),  0.0);
+
+    vec3 particlePosition = texture2D(uParticlePos, v_coordinates).rgb;
+    particlePosition = (particlePosition / uFieldSize) * uFieldResSize;
+
+    vec3 currentVelocity = sampleVelocity(uParticleVel, particlePosition);
+    gl_FragColor = vec4(vec3(1.0), 1.0);
   }
 `;

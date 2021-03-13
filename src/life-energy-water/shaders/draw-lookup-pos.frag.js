@@ -1,18 +1,15 @@
 module.exports = /* glsl */ `
 precision highp float;
 
+varying vec2 vUv;
 
-uniform mat4 uProjectionMatrix;
-uniform mat4 uViewMatrix;
-
-attribute vec3 uv3;
-
-uniform sampler2D tex3DVel;
+uniform sampler2D tex3DIndex;
 uniform sampler2D tex3DPos;
 
 uniform float size;
 uniform float numRows;
 uniform float slicesPerRow;
+uniform vec3 gridRes3;
 
 // tex is a texture with each slice of the cube placed in grid in a texture.
 // texCoord is a 3d texture coord
@@ -43,13 +40,9 @@ vec4 scan3DTextureValue (
 }
 
 void main (void) {
-  vec3 position = scan3DTextureValue(tex3DPos, uv3, size, numRows, slicesPerRow).rgb;
-  // vec3 velocity = scan3DTextureValue(tex3DVel, uv3, size, numRows, slicesPerRow).rgb;
-
-  vec3 outputPos = position;// + velocity;
-  outputPos = outputPos * 2.0 - 1.0;
-
-  gl_Position = uProjectionMatrix * uViewMatrix * vec4(outputPos, 1.0);
-  gl_PointSize = 3.0;
+  vec3 uv3 = texture2D(tex3DIndex, vUv).rgb;
+  vec3 posParticle = scan3DTextureValue(tex3DPos, uv3, size, numRows, slicesPerRow).rgb;
+  vec3 gravity = vec3(0.0, -0.5, 0.0);
+  gl_FragColor = vec4(posParticle + gravity, 1.0);
 }
 `;

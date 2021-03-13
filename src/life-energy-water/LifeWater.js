@@ -24,43 +24,6 @@ const quadFaces = [
   [0, 1, 2],
   [0, 2, 3],
 ];
-//
-// let makeQuadProgram = ({ name, computeFrag, uniforms = {} }) => {
-//   const quadComputeCmd = {
-//     name: "quadComputeCmd",
-//     pipeline: ctx.pipeline({
-//       vert: require("./shader/screen-image.vert"),
-//       frag: computeFrag,
-//     }),
-//     attributes: {
-//       aPosition: {
-//         buffer: ctx.vertexBuffer(quadPositions),
-//       },
-//       aUV: {
-//         buffer: ctx.vertexBuffer(quadTexCoords),
-//       },
-//     },
-//     indices: {
-//       buffer: ctx.indexBuffer(quadFaces),
-//     },
-//     uniforms: {
-//       dT: 0,
-//       eT: 0,
-//       ...uniforms,
-//     },
-//   };
-
-//   Database[name] = Database[name] || {};
-//   Database[name].cmd = quadComputeCmd;
-//   Database[name].update = ({ dT = 0, eT = 0, uniforms = {} }) => {
-//     quadComputeCmd.uniforms = {
-//       ...quadComputeCmd.uniforms,
-//       dT,
-//       eT,
-//       ...uniforms,
-//     };
-//   };
-// };
 
 export class LifeWater {
   constructor(mini) {
@@ -116,20 +79,25 @@ export class LifeWater {
 
       console.log("texture-2d", name, width, height);
 
-      let renderToTextureCmd = {
-        pass: ctx.pass({
-          clearColor: [0, 0, 0, 0],
-          color: [texture],
-        }),
-        viewport: [0, 0, width, height],
-      };
+      let passWithClear = ctx.pass({
+        clearColor: [0, 0, 0, 0],
+        color: [texture],
+      });
+
+      let passWithoutClear = ctx.pass({
+        color: [texture],
+      });
+
+      let viewport = [0, 0, width, height];
 
       return {
         name,
         texture,
         width,
         height,
-        renderToTextureCmd,
+        passWithClear,
+        passWithoutClear,
+        viewport,
       };
     };
 
@@ -138,6 +106,8 @@ export class LifeWater {
       size,
       slicesPerRow,
       slot = 0,
+      isIndex = false,
+      format = false,
       // makeParticleUV = false,
       debugCanvas2D = false,
     }) => {
@@ -158,10 +128,18 @@ export class LifeWater {
         for (var y = 0; y < size; ++y) {
           for (var x = 0; x < size; ++x) {
             var offset = ((yOff + y) * pixelsAcross + xOff + x) * 4;
-            pixels[offset + 0] = (x / size) * 255;
-            pixels[offset + 1] = (y / size) * 255;
-            pixels[offset + 2] = (slice / size) * 255;
-            pixels[offset + 3] = 255;
+
+            if (isIndex) {
+              pixels[offset + 0] = (x / size) * 255;
+              pixels[offset + 1] = (y / size) * 255;
+              pixels[offset + 2] = (slice / size) * 255;
+              pixels[offset + 3] = 255;
+            } else {
+              pixels[offset + 0] = (x / size) * 255;
+              pixels[offset + 1] = (y / size) * 255;
+              pixels[offset + 2] = (slice / size) * 255;
+              pixels[offset + 3] = 255;
+            }
           }
         }
       }
@@ -196,13 +174,23 @@ export class LifeWater {
         this.mini.domElement.appendChild(dataCavans);
       }
 
-      let res = make2DTexture({
-        name,
-        width: texSizeX,
-        height: texSizeY,
-        data: pixels,
-        format: ctx.PixelFormat.RGBA8,
-      });
+      let res = false;
+      if (format) {
+        res = make2DTexture({
+          name,
+          width: texSizeX,
+          height: texSizeY,
+          format,
+        });
+      } else {
+        res = make2DTexture({
+          name,
+          width: texSizeX,
+          height: texSizeY,
+          data: pixels,
+          format: ctx.PixelFormat.RGBA8,
+        });
+      }
 
       return {
         ...res,
@@ -268,6 +256,14 @@ export class LifeWater {
       near: 0.1,
       far: 500,
     });
+    const debugCamera = createCamera({
+      fov: Math.PI * 0.5,
+      aspect: 1,
+      position: [0, 0.0, 10],
+      target: [0, 0, 0],
+      near: 0.1,
+      far: 500,
+    });
     mini.onResize(() => {
       this.rect = mini.getRect();
       camera.set({
@@ -276,6 +272,11 @@ export class LifeWater {
     });
 
     createOrbiter({ camera: camera, distance: 5, element: this.ctx.gl.canvas });
+    createOrbiter({
+      camera: debugCamera,
+      distance: 5,
+      element: this.ctx.gl.canvas,
+    });
 
     let clock = new Clock();
     this.dT = 0;
@@ -292,8 +293,8 @@ export class LifeWater {
       }),
     };
 
-    const debugDataTextureCmd = {
-      name: "debugDataTextureCmd",
+    const debugDataTexture2DCmd = {
+      name: "debugDataTexture2DCmd",
       pipeline: ctx.pipeline({
         blend: true,
         vert: require("./shaders/screen-image.vert"),
@@ -308,13 +309,56 @@ export class LifeWater {
         uTexture: null,
       },
     };
+    const schema32 = make3DTexture({
+      name: "schema32",
+      size: 32,
+      slicesPerRow: 32,
+      // slot: 2,
+      // debugCanvas2D: true,
+    });
 
-    const debugTexture = ({ texture, slot }) => {
-      ctx.submit(debugDataTextureCmd, {
+    const debug32UV3 = makeUV3({
+      size: schema32.size,
+      slicesPerRow: schema32.slicesPerRow,
+    });
+
+    const debugDataTexture3DCmd = {
+      name: "debugDataTexture3DCmd",
+      pipeline: ctx.pipeline({
+        blend: true,
+        vert: require("./shaders/debug-tex3d.vert"),
+        frag: require("./shaders/debug-tex3d.frag"),
+        primitive: ctx.Primitive.Points,
+      }),
+      attributes: {
+        uv3: debug32UV3.uv3,
+      },
+      count: debug32UV3.count,
+      uniforms: {
+        uProjectionMatrix: debugCamera.projectionMatrix,
+        uViewMatrix: debugCamera.viewMatrix,
+        tex3dSrc: null,
+        size: schema32.size,
+        numRows: schema32.numRows,
+        slicesPerRow: schema32.slicesPerRow,
+      },
+    };
+
+    const debugTexture2D = ({ inputTexture, slot }) => {
+      ctx.submit(debugDataTexture2DCmd, {
         uniforms: {
-          uTexture: texture,
+          uTexture: inputTexture,
         },
-        viewport: [200 * slot, 0, 200, 200],
+        viewport: [350 * slot, 0, 350, 350],
+      });
+    };
+
+    const debugTexture3Ds32 = ({ inputTexture, slot }) => {
+      ctx.submit(debugDataTexture3DCmd, {
+        uniforms: {
+          tex3dSrc: inputTexture,
+        },
+        viewport: [350 * slot, 0, 350, 350],
       });
     };
 
@@ -322,182 +366,109 @@ export class LifeWater {
       name: "pParticlePos",
       size: 32,
       slicesPerRow: 32,
-      // slot: 2,
-      // debugCanvas2D: true,
+      factor: 1,
     });
 
-    const pParticleVel = make3DTexture({
-      name: "pParticleVel",
+    const inBound = make3DTexture({
+      name: "inBound",
       size: 32,
       slicesPerRow: 32,
-      // slot: 2,
-      // debugCanvas2D: true,
+      format: ctx.PixelFormat.RGBA16F,
     });
 
-    const marker = make3DTexture({
-      name: "marker",
+    const temp1 = make3DTexture({
+      name: "temp1",
       size: 32,
       slicesPerRow: 32,
-      // slot: 3,
-      // debugCanvas2D: true,
+      format: ctx.PixelFormat.RGBA16F,
     });
 
-    //marker
-
-    const pParticlePosUV3 = makeUV3({
-      size: pParticlePos.size,
-      slicesPerRow: pParticlePos.slicesPerRow,
-    });
-
-    const pParticlePosUV2 = makeUV2({
-      width: pParticlePos.width,
-      height: pParticlePos.height,
-    });
-
-    const drawParticlesToGridTextureCmd = {
+    const gpuIO = {
       pipeline: ctx.pipeline({
-        vert: require("./shaders/particles-to-grid.vert"),
-        frag: require("./shaders/particles-to-grid.frag"),
+        vert: require("./shaders/draw-to-marker.vert"),
+        frag: require("./shaders/draw-to-marker.frag"),
         blend: true,
-        primitive: ctx.Primitive.Points,
-      }),
-      attributes: {
-        uv2: pParticlePosUV2.uv2,
-      },
-      count: pParticlePosUV2.count,
-      uniforms: {
-        uFieldSize: [1, 1, 1],
-        uFieldResSize: [
-          pParticlePos.size,
-          pParticlePos.size,
-          pParticlePos.size,
-        ],
-
-        uAccumulate: 0,
-        uZOffset: 0.0,
-
-        uParticleVelTex: pParticleVel.texture,
-        uParticlePosTex: pParticlePos.texture,
-
-        // size: pParticlePos.size,
-        // numRows: pParticlePos.numRows,
-        // slicesPerRow: pParticlePos.slicesPerRow,
-      },
-    };
-
-    const drawFromGridToPartcilesCmd = {
-      pipeline: ctx.pipeline({
-        vert: require("./shaders/grid-to-particles.vert"),
-        frag: require("./shaders/grid-to-particles.frag"),
-        blend: true,
-        primitive: ctx.Primitive.Points,
       }),
       attributes: {
         aPosition: ctx.vertexBuffer(quadPositions),
         aUV: ctx.vertexBuffer(quadTexCoords),
       },
       indices: ctx.indexBuffer(quadFaces),
-
       uniforms: {
-        uFieldSize: [1, 1, 1],
-        uFieldResSize: [
-          pParticlePos.size,
-          pParticlePos.size,
-          pParticlePos.size,
-        ],
+        gridRes3: [schema32.size, schema32.size, schema32.size],
 
-        //
+        tex3dInput0: schema32.texture,
+        tex3dInput1: schema32.texture,
+        tex3dInput2: schema32.texture,
+
+        tex3DIndex: schema32.texture,
+        size: schema32.size,
+        numRows: schema32.numRows,
+        slicesPerRow: schema32.slicesPerRow,
+
+        dT: 1 / 60,
+        eT: 0,
       },
     };
 
     //
-
-    const drawPartcilesToScreenCmd = {
-      pipeline: ctx.pipeline({
-        vert: require("./shaders/particles-display.vert"),
-        frag: require("./shaders/particles-display.frag"),
-        blend: true,
-        primitive: ctx.Primitive.Points,
-      }),
-      attributes: {
-        uv3: pParticlePosUV3.uv3,
-      },
-      count: pParticlePosUV3.count,
-
-      uniforms: {
-        uFieldSize: [1, 1, 1],
-        uFieldResSize: [
-          pParticlePos.size,
-          pParticlePos.size,
-          pParticlePos.size,
-        ],
-
-        uProjectionMatrix: camera.projectionMatrix,
-        uViewMatrix: camera.viewMatrix,
-
-        tex3DVel: pParticleVel.texture,
-        tex3DPos: pParticlePos.texture,
-
-        size: pParticlePos.size,
-        numRows: pParticlePos.numRows,
-        slicesPerRow: pParticlePos.slicesPerRow,
-        //
-      },
-    };
-
-    //
-
     let tick = 0;
     mini.onLoop(() => {
       ctx.submit(clearScreenCmd);
 
-      let SPLAT_DEPTH = 5.0;
-      ctx.submit(marker.renderToTextureCmd, {}, () => {
-        //
-        for (
-          var z0 = -(SPLAT_DEPTH - 1) / 2;
-          z0 <= (SPLAT_DEPTH - 1) / 2;
-          ++z0
-        ) {
-          ctx.submit(drawParticlesToGridTextureCmd, {
-            uniforms: {
-              uAccumulate: 0.0,
-              uZOffset: z0,
-            },
-          });
-        }
-
-        //
-        for (
-          var z1 = -(SPLAT_DEPTH - 1) / 2;
-          z1 <= (SPLAT_DEPTH - 1) / 2;
-          ++z1
-        ) {
-          ctx.submit(drawParticlesToGridTextureCmd, {
-            uniforms: {
-              uAccumulate: 1.0,
-              uZOffset: z1,
-            },
-          });
-        }
-      });
-
-      ctx.submit(pParticlePos.renderToTextureCmd, {}, () => {
-        ctx.submit(drawFromGridToPartcilesCmd);
-      });
-
       //
-
-      ctx.submit(drawPartcilesToScreenCmd, {
+      ctx.submit(gpuIO, {
         uniforms: {
-          tex3D: pParticlePos.texture,
+          dT: this.dT,
+          eT: this.eT,
+
+          // input:
+          tex3dInput0: pParticlePos.texture,
+
+          // code
+          code: 0,
         },
+        // output to
+        pass: inBound.passWithClear,
+        viewport: inBound.viewport,
       });
 
-      // debugTexture({ texture: marker.texture, slot: 0 });
-      // debugTexture({ texture: outputParticlePos.texture, slot: 1 });
+      //
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input:
+          tex3dInput0: inBound.texture,
+
+          // code
+          code: 1,
+        },
+        // output to
+        pass: temp1.passWithClear,
+        viewport: temp1.viewport,
+      });
 
       //
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input:
+          tex3dInput0: temp1.texture,
+
+          // code
+          code: 2,
+        },
+        // output to
+        pass: pParticlePos.passWithClear,
+        viewport: pParticlePos.viewport,
+      });
+
+      debugTexture3Ds32({ inputTexture: pParticlePos.texture, slot: 0 });
+
       tick++;
     });
   }

@@ -7,8 +7,7 @@ uniform mat4 uViewMatrix;
 
 attribute vec3 uv3;
 
-uniform sampler2D tex3DVel;
-uniform sampler2D tex3DPos;
+uniform sampler2D tex3dSrc;
 
 uniform float size;
 uniform float numRows;
@@ -43,8 +42,7 @@ vec4 scan3DTextureValue (
 }
 
 void main (void) {
-  vec3 position = scan3DTextureValue(tex3DPos, uv3, size, numRows, slicesPerRow).rgb;
-  // vec3 velocity = scan3DTextureValue(tex3DVel, uv3, size, numRows, slicesPerRow).rgb;
+  vec3 position = scan3DTextureValue(tex3dSrc, uv3, size, numRows, slicesPerRow).rgb;
 
   vec3 outputPos = position;// + velocity;
   outputPos = outputPos * 2.0 - 1.0;

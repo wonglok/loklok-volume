@@ -22,7 +22,7 @@ varying vec3 vPosition;
 varying vec3 vVelocity;
 uniform vec3 uFieldResSize;
 
-uniform int uAccumulate; //when this is 0, we accumulate (xWeight, yWeight, 0, centerWeight), when 1 we accumulate (xWeight * velocity.x, yWeight * velocity.y, 0, 0)
+uniform float uAccumulate; //when this is 0, we accumulate (xWeight, yWeight, 0, centerWeight), when 1 we accumulate (xWeight * velocity.x, yWeight * velocity.y, 0, 0)
 
 float h (float r) {
   if (r >= 0.0 && r <= 1.0) {
@@ -56,11 +56,14 @@ void main () {
       float scalarWeight = k(vPosition - scalarPosition);
 
 
-      if (uAccumulate == 0) {
-        gl_FragColor = vec4(xWeight, yWeight, zWeight, scalarWeight);
-      } else if (uAccumulate == 1) {
-        gl_FragColor = vec4(xWeight * vVelocity.x, yWeight * vVelocity.y, zWeight * vVelocity.z, 0.0);
-      }
+      // if (uAccumulate == 0.0) {
+      //   gl_FragColor = vec4(xWeight, yWeight, zWeight, scalarWeight);
+      // } else if (uAccumulate == 1.0) {
+      //   gl_FragColor = vec4(xWeight * vVelocity.x, yWeight * vVelocity.y, zWeight * vVelocity.z, 0.0);
+      // }
+
+      gl_FragColor = vec4(xWeight, yWeight, zWeight, scalarWeight);
+
     } else {
       gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
     }
