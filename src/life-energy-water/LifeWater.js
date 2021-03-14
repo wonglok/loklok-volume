@@ -273,7 +273,7 @@ export class LifeWater {
     });
 
     let clock = new Clock();
-    this.dT = 0;
+    this.dT = 0.00167;
     this.eT = 0;
     mini.onLoop(() => {
       this.dT = clock.getDelta();
@@ -409,6 +409,18 @@ export class LifeWater {
       slicesPerRow: 32,
     });
 
+    const varTemp1 = make3DTexture({
+      name: "varTemp1",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varTemp2 = make3DTexture({
+      name: "varTemp2",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
     const gpuIO = {
       attributes: {
         aPosition: ctx.vertexBuffer(quadPositions),
@@ -436,7 +448,7 @@ export class LifeWater {
         numRows: schema32.numRows,
         slicesPerRow: schema32.slicesPerRow,
 
-        dT: 1 / 60,
+        dT: 0.00167,
         eT: 0,
       },
     };
@@ -445,9 +457,9 @@ export class LifeWater {
     const Exec = {
       copy: 0.0,
       makeIndexTexture: 1.0,
-      makeDynamicVelocity: 2.0,
+      __makeDynamicVelocity: 2.0,
       makeGravity: 3.0,
-      readBy3DCoord: 4.0,
+      __readBy3DCoord: 4.0,
       addPosWithVel: 5.0,
     };
 
@@ -505,23 +517,6 @@ export class LifeWater {
           // code
           code: Exec.copy,
         },
-      });
-
-      // MAKE gravity
-      ctx.submit(gpuIO, {
-        uniforms: {
-          dT: this.dT,
-          eT: this.eT,
-
-          // input
-          tex3dInput0: schema32.texture,
-
-          // code
-          code: Exec.makeGravity,
-        },
-        // output
-        pass: varGravity.passWithClear,
-        viewport: varGravity.viewport,
       });
     };
 
@@ -597,22 +592,83 @@ export class LifeWater {
       });
     };
 
+    let simulateTemp = () => {
+      ctx.submit(gpuIO, {
+        // output
+        pass: varTemp1.passWithClear,
+        viewport: varTemp1.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varPosTemp.texture,
+          tex3dInput1: varGravity.texture,
+
+          // code
+          code: Exec.addPosWithVel,
+        },
+      });
+
+      ctx.submit(gpuIO, {
+        // output
+        pass: varPosTemp.passWithClear,
+        viewport: varPosTemp.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varTemp1.texture,
+
+          // code
+          code: Exec.copy,
+        },
+      });
+    };
+
     // initialise data
     makeInitData();
+
+    let makeGravity = () => {
+      // MAKE gravity
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varLookup.texture,
+
+          // code
+          code: Exec.makeGravity,
+        },
+
+        // output
+        pass: varGravity.passWithClear,
+        viewport: varGravity.viewport,
+      });
+    };
 
     // simulation and render loop
     this.tick = 0;
     mini.onLoop(() => {
       ctx.submit(clearScreenCmd);
 
+      makeGravity();
+
       importToTemp();
+
+      simulateTemp();
 
       exportFromTemp();
 
       // debugTexture2D({ inputTexture: varPos.texture, slot: 2 });
 
-      debugTexture3Ds32({ inputTexture: varPosTemp.texture, slot: 1 });
       debugTexture3Ds32({ inputTexture: varVelTemp.texture, slot: 0 });
+      debugTexture3Ds32({ inputTexture: varPosTemp.texture, slot: 1 });
 
       debugTexture3Ds32FullScreen({ inputTexture: varPos.texture });
 

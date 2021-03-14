@@ -72,10 +72,14 @@ void makeDynamicVelocity (void) {
 
   gl_FragColor = vec4(data0 - uv3, 1.0);
 }
+
 void addPosWithVel (void) {
-  vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
-  vec3 position = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
-  vec3 velocity = scan3DTextureValue(tex3dInput1, uv3, size, numRows, slicesPerRow).rgb;
+  // vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
+  // vec3 position = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
+  // vec3 velocity = scan3DTextureValue(tex3dInput1, uv3, size, numRows, slicesPerRow).rgb;
+
+  vec3 position = texture2D(tex3dInput0, vUv2).rgb;
+  vec3 velocity = texture2D(tex3dInput1, vUv2).rgb;
 
   vec3 newPos = position + velocity;
   gl_FragColor = vec4(vec3(newPos), 1.0);
@@ -83,7 +87,8 @@ void addPosWithVel (void) {
 
 void makeGravity (void) {
   vec3 data0 = texture2D(tex3dInput0, vUv2).rgb;
-  vec3 gravity = vec3(0.0, dT * -1.0, 0.0);
+
+  vec3 gravity = vec3(0.0, -dT * 0.1, 0.0);
   gl_FragColor = vec4(gravity, 1.0);
 }
 
