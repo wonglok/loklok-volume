@@ -457,7 +457,7 @@ export class LifeWater {
     const Exec = {
       copy: 0.0,
       makeIndexTexture: 1.0,
-      __makeDynamicVelocity: 2.0,
+      custom3DLookup: 2.0,
       makeGravity: 3.0,
       __readBy3DCoord: 4.0,
       addPosWithVel: 5.0,
@@ -624,9 +624,26 @@ export class LifeWater {
           tex3dInput0: varTemp1.texture,
 
           // code
-          code: Exec.copy,
+          code: Exec.custom3DLookup,
         },
       });
+
+      // ctx.submit(gpuIO, {
+      //   // output
+      //   pass: varPosTemp.passWithClear,
+      //   viewport: varPosTemp.viewport,
+
+      //   uniforms: {
+      //     dT: this.dT,
+      //     eT: this.eT,
+
+      //     // input
+      //     tex3dInput0: varTemp1.texture,
+
+      //     // code
+      //     code: Exec.copy,
+      //   },
+      // });
     };
 
     // initialise data

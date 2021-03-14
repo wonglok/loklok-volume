@@ -2,7 +2,6 @@ module.exports = /* glsl */ `
 precision highp float;
 
 varying highp vec2 vUv2;
-varying highp vec3 vUv3;
 
 uniform highp sampler2D tex3dIndex;
 
@@ -66,11 +65,13 @@ void makeIndexTexture (void) {
   gl_FragColor = vec4(data0, 1.0);
 }
 
-void makeDynamicVelocity (void) {
-  vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
-  vec3 data0 = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
+void custom3DLookup (void) {
+  // vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
+  // vec3 data0 = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 
-  gl_FragColor = vec4(data0 - uv3, 1.0);
+  vec3 data0 = texture2D(tex3dInput0, vUv2).rgb;
+
+  gl_FragColor = vec4(data0, 1.0);
 }
 
 void addPosWithVel (void) {
@@ -104,7 +105,7 @@ void main (void) {
   } else if (code == 1.0) {
     makeIndexTexture();
   } else if (code == 2.0) {
-    makeDynamicVelocity();
+    custom3DLookup();
   } else if (code == 3.0) {
     makeGravity();
   } else if (code == 4.0) {
