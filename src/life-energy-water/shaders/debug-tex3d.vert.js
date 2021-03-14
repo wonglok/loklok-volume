@@ -45,7 +45,7 @@ void main (void) {
   vec3 position = scan3DTextureValue(tex3dSrc, uv3, size, numRows, slicesPerRow).rgb;
 
   vec3 outputPos = position;// + velocity;
-  outputPos = outputPos * 2.0 - 1.0;
+  outputPos = outputPos;// * 2.0 - 1.0;
 
   gl_Position = uProjectionMatrix * uViewMatrix * vec4(outputPos, 1.0);
   gl_PointSize = 3.0;
