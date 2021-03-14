@@ -2,7 +2,7 @@ import createContext from "pex-context";
 import createCamera from "pex-cam/perspective";
 import { Clock } from "three";
 import createOrbiter from "pex-cam/orbiter";
-import makeCube from "primitive-cube";
+import createPlane from "primitive-plane";
 
 // import mat4 from "pex-math/mat4";
 // import vec3 from "pex-math/vec3";
@@ -231,6 +231,7 @@ export class LifeWater {
               uv3[offset + 0] = x / size;
               uv3[offset + 1] = y / size;
               uv3[offset + 2] = slice / size;
+              uv3[offset + 3] = 0.0;
             }
           }
         }
@@ -309,7 +310,6 @@ export class LifeWater {
       size: 32,
       slicesPerRow: 32,
       seedType: "index",
-      debugCanvas2D: true,
     });
 
     const null32 = make3DTexture({
@@ -421,12 +421,52 @@ export class LifeWater {
       slicesPerRow: 32,
     });
 
+    const slices = 32;
+    let sliceIndx = 0;
+    let s32_quadPositions = [];
+    let s32_quadTexCoords = [];
+    let s32_quadFaces = [];
+    for (let ss = 0; ss < slices; ss++) {
+      s32_quadPositions.push(
+        ...[
+          [(-1 / slices) * ss * 0.5, (-1 / slices) * ss * 0.5],
+          [(1 / slices) * ss * 0.5, (-1 / slices) * ss * 0.5],
+          [(1 / slices) * ss * 0.5, (1 / slices) * ss * 0.5],
+          [(-1 / slices) * ss * 0.5, (1 / slices) * ss * 0.5],
+        ]
+      );
+
+      s32_quadTexCoords.push(
+        ...[
+          [(0 / slices) * ss, 0],
+          [(1 / slices) * ss, 0],
+          [(1 / slices) * ss, 1],
+          [(0 / slices) * ss, 1],
+        ]
+      );
+
+      s32_quadFaces.push(
+        ...[
+          [0 + sliceIndx, 1 + sliceIndx, 2 + sliceIndx],
+          [0 + sliceIndx, 2 + sliceIndx, 3 + sliceIndx],
+        ]
+      );
+
+      sliceIndx += 4;
+    }
+
     const gpuIO = {
       attributes: {
         aPosition: ctx.vertexBuffer(quadPositions),
         aUV: ctx.vertexBuffer(quadTexCoords),
       },
       indices: ctx.indexBuffer(quadFaces),
+
+      // attributes: {
+      //   aPosition: ctx.vertexBuffer(plane.positions),
+      //   aUV: ctx.vertexBuffer(plane.uvs),
+      // },
+      // indices: ctx.indexBuffer(plane.cells),
 
       pipeline: ctx.pipeline({
         vert: require("./shaders/general-io-3d2d.vert"),
@@ -443,7 +483,6 @@ export class LifeWater {
         tex3dInput2: null32.texture,
 
         tex3dIndex: schema32.texture,
-
         size: schema32.size,
         numRows: schema32.numRows,
         slicesPerRow: schema32.slicesPerRow,
@@ -501,23 +540,23 @@ export class LifeWater {
         },
       });
 
-      // MAKE vel init
-      ctx.submit(gpuIO, {
-        // output
-        pass: varVel.passWithClear,
-        viewport: varVel.viewport,
+      // // MAKE vel init
+      // ctx.submit(gpuIO, {
+      //   // output
+      //   pass: varVel.passWithClear,
+      //   viewport: varVel.viewport,
 
-        uniforms: {
-          dT: this.dT,
-          eT: this.eT,
+      //   uniforms: {
+      //     dT: this.dT,
+      //     eT: this.eT,
 
-          // input
-          tex3dInput0: null32.texture,
+      //     // input
+      //     tex3dInput0: null32.texture,
 
-          // code
-          code: Exec.copy,
-        },
-      });
+      //     // code
+      //     code: Exec.copy,
+      //   },
+      // });
     };
 
     let importToTemp = () => {
@@ -592,64 +631,10 @@ export class LifeWater {
       });
     };
 
-    let simulateTemp = () => {
-      ctx.submit(gpuIO, {
-        // output
-        pass: varTemp1.passWithClear,
-        viewport: varTemp1.viewport,
-
-        uniforms: {
-          dT: this.dT,
-          eT: this.eT,
-
-          // input
-          tex3dInput0: varPosTemp.texture,
-          tex3dInput1: varGravity.texture,
-
-          // code
-          code: Exec.addPosWithVel,
-        },
-      });
-
-      ctx.submit(gpuIO, {
-        // output
-        pass: varPosTemp.passWithClear,
-        viewport: varPosTemp.viewport,
-
-        uniforms: {
-          dT: this.dT,
-          eT: this.eT,
-
-          // input
-          tex3dInput0: varTemp1.texture,
-
-          // code
-          code: Exec.custom3DLookup,
-        },
-      });
-
-      // ctx.submit(gpuIO, {
-      //   // output
-      //   pass: varPosTemp.passWithClear,
-      //   viewport: varPosTemp.viewport,
-
-      //   uniforms: {
-      //     dT: this.dT,
-      //     eT: this.eT,
-
-      //     // input
-      //     tex3dInput0: varTemp1.texture,
-
-      //     // code
-      //     code: Exec.copy,
-      //   },
-      // });
-    };
-
     // initialise data
     makeInitData();
 
-    let makeGravity = () => {
+    let makeTimeRelatedVars = () => {
       // MAKE gravity
       ctx.submit(gpuIO, {
         uniforms: {
@@ -669,12 +654,49 @@ export class LifeWater {
       });
     };
 
+    let simulateTemp = () => {
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varPosTemp.texture,
+          tex3dInput1: varGravity.texture,
+
+          // code
+          code: Exec.addPosWithVel,
+        },
+
+        // output
+        pass: varTemp1.passWithClear,
+        viewport: varTemp1.viewport,
+      });
+
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varTemp1.texture,
+
+          // code
+          code: Exec.copy,
+        },
+
+        // output
+        pass: varPosTemp.passWithClear,
+        viewport: varPosTemp.viewport,
+      });
+    };
+
     // simulation and render loop
     this.tick = 0;
     mini.onLoop(() => {
       ctx.submit(clearScreenCmd);
 
-      makeGravity();
+      makeTimeRelatedVars();
 
       importToTemp();
 
