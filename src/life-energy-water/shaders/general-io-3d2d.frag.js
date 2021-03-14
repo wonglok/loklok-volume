@@ -55,6 +55,10 @@ vec4 scan3DTextureValue (sampler2D tex, vec3 texCoord, float size, float numRows
 void copy (void) {
   vec3 data0 = texture2D(tex3dInput0, vUv2).rgb;
   gl_FragColor = vec4(data0, 1.0);
+
+  // vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
+  // vec3 outputValue = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
+  // gl_FragColor = vec4(outputValue, 1.0);
 }
 
 void makeIndexTexture (void) {
@@ -62,10 +66,11 @@ void makeIndexTexture (void) {
   gl_FragColor = vec4(data0, 1.0);
 }
 
-void detectMarker (void) {
+void makeDynamicVelocity (void) {
   vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
   vec3 data0 = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 
+  gl_FragColor = vec4(data0 - uv3, 1.0);
 }
 void addPosWithVel (void) {
   vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
@@ -76,7 +81,7 @@ void addPosWithVel (void) {
   gl_FragColor = vec4(vec3(newPos), 1.0);
 }
 
-void makeVelocity (void) {
+void makeGravity (void) {
   vec3 data0 = texture2D(tex3dInput0, vUv2).rgb;
   vec3 gravity = vec3(0.0, dT * -1.0, 0.0);
   gl_FragColor = vec4(gravity, 1.0);
@@ -94,9 +99,9 @@ void main (void) {
   } else if (code == 1.0) {
     makeIndexTexture();
   } else if (code == 2.0) {
-    detectMarker();
+    makeDynamicVelocity();
   } else if (code == 3.0) {
-    makeVelocity();
+    makeGravity();
   } else if (code == 4.0) {
     readBy3DCoord();
   } else if (code == 5.0) {

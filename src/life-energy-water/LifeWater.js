@@ -391,14 +391,20 @@ export class LifeWater {
       slicesPerRow: 32,
     });
 
-    const varMarker = make3DTexture({
-      name: "varMarker",
+    const varVel = make3DTexture({
+      name: "varVel",
       size: 32,
       slicesPerRow: 32,
     });
 
-    const varVel = make3DTexture({
-      name: "varVel",
+    const varVelTemp = make3DTexture({
+      name: "varVelTemp",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varGravity = make3DTexture({
+      name: "varGravity",
       size: 32,
       slicesPerRow: 32,
     });
@@ -439,32 +445,18 @@ export class LifeWater {
     const Exec = {
       copy: 0.0,
       makeIndexTexture: 1.0,
-      detectMarker: 2.0,
-      makeVelocity: 3.0,
+      makeDynamicVelocity: 2.0,
+      makeGravity: 3.0,
       readBy3DCoord: 4.0,
       addPosWithVel: 5.0,
     };
 
-    // MAKE INDEX TEXTURE
+    // MAKE lookup
     ctx.submit(gpuIO, {
-      uniforms: {
-        dT: this.dT,
-        eT: this.eT,
-
-        // input
-        tex3dInput0: schema32.texture,
-
-        // code
-        code: Exec.makeIndexTexture,
-      },
       // output to
       pass: varLookup.passWithClear,
       viewport: varLookup.viewport,
-    });
-    gpuIO.uniforms.tex3dIndex = varLookup.texture;
 
-    // MAKE SIM INIT POS TEXTURE
-    ctx.submit(gpuIO, {
       uniforms: {
         dT: this.dT,
         eT: this.eT,
@@ -475,52 +467,106 @@ export class LifeWater {
         // code
         code: Exec.makeIndexTexture,
       },
-      // output
-      pass: varPos.passWithClear,
-      viewport: varPos.viewport,
     });
+    gpuIO.uniforms.tex3dIndex = varLookup.texture;
 
-    // MAKE SIM INIT Vel TEXTURE
-    ctx.submit(gpuIO, {
-      uniforms: {
-        dT: this.dT,
-        eT: this.eT,
+    let makeInitData = () => {
+      // MAKE pos init
+      ctx.submit(gpuIO, {
+        // output
+        pass: varPos.passWithClear,
+        viewport: varPos.viewport,
 
-        // input
-        tex3dInput0: schema32.texture,
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
 
-        // code
-        code: Exec.makeVelocity,
-      },
-      // output
-      pass: varVel.passWithClear,
-      viewport: varVel.viewport,
-    });
+          // input
+          tex3dInput0: varLookup.texture,
 
-    //
-    this.tick = 0;
-    mini.onLoop(() => {
-      ctx.submit(clearScreenCmd);
+          // code
+          code: Exec.copy,
+        },
+      });
 
+      // MAKE vel init
+      ctx.submit(gpuIO, {
+        // output
+        pass: varVel.passWithClear,
+        viewport: varVel.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: null32.texture,
+
+          // code
+          code: Exec.copy,
+        },
+      });
+
+      // MAKE gravity
       ctx.submit(gpuIO, {
         uniforms: {
           dT: this.dT,
           eT: this.eT,
 
           // input
-          tex3dInput0: varPos.texture,
-          tex3dInput1: varVel.texture,
+          tex3dInput0: schema32.texture,
 
           // code
-          code: Exec.addPosWithVel,
+          code: Exec.makeGravity,
         },
+        // output
+        pass: varGravity.passWithClear,
+        viewport: varGravity.viewport,
+      });
+    };
 
+    let importToTemp = () => {
+      ctx.submit(gpuIO, {
         // output
         pass: varPosTemp.passWithClear,
         viewport: varPosTemp.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varPos.texture,
+
+          // code
+          code: Exec.copy,
+        },
       });
 
       ctx.submit(gpuIO, {
+        // output
+        pass: varVelTemp.passWithClear,
+        viewport: varVelTemp.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varVel.texture,
+
+          // code
+          code: Exec.copy,
+        },
+      });
+    };
+
+    let exportFromTemp = () => {
+      ctx.submit(gpuIO, {
+        // output
+        pass: varPos.passWithClear,
+        viewport: varPos.viewport,
+
         uniforms: {
           dT: this.dT,
           eT: this.eT,
@@ -529,19 +575,44 @@ export class LifeWater {
           tex3dInput0: varPosTemp.texture,
 
           // code
-          code: Exec.detectMarker,
+          code: Exec.copy,
         },
-
-        // output
-        pass: varMarker.passWithClear,
-        viewport: varMarker.viewport,
       });
 
-      // debugTexture3Ds32({ inputTexture: varLookup.texture, slot: 1 });
+      ctx.submit(gpuIO, {
+        // output
+        pass: varVel.passWithClear,
+        viewport: varVel.viewport,
+
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varVelTemp.texture,
+
+          // code
+          code: Exec.copy,
+        },
+      });
+    };
+
+    // initialise data
+    makeInitData();
+
+    // simulation and render loop
+    this.tick = 0;
+    mini.onLoop(() => {
+      ctx.submit(clearScreenCmd);
+
+      importToTemp();
+
+      exportFromTemp();
+
       // debugTexture2D({ inputTexture: varPos.texture, slot: 2 });
 
-      debugTexture3Ds32({ inputTexture: schema32.texture, slot: 0 });
       debugTexture3Ds32({ inputTexture: varPosTemp.texture, slot: 1 });
+      debugTexture3Ds32({ inputTexture: varVelTemp.texture, slot: 0 });
 
       debugTexture3Ds32FullScreen({ inputTexture: varPos.texture });
 
