@@ -2,7 +2,7 @@ import createContext from "pex-context";
 import createCamera from "pex-cam/perspective";
 import { Clock } from "three";
 import createOrbiter from "pex-cam/orbiter";
-import createPlane from "primitive-plane";
+// import createPlane from "primitive-plane";
 
 // import mat4 from "pex-math/mat4";
 // import vec3 from "pex-math/vec3";
