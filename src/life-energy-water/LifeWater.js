@@ -474,24 +474,26 @@ export class LifeWater {
       addPosWithVel: 5.0,
     };
 
-    // MAKE lookup
-    ctx.submit(gpuIO, {
-      // output to
-      pass: varLookup.passWithClear,
-      viewport: varLookup.viewport,
+    let makeLookupTable = () => {
+      // MAKE lookup
+      ctx.submit(gpuIO, {
+        // output to
+        pass: varLookup.passWithClear,
+        viewport: varLookup.viewport,
 
-      uniforms: {
-        dT: this.dT,
-        eT: this.eT,
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
 
-        // input
-        tex3dInput0: schema32.texture,
+          // input
+          tex3dInput0: schema32.texture,
 
-        // code
-        code: Exec.makeIndexTexture,
-      },
-    });
-    gpuIO.uniforms.tex3dIndex = varLookup.texture;
+          // code
+          code: Exec.makeIndexTexture,
+        },
+      });
+      gpuIO.uniforms.tex3dIndex = varLookup.texture;
+    };
 
     let makeInitData = () => {
       // MAKE pos init
@@ -585,9 +587,6 @@ export class LifeWater {
       });
     };
 
-    // initialise data
-    makeInitData();
-
     let makeTimeRelatedVars = () => {
       // MAKE gravity
       ctx.submit(gpuIO, {
@@ -662,9 +661,12 @@ export class LifeWater {
       });
     };
 
-    //
-
     // simulation and render loop
+
+    // initialise data
+    makeLookupTable();
+    makeInitData();
+
     this.tick = 0;
     mini.onLoop(() => {
       ctx.submit(clearScreenCmd);

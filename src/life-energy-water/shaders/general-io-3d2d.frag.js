@@ -66,9 +66,8 @@ vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float 
   return texture2D(tex, nearUV);
 }
 
-vec4 texture2D_sampler3D(sampler2D tex3d, vec2 uv) {
+vec4 texture3DSampler(sampler2D tex3d, vec2 uv) {
   vec3 uv3 = texture2D(tex3dIndex, uv).rgb;
-  // uv3 = ceil(uv3 * vec3(size)) / vec3(size);
   vec4 outputValue = scan3DTextureValueNearest(tex3d, uv3, size, numRows, slicesPerRow);
   return outputValue;
 }
@@ -76,12 +75,12 @@ vec4 texture2D_sampler3D(sampler2D tex3d, vec2 uv) {
 // -------
 
 void copy (void) {
-  vec3 data0 = texture2D_sampler3D(tex3dInput0, vUv2).rgb;
+  vec3 data0 = texture3DSampler(tex3dInput0, vUv2).rgb;
   gl_FragColor = vec4(data0, 1.0);
 }
 
 void makeIndexTexture (void) {
-  vec3 data0 = texture2D_sampler3D(tex3dIndex, vUv2).rgb;
+  vec3 data0 = texture3DSampler(tex3dIndex, vUv2).rgb;
   gl_FragColor = vec4(data0, 1.0);
 }
 
@@ -107,7 +106,6 @@ void makeGravity (void) {
 
 void markerGrid (void) {
   vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
-
   vec3 position = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 
   if (length(uv3 - position) > 1.) {
