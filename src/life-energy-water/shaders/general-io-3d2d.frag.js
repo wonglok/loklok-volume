@@ -52,6 +52,8 @@ uniform float eT;
 //  vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
 //  vec3 lookupPos = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
+  texCoord = ceil((texCoord) * vec3(size)) / vec3(size);
+
   float pixel2DWidth = slicesPerRow * size;
   float pixel2DHeight = numRows * size;
 
@@ -66,7 +68,7 @@ vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float 
 
 vec4 texture2D_sampler3D(sampler2D tex3d, vec2 uv) {
   vec3 uv3 = texture2D(tex3dIndex, uv).rgb;
-  uv3 = ceil(uv3 * vec3(size)) / vec3(size);
+  // uv3 = ceil(uv3 * vec3(size)) / vec3(size);
   vec4 outputValue = scan3DTextureValueNearest(tex3d, uv3, size, numRows, slicesPerRow);
   return outputValue;
 }
@@ -88,7 +90,8 @@ void code2 (void) {
 
 void addPosWithVel (void) {
   vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
-  uv3 = ceil((uv3) * vec3(size)) / vec3(size);
+
+  // uv3 = ceil((uv3) * vec3(size)) / vec3(size);
 
   vec3 position = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
   vec3 velocity = scan3DTextureValueNearest(tex3dInput1, uv3, size, numRows, slicesPerRow).rgb;
@@ -98,13 +101,12 @@ void addPosWithVel (void) {
 }
 
 void makeGravity (void) {
-  vec3 gravity = vec3(0.0, -dT * 0.23, 0.0);
+  vec3 gravity = vec3(0.0, -1.0 * 0.0023, 0.0);
   gl_FragColor = vec4(gravity, 1.0);
 }
 
 void markerGrid (void) {
   vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
-  uv3 = ceil((uv3) * vec3(size)) / vec3(size);
 
   vec3 position = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 

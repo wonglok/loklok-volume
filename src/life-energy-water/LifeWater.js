@@ -662,6 +662,8 @@ export class LifeWater {
       });
     };
 
+    //
+
     // simulation and render loop
     this.tick = 0;
     mini.onLoop(() => {
@@ -677,8 +679,11 @@ export class LifeWater {
 
       // debugTexture2D({ inputTexture: varPos.texture, slot: 2 });
 
+      // debugTexture3Ds32({ inputTexture: varMarker.texture, slot: 0 });
+
+      //
+
       debugTexture3Ds32({ inputTexture: varMarker.texture, slot: 0 });
-      debugTexture3Ds32({ inputTexture: varPosTemp.texture, slot: 1 });
 
       debugTexture3Ds32FullScreen({ inputTexture: varPos.texture });
 
