@@ -409,6 +409,12 @@ export class LifeWater {
       slicesPerRow: 32,
     });
 
+    const varMarker = make3DTexture({
+      name: "varMarker",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
     const varTemp1 = make3DTexture({
       name: "varTemp1",
       size: 32,
@@ -420,40 +426,6 @@ export class LifeWater {
       size: 32,
       slicesPerRow: 32,
     });
-
-    const slices = 32;
-    let sliceIndx = 0;
-    let s32_quadPositions = [];
-    let s32_quadTexCoords = [];
-    let s32_quadFaces = [];
-    for (let ss = 0; ss < slices; ss++) {
-      s32_quadPositions.push(
-        ...[
-          [(-1 / slices) * ss * 0.5, (-1 / slices) * ss * 0.5],
-          [(1 / slices) * ss * 0.5, (-1 / slices) * ss * 0.5],
-          [(1 / slices) * ss * 0.5, (1 / slices) * ss * 0.5],
-          [(-1 / slices) * ss * 0.5, (1 / slices) * ss * 0.5],
-        ]
-      );
-
-      s32_quadTexCoords.push(
-        ...[
-          [(0 / slices) * ss, 0],
-          [(1 / slices) * ss, 0],
-          [(1 / slices) * ss, 1],
-          [(0 / slices) * ss, 1],
-        ]
-      );
-
-      s32_quadFaces.push(
-        ...[
-          [0 + sliceIndx, 1 + sliceIndx, 2 + sliceIndx],
-          [0 + sliceIndx, 2 + sliceIndx, 3 + sliceIndx],
-        ]
-      );
-
-      sliceIndx += 4;
-    }
 
     const gpuIO = {
       attributes: {
@@ -498,7 +470,7 @@ export class LifeWater {
       makeIndexTexture: 1.0,
       custom3DLookup: 2.0,
       makeGravity: 3.0,
-      __readBy3DCoord: 4.0,
+      markerGrid: 4.0,
       addPosWithVel: 5.0,
     };
 
@@ -539,24 +511,6 @@ export class LifeWater {
           code: Exec.copy,
         },
       });
-
-      // // MAKE vel init
-      // ctx.submit(gpuIO, {
-      //   // output
-      //   pass: varVel.passWithClear,
-      //   viewport: varVel.viewport,
-
-      //   uniforms: {
-      //     dT: this.dT,
-      //     eT: this.eT,
-
-      //     // input
-      //     tex3dInput0: null32.texture,
-
-      //     // code
-      //     code: Exec.copy,
-      //   },
-      // });
     };
 
     let importToTemp = () => {
@@ -689,6 +643,23 @@ export class LifeWater {
         pass: varPosTemp.passWithClear,
         viewport: varPosTemp.viewport,
       });
+
+      ctx.submit(gpuIO, {
+        uniforms: {
+          dT: this.dT,
+          eT: this.eT,
+
+          // input
+          tex3dInput0: varPosTemp.texture,
+
+          // code
+          code: Exec.markerGrid,
+        },
+
+        // output
+        pass: varMarker.passWithClear,
+        viewport: varMarker.viewport,
+      });
     };
 
     // simulation and render loop
@@ -706,7 +677,7 @@ export class LifeWater {
 
       // debugTexture2D({ inputTexture: varPos.texture, slot: 2 });
 
-      debugTexture3Ds32({ inputTexture: varVelTemp.texture, slot: 0 });
+      debugTexture3Ds32({ inputTexture: varMarker.texture, slot: 0 });
       debugTexture3Ds32({ inputTexture: varPosTemp.texture, slot: 1 });
 
       debugTexture3Ds32FullScreen({ inputTexture: varPos.texture });
