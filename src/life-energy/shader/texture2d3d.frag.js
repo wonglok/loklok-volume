@@ -91,12 +91,9 @@ vec4 texture3D(sampler2D tex, vec3 texCoord, vec3 resolution) {
 //   return slice0Color;
 // }
 
-*/
-
-module.exports = /* glsl */ `
-// precision highp float;
-
+vec3 data = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
+
     // --------
     // float pageY = (ceil((texCoord.y) * (size)) / (size));
     // float pageX = (ceil((texCoord.x) * (size)) / (size));
@@ -115,20 +112,64 @@ vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float 
     // --------
 
     // --------
+}
 
-    // --------
-    // texCoord = ceil((texCoord) * vec3(size * 1.0)) / vec3(size * 1.0);
+// // --------
+// // texCoord = ceil((texCoord) * vec3(size * 1.0)) / vec3(size * 1.0);
 
+// float pixel2DWidth = slicesPerRow * size;
+// float pixel2DHeight = numRows * size;
+
+// float pageY = ceil(texCoord.y * size);
+// float pageX = ceil(texCoord.x * size);
+// float pageZ = ceil(texCoord.z * size);
+
+// vec2 nearUV = (vec2(pageX + size * pageZ, pageY)) / vec2(pixel2DWidth, pixel2DHeight);
+
+*/
+
+module.exports = /* glsl */ `
+// precision highp float;
+//
+// vec3 data = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
+
+// convert to color
+vec3 coord2dto3d (vec2 coord2d, float size, float numRows, float slicesPerRow) {
     float pixel2DWidth = slicesPerRow * size;
     float pixel2DHeight = numRows * size;
 
-    float pageY = ceil(texCoord.y * size);
-    float pageX = ceil(texCoord.x * size);
-    float pageZ = ceil(texCoord.z * size);
+    vec2 pixelCoord = coord2d * vec2(pixel2DWidth, pixel2DHeight);
+
+    float pageX = ceil(mod(pixelCoord.x, size)) / size;
+    float pageZ = ceil(pixelCoord.x) / size * size / size;
+    float pageY = ceil(pixelCoord.y) / size;
+
+    return vec3(pageX, pageY, pageZ);
+}
+
+
+// convert to 2d
+vec2 coord3dto2d (vec3 coord3d, float size, float numRows, float slicesPerRow) {
+    float pixel2DWidth = slicesPerRow * size;
+    float pixel2DHeight = numRows * size;
+
+    float pageY = ceil(coord3d.y * size);
+    float pageX = ceil(coord3d.x * size);
+    float pageZ = ceil(coord3d.z * size);
 
     vec2 nearUV = (vec2(pageX + size * pageZ, pageY)) / vec2(pixel2DWidth, pixel2DHeight);
+    return nearUV;
+}
 
+// scan texture
+vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
+    vec2 nearUV = coord3dto2d(texCoord, size, numRows, slicesPerRow);
     return texture2D(tex, nearUV);
+}
+
+// scan texture
+vec4 scan2DTextureValueNearest (sampler2D tex, vec2 uv) {
+    return texture2D(tex, uv);
 }
 
 `;

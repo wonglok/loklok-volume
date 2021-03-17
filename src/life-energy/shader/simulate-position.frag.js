@@ -12,6 +12,10 @@ uniform vec3 mouseNow;
 uniform vec3 mouseLast;
 uniform vec2 resolution;
 
+uniform sampler2D gridVelocity;
+${require("./texture2d3d.header")}
+${require("./texture2d3d.frag")}
+
 #define M_PI 3.1415926535897932384626433832795
 
 float atan2(in float y, in float x) {
@@ -51,6 +55,7 @@ vec3 ballify (vec3 pos, float r) {
 float rand(vec2 n) {
 	return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
 }
+
 
 float sdBox( vec3 p, vec3 b ) {
   vec3 q = abs(p) - b;
@@ -100,9 +105,7 @@ void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
   p /= 1.25;
 
   // if(sdMetaBall(p) < 0.0){
-
   //   vec3 myNormal = calcNormal(p);
-
   //   particleVel += myNormal * dT * 1.0;
   // }
 
@@ -112,6 +115,8 @@ void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
     particleVel -= calcNormal(p) * dT * 2.0 * sdMetaBall(p);
   }
 }
+
+// vec3 data = scan3DTextureValueNearest(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
 
 void handleCollision (inout vec4 pos, inout vec3 vel) {
   collisionMetaBalls(
@@ -124,8 +129,14 @@ void handleCollision (inout vec4 pos, inout vec3 vel) {
     vel,
     1.5
   );
-}
 
+  // vec3 fieldData = scan3DTextureValueNearest(gridVelocity, (normalize(pos.xyz) * 0.5 + 0.5), size, numRows, slicesPerRow).rgb;
+  // if (sdSphere(pos.xyz + mouseNow, 1.0) < 0.0) {
+  //   vel.xyz += fieldData * -dT;
+  // } else {
+  //   vel.xyz += fieldData * dT;
+  // }
+}
 
 void main() {
   vec2 uv = gl_FragCoord.xy / resolution.xy;
@@ -147,7 +158,7 @@ void main() {
       -0.5 + rand(uv + 0.3)
     );
 
-    pos.xyz *= 5.0;
+    pos.xyz *= 10.0;
     // pos.z -= 0.0;
     // pos.xyz = ballify(pos.xyz, 1.0);
     // pos.z += 1.5;
@@ -163,16 +174,19 @@ void main() {
       -0.5 + rand(uv + 0.2),
       -0.5 + rand(uv + 0.3)
     );
-    pos.xyz *= 5.0;
+    pos.xyz *= 10.0;
     // pos.z -= 0.0;
 
     // pos.xyz = ballify(pos.xyz, 1.0);
     // pos.z += 1.5;
     life = 1.1;
+
+    // vec3 fieldData = scan3DTextureValueNearest(gridVelocity, pos.xyz, size, numRows, slicesPerRow).rgb * 2.0 - 1.0;
+    // pos.xyz += fieldData * 0.4;
   }
 
   // gravity
-  vel += vec3( 0.0 , -.003 , 0. );
+  // vel += vec3( 0.0 , -.003 , 0. );
 
   // wind
   // vel += vec3( 0.001 * life, 0.0, 0.0 );

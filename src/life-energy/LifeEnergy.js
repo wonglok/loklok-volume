@@ -49,6 +49,121 @@ const visibleWidthAtZDepth = (depth, zPos, fov, aspect) => {
   return height * aspect;
 };
 
+// ref: http://stackoverflow.com/questions/32633585/how-do-you-convert-to-half-floats-in-javascript
+var toHalf = (function () {
+  var floatView = new Float32Array(1);
+  var int32View = new Int32Array(floatView.buffer);
+
+  /* This method is faster than the OpenEXR implementation (very often
+   * used, eg. in Ogre), with the additional benefit of rounding, inspired
+   * by James Tursa?s half-precision code. */
+  return function toHalf(val) {
+    floatView[0] = val;
+    var x = int32View[0];
+
+    var bits = (x >> 16) & 0x8000; /* Get the sign */
+    var m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
+    var e = (x >> 23) & 0xff; /* Using int is faster here */
+
+    /* If zero, or denormal, or exponent underflows too much for a denormal
+     * half, return signed zero. */
+    if (e < 103) {
+      return bits;
+    }
+
+    /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+    if (e > 142) {
+      bits |= 0x7c00;
+      /* If exponent was 0xff and one mantissa bit was set, it means NaN,
+       * not Inf, so make sure we set one mantissa bit too. */
+      bits |= (e === 255 ? 0 : 1) && x & 0x007fffff;
+      return bits;
+    }
+
+    /* If exponent underflows but not too much, return a denormal */
+    if (e < 113) {
+      m |= 0x0800;
+      /* Extra rounding may overflow and set mantissa to 0 and exponent
+       * to 1, which is OK. */
+      bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
+      return bits;
+    }
+
+    bits |= ((e - 112) << 10) | (m >> 1);
+    /* Extra rounding. An overflow will set mantissa to 0 and increment
+     * the exponent, which is OK. */
+    bits += m & 1;
+    return bits;
+  };
+})();
+
+export class Field3D2D {
+  constructor({ ctx, name = "field0", initSize = 50 }) {
+    let size = initSize;
+    let slicesPerRow = size;
+    var numRows = Math.floor((size + slicesPerRow - 1) / slicesPerRow);
+    let lookupData = new Uint16Array(size * slicesPerRow * size * numRows * 4);
+
+    // var pixels = new Uint8Array(size * slicesPerRow * size * numRows * 4);
+    var pixelsAcross = slicesPerRow * size;
+
+    // let r0 = () => Math.random() * 2.0 - 1.0;
+    for (var slice = 0; slice < size; ++slice) {
+      var row = Math.floor(slice / slicesPerRow);
+      var xOff = (slice % slicesPerRow) * size;
+      var yOff = row * size;
+      for (var y = 0; y < size; ++y) {
+        for (var x = 0; x < size; ++x) {
+          var offset = ((yOff + y) * pixelsAcross + xOff + x) * 4;
+          lookupData[offset + 0] = toHalf((x / size) * 2.0 - 1.0);
+          lookupData[offset + 1] = toHalf((y / size) * 2.0 - 1.0);
+          lookupData[offset + 2] = toHalf((slice / size) * 2.0 - 1.0);
+          lookupData[offset + 3] = 1.0;
+        }
+      }
+    }
+
+    let conf = {
+      data: lookupData,
+      width: size * size,
+      height: size,
+      pixelFormat: ctx.PixelFormat.RGBA16F,
+      encoding: ctx.Encoding.Linear,
+    };
+
+    let texture = ctx.texture2D(conf);
+
+    console.log("texture-2d", name, conf.format, conf.width, conf.height);
+
+    this.texture = texture;
+
+    this.passWithClear = ctx.pass({
+      clearColor: [0, 0, 0, 0],
+      color: [texture],
+    });
+
+    this.passWithoutClear = ctx.pass({
+      color: [texture],
+    });
+
+    this.viewport = [0, 0, conf.width, conf.height];
+
+    this.size = size;
+    this.numRows = numRows;
+    this.slicesPerRow = slicesPerRow;
+
+    this.uniforms = {};
+    this.uniforms.size = size;
+    this.uniforms.numRows = numRows;
+    this.uniforms.slicesPerRow = slicesPerRow;
+
+    this.glsl = /* glsl */ `
+      ${require("./shader/texture2d3d.header")}
+      ${require("./shader/texture2d3d.frag")}
+    `;
+  }
+}
+
 export class LifeEnergy {
   constructor(mini) {
     //
@@ -102,8 +217,26 @@ export class LifeEnergy {
 
     // createOrbiter({ camera: camera, distance: 6 });
 
-    const texSizeX = 512;
-    const texSizeY = 512;
+    const initSize = 50;
+
+    const gridVelocity0 = new Field3D2D({
+      ctx,
+      name: "gridVelocity0",
+      initSize: initSize,
+    });
+    const gridVelocity1 = new Field3D2D({
+      ctx,
+      name: "gridVelocity1",
+      initSize: initSize,
+    });
+    const gridVelocity2 = new Field3D2D({
+      ctx,
+      name: "gridVelocity2",
+      initSize: initSize,
+    });
+
+    const texSizeX = initSize * initSize;
+    const texSizeY = initSize;
     const particleCount = texSizeX * texSizeY;
 
     const displayDataTextureCmd = {
@@ -128,7 +261,12 @@ export class LifeEnergy {
         uniforms: {
           uTexture: texture,
         },
-        viewport: [200 * slot, 0, 200, 200],
+        viewport: [
+          0,
+          Math.pow(window.innerWidth, 1 / 3) * 2.0 * slot,
+          window.innerWidth,
+          Math.pow(window.innerWidth, 1 / 3) * 2.0,
+        ],
       });
     };
 
@@ -155,6 +293,7 @@ export class LifeEnergy {
         },
       }
     );
+
     const textures = new Proxy(db, {
       get: (obj, key) => {
         return obj[key].texture;
@@ -197,6 +336,35 @@ export class LifeEnergy {
     // Simulate Position
     // ----- ----- -----
 
+    const simulateGridCmd = {
+      name: "simulateGridCmd",
+      pipeline: ctx.pipeline({
+        vert: require("./shader/screen-image.vert"),
+        frag: require("./shader/simulate-grid.frag"),
+      }),
+      attributes: {
+        aPosition: {
+          buffer: ctx.vertexBuffer(quadPositions),
+        },
+        aTexCoord0: {
+          buffer: ctx.vertexBuffer(quadTexCoords),
+        },
+      },
+      indices: {
+        buffer: ctx.indexBuffer(quadFaces),
+      },
+      uniforms: {
+        dT: 0.0,
+        eT: 0.0,
+        uTexture: null,
+        resolution: [texSizeX, texSizeY],
+      },
+    };
+
+    // ----- ----- -----
+    // Simulate Position
+    // ----- ----- -----
+
     const simulatePositionCmd = {
       name: "simulatePositionCmd",
       pipeline: ctx.pipeline({
@@ -225,14 +393,13 @@ export class LifeEnergy {
     // ----- ----- -----
     // Display Particles
     // ----- ----- -----
+
     let lookup = [];
     for (let y = 0; y < texSizeY; y++) {
       for (let x = 0; x < texSizeX; x++) {
         lookup.push(x / texSizeX, y / texSizeY);
       }
     }
-
-    //
 
     const drawParticlesCmd = {
       name: "drawParticlesCmd",
@@ -451,6 +618,7 @@ export class LifeEnergy {
     let tick = 0;
     let clock = new Clock();
     let ioNames = ["pos0", "pos2", "pos1"];
+    let gridVel = [gridVelocity0, gridVelocity2, gridVelocity1];
     mini.onLoop(() => {
       vec3.set(mouseLast, mouseNow);
       vec3.set(mouseNow, mouse);
@@ -461,11 +629,40 @@ export class LifeEnergy {
 
       if (tick % 3 === 0.0) {
         ioNames = ["pos0", "pos1", "pos2"];
+        gridVel = [gridVelocity0, gridVelocity1, gridVelocity2];
       } else if (tick % 3 === 1.0) {
         ioNames = ["pos2", "pos0", "pos1"];
+        gridVel = [gridVelocity2, gridVelocity0, gridVelocity1];
       } else if (tick % 3 === 2.0) {
         ioNames = ["pos1", "pos2", "pos0"];
+        gridVel = [gridVelocity1, gridVelocity2, gridVelocity0];
       }
+
+      let writeToVel = gridVel[0];
+      let currentVel = gridVel[1];
+      let lastVel = gridVel[2];
+
+      ctx.submit(
+        {
+          pass: writeToVel.passWithClear,
+          viewport: writeToVel.viewport,
+        },
+        () => {
+          ctx.submit(simulateGridCmd, {
+            uniforms: {
+              dT,
+              eT,
+              uTextureCurrent: currentVel.texture,
+              uTextureLast: lastVel.texture,
+
+              uCurrentPositionTex: textures[ioNames[1]],
+
+              mouseNow: mouseNow,
+              mouseLast: mouseLast,
+            },
+          });
+        }
+      );
 
       db[ioNames[0]].simulate({
         cmd: simulatePositionCmd,
@@ -473,10 +670,15 @@ export class LifeEnergy {
           uniforms: {
             dT,
             eT,
+
             uTextureCurrent: textures[ioNames[1]],
             uTextureLast: textures[ioNames[2]],
             mouseNow: mouseNow,
             mouseLast: mouseLast,
+
+            //
+            ...gridVelocity0.uniforms,
+            gridVelocity: writeToVel.texture,
           },
         },
       });
@@ -499,6 +701,7 @@ export class LifeEnergy {
       });
 
       displayTexture({ texture: textures.pos0, slot: 0 });
+      displayTexture({ texture: writeToVel.texture, slot: 1 });
 
       tick += 1;
     });

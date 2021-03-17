@@ -1,8 +1,9 @@
 import createContext from "pex-context";
 import createCamera from "pex-cam/perspective";
+
 import { Clock } from "three";
 import createOrbiter from "pex-cam/orbiter";
-// import createPlane from "primitive-plane";
+import createPlane from "primitive-plane";
 
 // import mat4 from "pex-math/mat4";
 // import vec3 from "pex-math/vec3";
@@ -128,9 +129,9 @@ export class LifeWater {
           for (var x = 0; x < size; ++x) {
             var offset = ((yOff + y) * pixelsAcross + xOff + x) * 4;
             if (seedType === "index") {
-              pixels[offset + 0] = (x / size) * 255;
-              pixels[offset + 1] = (y / size) * 255;
-              pixels[offset + 2] = (slice / size) * 255;
+              pixels[offset + 0] = Math.floor((x / size) * 255);
+              pixels[offset + 1] = Math.floor((y / size) * 255);
+              pixels[offset + 2] = Math.floor((slice / size) * 255);
               pixels[offset + 3] = 255;
             } else {
               pixels[offset + 0] = (x / size) * 0;
@@ -182,8 +183,11 @@ export class LifeWater {
       };
 
       if (seedType === "index") {
-        opts2d.data = pixels;
-        opts2d.format = ctx.PixelFormat.RGBA8;
+        // opts2d.data = pixels;
+        // opts2d.format = ctx.PixelFormat.RGBA8;
+
+        opts2d.data = dataCavans;
+        opts2d.format = ctx.PixelFormat.RGBA16F;
       }
 
       res = make2DTexture(opts2d);
@@ -318,6 +322,60 @@ export class LifeWater {
       slicesPerRow: 32,
     });
 
+    const varLookup = make3DTexture({
+      name: "varLookup",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varPos = make3DTexture({
+      name: "varPos",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varPosTemp = make3DTexture({
+      name: "varPos",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varVel = make3DTexture({
+      name: "varVel",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varVelTemp = make3DTexture({
+      name: "varVelTemp",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varGravity = make3DTexture({
+      name: "varGravity",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varMarker = make3DTexture({
+      name: "varMarker",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varTemp1 = make3DTexture({
+      name: "varTemp1",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
+    const varTemp2 = make3DTexture({
+      name: "varTemp2",
+      size: 32,
+      slicesPerRow: 32,
+    });
+
     const debug32UV3 = makeUV3({
       size: schema32.size,
       slicesPerRow: schema32.slicesPerRow,
@@ -373,59 +431,7 @@ export class LifeWater {
       });
     };
 
-    const varLookup = make3DTexture({
-      name: "varLookup",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varPos = make3DTexture({
-      name: "varPos",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varPosTemp = make3DTexture({
-      name: "varPos",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varVel = make3DTexture({
-      name: "varVel",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varVelTemp = make3DTexture({
-      name: "varVelTemp",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varGravity = make3DTexture({
-      name: "varGravity",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varMarker = make3DTexture({
-      name: "varMarker",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varTemp1 = make3DTexture({
-      name: "varTemp1",
-      size: 32,
-      slicesPerRow: 32,
-    });
-
-    const varTemp2 = make3DTexture({
-      name: "varTemp2",
-      size: 32,
-      slicesPerRow: 32,
-    });
+    // const plane = createPlane(1, 1, 32 * 32, 1);
 
     const gpuIO = {
       attributes: {
@@ -448,7 +454,7 @@ export class LifeWater {
 
       uniforms: {
         tex3dRes2: [schema32.width, schema32.height],
-        gridRes3: [schema32.size, schema32.size, schema32.size],
+        // gridRes3: [schema32.size, schema32.size, schema32.size],
 
         tex3dInput0: null32.texture,
         tex3dInput1: null32.texture,
@@ -475,7 +481,40 @@ export class LifeWater {
     };
 
     let makeLookupTable = () => {
-      // MAKE lookup
+      // let size = 32;
+      // let slicesPerRow = 32;
+      // var numRows = Math.floor((size + slicesPerRow - 1) / slicesPerRow);
+      // let lookupData = new Uint8Array(size * slicesPerRow * size * numRows * 4);
+
+      // // var pixels = new Uint8Array(size * slicesPerRow * size * numRows * 4);
+      // var pixelsAcross = slicesPerRow * size;
+      // let max = Math.pow(2, 8);
+      // console.log(max);
+
+      // // let r0 = () => Math.random() * 2.0 - 1.0;
+      // for (var slice = 0; slice < size; ++slice) {
+      //   var row = Math.floor(slice / slicesPerRow);
+      //   var xOff = (slice % slicesPerRow) * size;
+      //   var yOff = row * size;
+      //   for (var y = 0; y < size; ++y) {
+      //     for (var x = 0; x < size; ++x) {
+      //       var offset = ((yOff + y) * pixelsAcross + xOff + x) * 4;
+      //       lookupData[offset + 0] = (x / size) * max;
+      //       lookupData[offset + 1] = (y / size) * max;
+      //       lookupData[offset + 2] = (slice / size) * max;
+      //       lookupData[offset + 3] = max;
+      //     }
+      //   }
+      // }
+      // let varLookup2 = make2DTexture({
+      //   name: "varLookup",
+      //   width: 32 * 32,
+      //   height: 32,
+      //   data: lookupData,
+      //   format: ctx.PixelFormat.RGBA8,
+      // });
+
+      // // // MAKE lookup
       ctx.submit(gpuIO, {
         // output to
         pass: varLookup.passWithClear,

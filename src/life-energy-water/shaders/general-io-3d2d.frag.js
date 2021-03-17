@@ -1,3 +1,5 @@
+const commonFrag = require("./common.frag");
+
 module.exports = /* glsl */ `
 precision highp float;
 
@@ -12,7 +14,8 @@ uniform highp sampler2D tex3dInput2;
 uniform float size;
 uniform float numRows;
 uniform float slicesPerRow;
-uniform vec3 gridRes3;
+
+// uniform vec3 gridRes3;
 uniform vec2 tex3dRes2;
 
 uniform float code;
@@ -51,20 +54,22 @@ uniform float eT;
 
 //  vec3 uv3 = texture2D(tex3dIndex, vUv2).rgb;
 //  vec3 lookupPos = scan3DTextureValue(tex3dInput0, uv3, size, numRows, slicesPerRow).rgb;
-vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
-  texCoord = ceil((texCoord) * vec3(size)) / vec3(size);
+// vec4 scan3DTextureValueNearest (sampler2D tex, vec3 texCoord, float size, float numRows, float slicesPerRow) {
+//   texCoord = ceil((texCoord) * vec3(size)) / vec3(size);
 
-  float pixel2DWidth = slicesPerRow * size;
-  float pixel2DHeight = numRows * size;
+//   float pixel2DWidth = slicesPerRow * size;
+//   float pixel2DHeight = numRows * size;
 
-  float pageY = texCoord.y * size;
-  float pageX = texCoord.x * size;
-  float pageZ = texCoord.z * size;
+//   float pageY = texCoord.y * size;
+//   float pageX = texCoord.x * size;
+//   float pageZ = (texCoord.z * size);
 
-  vec2 nearUV = vec2(pageX + size * pageZ, pageY) / vec2(pixel2DWidth, pixel2DHeight);
+//   vec2 nearUV = ceil(vec2(pageX + size * pageZ, pageY)) / vec2(pixel2DWidth, pixel2DHeight);
 
-  return texture2D(tex, nearUV);
-}
+//   return texture2D(tex, nearUV);
+// }
+
+${commonFrag}
 
 vec4 texture3DSampler(sampler2D tex3d, vec2 uv) {
   vec3 uv3 = texture2D(tex3dIndex, uv).rgb;
@@ -80,7 +85,7 @@ void copy (void) {
 }
 
 void makeIndexTexture (void) {
-  vec3 data0 = texture3DSampler(tex3dIndex, vUv2).rgb;
+  vec3 data0 = texture3DSampler(tex3dInput0, vUv2).rgb;
   gl_FragColor = vec4(data0, 1.0);
 }
 
@@ -100,8 +105,8 @@ void addPosWithVel (void) {
 }
 
 void makeGravity (void) {
-  vec3 gravity = vec3(0.0, -1.0 * 0.0023, 0.0);
-  gl_FragColor = vec4(gravity, 1.0);
+  vec3 gravity = vec3(0.0, 0.0, 1.0 * 0.023);
+  gl_FragColor = vec4(gravity * 0.0, 1.0);
 }
 
 void markerGrid (void) {
