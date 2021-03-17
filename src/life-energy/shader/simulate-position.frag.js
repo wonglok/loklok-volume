@@ -71,14 +71,18 @@ void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3
 
 void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
   vec3 dif = (mouseNow) - particlePos.xyz;
+  vec3 mouseForce = mouseNow - mouseLast;
 
-  if( (length( dif ) - sphereRadius) < 0.0 ){
-    vec3 mouseForce = mouseNow - mouseLast;
-    particleVel += mouseForce * dT * -5.0;
-    particleVel += normalize(dif) * dT * -5.0;
-  } else {
-    // particleVel += normalize(dif) * dT * 5.0;
-  }
+  // if( (length( dif ) - sphereRadius) < 0.0 ){
+  //   // particleVel += mouseForce * dT * -10.0;
+  //   // particleVel += mouseForce * normalize(dif) * dT * -50.0;
+  //   // particleVel += normalize(dif) * dT * -50.0;
+  // } else {
+  //   // particleVel += mouseForce * normalize(dif) * dT * -3.0;
+  // }
+
+  particleVel += normalize(dif) * dT * 0.5;
+  // particleVel += mouseForce * normalize(dif) * dT * 1.5;
 }
 
 void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
@@ -110,9 +114,9 @@ void collisionMetaBalls (inout vec4 particlePos, inout vec3 particleVel) {
   // }
 
   if (sdMetaBall(p) < 0.0) {
-    particleVel += calcNormal(p) * dT * 2.0 * -sdMetaBall(p);
+    particleVel += calcNormal(p) * dT * 4.0 * -sdMetaBall(p);
   } else {
-    particleVel -= calcNormal(p) * dT * 2.0 * sdMetaBall(p);
+    particleVel -= calcNormal(p) * dT * 4.0 * sdMetaBall(p);
   }
 }
 
