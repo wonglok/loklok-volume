@@ -1,9 +1,15 @@
 module.exports = /* glsl */ `
   varying vec2 vUv;
   uniform float progress;
+  varying vec3 vRand3;
 
   void main (void) {
     // gl_PointSize = 1.0;
-    gl_FragColor = vec4(vUv.xy, 1.0,  0.1 * (progress) + 0.05);
+    vec3 cDiffusion = vec3(
+      pow(vRand3.x, 1.0 - progress + 0.3),
+      pow(vRand3.y, 1.0 - progress + 0.3),
+      pow(vRand3.z, 1.0 - progress + 0.3)
+    );
+    gl_FragColor = vec4(cDiffusion,  0.1 * (progress) + 0.1);
   }
 `;

@@ -5,6 +5,7 @@ module.exports = /* glsl */ `
   uniform float initHeight;
   uniform float unitSize;
   varying vec2 vUv;
+  varying vec3 vRand3;
 
   mat3 calcLookAtMatrix(vec3 origin, vec3 target, float roll) {
     vec3 rr = vec3(sin(roll), cos(roll), 0.0);
@@ -16,6 +17,7 @@ module.exports = /* glsl */ `
   }
 
   void main (void) {
+    vRand3 = rand3;
     vUv = uv;
     vec3 faceMePos = position;
 

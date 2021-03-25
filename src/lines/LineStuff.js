@@ -75,7 +75,7 @@ export class LineStuff {
       anime({
         targets: [progress],
         value: 1,
-        easing: "easeOutQuad",
+        easing: "easeOutSine", //"easeOutQuad",
         duration: 1500,
         complete: () => {
           setTimeout(() => {
