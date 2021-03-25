@@ -18,19 +18,19 @@ export const LinesCanvas = () => {
       new Base(mini),
       new LineStuff(mini, {
         delay: 0.0 * 1000.0,
-        shape: "torus",
+        shape: "sphere",
         position: new Vector3(-7.0, 0.0, 0.0),
       }),
       new LineStuff(mini, {
         //,
         delay: 0.25 * 1000.0,
-        shape: "sphere",
+        shape: "box",
         position: new Vector3(0.0, 0.0, 0.0),
       }),
       new LineStuff(mini, {
         //
         delay: 0.5 * 1000.0,
-        shape: "box",
+        shape: "sphere",
         position: new Vector3(7.0, 0.0, 0.0),
       }),
       new SceneControls(mini),

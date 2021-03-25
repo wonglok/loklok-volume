@@ -24,27 +24,26 @@ export class LineStuff {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.05;
     let height = 10;
-    // let pGeo = new CylinderBufferGeometry(0.1, 0.1, height, 6, 3, false);
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 2, 2, 2);
-    let sGeo = new SphereBufferGeometry(3, 64, 64);
 
+    let baseGeometry = new SphereBufferGeometry(3, 64, 64);
     if (shape === "torus") {
-      sGeo = new TorusKnotBufferGeometry(2, 0.25, 500, 127, 4);
+      baseGeometry = new TorusKnotBufferGeometry(2, 0.25, 500, 127, 4);
     }
     if (shape === "box") {
-      sGeo = new BoxBufferGeometry(5, 5, 5, 50, 50, 50);
+      baseGeometry = new BoxBufferGeometry(5, 5, 5, 50, 50, 50);
     }
 
     let iGeo = new InstancedBufferGeometry();
     iGeo.copy(pGeo);
 
-    let count = sGeo.attributes.position.array.length / 3;
+    let count = baseGeometry.attributes.position.array.length / 3;
     iGeo.instanceCount = count;
 
     iGeo.setAttribute(
       "offsets",
       new InstancedBufferAttribute(
-        new Float32Array([...sGeo.attributes.position.array]),
+        new Float32Array([...baseGeometry.attributes.position.array]),
         3
       )
     );
@@ -53,7 +52,7 @@ export class LineStuff {
       "rand3",
       new InstancedBufferAttribute(
         new Float32Array(
-          [...sGeo.attributes.position.array].map((e) => Math.random())
+          [...baseGeometry.attributes.position.array].map((e) => Math.random())
         ),
         3
       )
