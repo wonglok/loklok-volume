@@ -24,7 +24,7 @@ export class LineStuff {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.05;
     let height = 3;
-    let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 2, 2, 2);
+    let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 1, 1, 1);
 
     let baseGeometry = new SphereBufferGeometry(3, 64, 64);
     if (shape === "torus") {
