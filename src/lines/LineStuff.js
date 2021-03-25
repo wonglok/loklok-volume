@@ -10,6 +10,7 @@ import {
   Mesh,
   ShaderMaterial,
   SphereBufferGeometry,
+  TorusKnotBufferGeometry,
   Vector3,
 } from "three";
 import anime from "animejs/lib/anime.es.js";
@@ -19,12 +20,19 @@ export class LineStuff {
     this.mini = mini;
     return this.setup(config);
   }
-  async setup({ position = new Vector3(), delay = 0.0 }) {
+  async setup({ position = new Vector3(), delay = 0.0, shape = "sphere" }) {
     let unitSize = 0.05;
     let height = 10;
     // let pGeo = new CylinderBufferGeometry(0.1, 0.1, height, 6, 3, false);
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 2, 2, 2);
     let sGeo = new SphereBufferGeometry(3, 64, 64);
+
+    if (shape === "torus") {
+      sGeo = new TorusKnotBufferGeometry(2, 0.25, 500, 127, 4);
+    }
+    if (shape === "box") {
+      sGeo = new BoxBufferGeometry(5, 5, 5, 50, 50, 50);
+    }
 
     let iGeo = new InstancedBufferGeometry();
     iGeo.copy(pGeo);
