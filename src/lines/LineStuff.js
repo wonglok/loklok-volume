@@ -23,7 +23,7 @@ export class LineStuff {
   async setup({ position = new Vector3(), delay = 0.0, shape = "sphere" }) {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.05;
-    let height = 3;
+    let height = 4;
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 1, 1, 1);
 
     let baseGeometry = new SphereBufferGeometry(3, 64, 64);
