@@ -3,6 +3,7 @@ import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
 import { LineStuff } from "./LineStuff";
 import { SceneControls } from "../shared/SceneControls";
+import { Vector3 } from "three";
 
 //
 // import { SceneControls } from "../shared/SceneControls";
@@ -15,7 +16,20 @@ export const LinesCanvas = () => {
     let mods = [
       //
       new Base(mini),
-      new LineStuff(mini),
+      new LineStuff(mini, {
+        delay: 0.0 * 1000.0,
+        position: new Vector3(-7.0, 0.0, 0.0),
+      }),
+      new LineStuff(mini, {
+        //,
+        delay: 2.0 * 1000.0,
+        position: new Vector3(0.0, 0.0, 0.0),
+      }),
+      new LineStuff(mini, {
+        //
+        delay: 4.0 * 1000.0,
+        position: new Vector3(7.0, 0.0, 0.0),
+      }),
       new SceneControls(mini),
     ];
 

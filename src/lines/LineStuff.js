@@ -10,15 +10,16 @@ import {
   Mesh,
   ShaderMaterial,
   SphereBufferGeometry,
+  Vector3,
 } from "three";
 import anime from "animejs/lib/anime.es.js";
 
 export class LineStuff {
-  constructor(mini) {
+  constructor(mini, config = {}) {
     this.mini = mini;
-    return this.setup();
+    return this.setup(config);
   }
-  async setup() {
+  async setup({ position = new Vector3(), delay = 0.0 }) {
     let unitSize = 0.05;
     let height = 10;
     // let pGeo = new CylinderBufferGeometry(0.1, 0.1, height, 6, 3, false);
@@ -66,6 +67,8 @@ export class LineStuff {
     let iMesh = new Mesh(iGeo, iMat);
     iMesh.frustumCulled = false;
 
+    iMesh.position.copy(position);
+
     this.mini.i.scene.then((scene) => {
       scene.add(iMesh);
     });
@@ -80,11 +83,14 @@ export class LineStuff {
         complete: () => {
           setTimeout(() => {
             runner();
-          }, 500);
+          }, 1500);
         },
       });
     };
-    runner();
+
+    setTimeout(() => {
+      runner();
+    }, delay);
 
     // //-----------
     // //
