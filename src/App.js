@@ -17,6 +17,7 @@ import { DeferCanvas } from "./defer/DeferCanvas";
 import { FluidCanvas } from "./water-fluid/FluidCanvas";
 import { LifeCanvas } from "./life-energy/LifeCanvas";
 import { LifeWaterCanvas } from "./life-energy-water/LifeWaterCanvas";
+import { LinesCanvas } from "./lines/LinesCanvas";
 
 function App() {
   return (
@@ -74,6 +75,9 @@ function App() {
         <Route exact path="/life-energy-water">
           <LifeWaterCanvas></LifeWaterCanvas>
         </Route>
+        <Route exact path="/line-stuff">
+          <LinesCanvas></LinesCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -125,6 +129,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/life-energy-water"}>Life Energy Water</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/line-stuff"}>Line Stuff</Link>
           </div>
         </Route>
       </Switch>

@@ -100,5 +100,14 @@ export class Mini {
         duration,
       };
     };
+
+    this.i = new Proxy(
+      {},
+      {
+        get: (obj, key) => {
+          return this.get(key);
+        },
+      }
+    );
   }
 }
