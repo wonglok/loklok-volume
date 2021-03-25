@@ -21,6 +21,7 @@ export class LineStuff {
     return this.setup(config);
   }
   async setup({ position = new Vector3(), delay = 0.0, shape = "sphere" }) {
+    let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.05;
     let height = 10;
     // let pGeo = new CylinderBufferGeometry(0.1, 0.1, height, 6, 3, false);
@@ -77,7 +78,7 @@ export class LineStuff {
 
     iMesh.position.copy(position);
 
-    this.mini.i.scene.then((scene) => {
+    onScene((scene) => {
       scene.add(iMesh);
     });
 
@@ -99,51 +100,6 @@ export class LineStuff {
     setTimeout(() => {
       runner();
     }, delay);
-
-    // //-----------
-    // //
-    // let bGeo = new BoxBufferGeometry(0.1, 0.1, 0.1, 2, 2, 2);
-    // let stopGeo = new InstancedBufferGeometry();
-    // stopGeo.copy(bGeo);
-    // stopGeo.instanceCount = count;
-
-    // stopGeo.setAttribute(
-    //   "offsets",
-    //   new InstancedBufferAttribute(
-    //     new Float32Array([...sGeo.attributes.position.array]),
-    //     3
-    //   )
-    // );
-
-    // stopGeo.setAttribute(
-    //   "rand3",
-    //   new InstancedBufferAttribute(
-    //     new Float32Array(
-    //       [...sGeo.attributes.position.array].map((e) => Math.random())
-    //     ),
-    //     3
-    //   )
-    // );
-
-    // let stopMat = new ShaderMaterial({
-    //   uniforms: {
-    //     progress,
-    //   },
-    //   depthTest: false,
-    //   transparent: true,
-    //   side: DoubleSide,
-    //   vertexShader: require("./shaders/stopBox.vert.js"),
-    //   fragmentShader: require("./shaders/stopBox.frag.js"),
-    // });
-
-    // let stopMesh = new Mesh(stopGeo, stopMat);
-    // stopMesh.frustumCulled = false;
-    // this.mini.i.scene.then((scene) => {
-    //   scene.add(stopMesh);
-    // });
-
-    // //
-    // //-----------
 
     this.mini.onLoop(() => {});
 
