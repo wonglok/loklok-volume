@@ -6,10 +6,10 @@ module.exports = /* glsl */ `
   void main (void) {
     // gl_PointSize = 1.0;
     vec3 cDiffusion = vec3(
-      pow(vRand3.x, 1.0 - progress + 0.3),
-      pow(vRand3.y, 1.0 - progress + 0.3),
-      pow(vRand3.z, 1.0 - progress + 0.3)
+      pow(vRand3.x, 1.0 - progress + 0.15),
+      pow(vRand3.y, 1.0 - progress + 0.15),
+      pow(vRand3.z, 1.0 - progress + 0.15)
     );
-    gl_FragColor = vec4(cDiffusion,  0.1 * (progress));
+    gl_FragColor = vec4(cDiffusion,  0.5 * (progress));
   }
 `;

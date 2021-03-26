@@ -4,35 +4,41 @@ import {
   // InstancedMesh,
   // PlaneBufferGeometry,
   // CylinderBufferGeometry,
-  DoubleSide,
+  FrontSide,
   InstancedBufferAttribute,
   InstancedBufferGeometry,
   Mesh,
   ShaderMaterial,
   SphereBufferGeometry,
-  TorusKnotBufferGeometry,
   Vector3,
 } from "three";
 import anime from "animejs/lib/anime.es.js";
 
 export class LineStuff {
-  constructor(mini, config = {}) {
+  constructor(
+    mini,
+    {
+      name = "fall",
+      position = new Vector3(),
+      delay = 0.0,
+      baseGeometry = new SphereBufferGeometry(3, 64, 64),
+    }
+  ) {
     this.mini = mini;
-    return this.setup(config);
+    return this.setup({
+      name,
+      position,
+      delay,
+      baseGeometry,
+    });
   }
-  async setup({ position = new Vector3(), delay = 0.0, shape = "sphere" }) {
+  async setup({ name, position, delay, baseGeometry }) {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.05;
     let height = 4;
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 1, 1, 1);
 
-    let baseGeometry = new SphereBufferGeometry(3, 64, 64);
-    if (shape === "torus") {
-      baseGeometry = new TorusKnotBufferGeometry(2, 0.25, 500, 127, 4);
-    }
-    if (shape === "box") {
-      baseGeometry = new BoxBufferGeometry(5, 5, 5, 50, 50, 50);
-    }
+    // let baseGeometry = new SphereBufferGeometry(3, 64, 64);
 
     let iGeo = new InstancedBufferGeometry();
     iGeo.copy(pGeo);
@@ -67,7 +73,7 @@ export class LineStuff {
       },
       depthTest: false,
       transparent: true,
-      side: DoubleSide,
+      side: FrontSide,
       vertexShader: require("./shaders/vlines.vert.js"),
       fragmentShader: require("./shaders/vlines.frag.js"),
     });
@@ -81,26 +87,30 @@ export class LineStuff {
       scene.add(iMesh);
     });
 
-    let runner = () => {
+    let current = false;
+    let runner = ({ done = () => {}, delay = 0 }) => {
       progress.value = 0.0;
-      anime({
+      current = anime({
         targets: [progress],
         value: 1,
         easing: "easeOutSine", //"easeOutQuad",
         duration: 2000,
+        delay,
         complete: () => {
-          setTimeout(() => {
-            runner();
-          }, 1500);
+          done();
         },
       });
     };
 
-    setTimeout(() => {
-      runner();
-    }, delay);
+    this.run = runner;
+    this.hide = () => {
+      if (current) {
+        current.pause();
+      }
+      progress.value = 0.0;
+    };
 
-    this.mini.onLoop(() => {});
+    this.mini.set(name, this);
 
     return this;
   }

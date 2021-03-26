@@ -3,40 +3,84 @@ import { Mini } from "../shared/Mini";
 import { Base } from "../shared/Base";
 import { LineStuff } from "./LineStuff";
 import { SceneControls } from "../shared/SceneControls";
-import { Vector3 } from "three";
+import {
+  BoxBufferGeometry,
+  PlaneBufferGeometry,
+  SphereBufferGeometry,
+  Vector3,
+} from "three";
 
 //
 // import { SceneControls } from "../shared/SceneControls";
 
 export const LinesCanvas = () => {
   const ref = useRef(null);
+  const replayBtn = useRef(null);
   //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
+    let sphere = new SphereBufferGeometry(2.5, 32, 32);
+    let plane = new PlaneBufferGeometry(50, 50, 250, 250);
+    let box = new BoxBufferGeometry(5, 5, 5, 30, 30, 30);
+    plane.rotateX(-0.5 * Math.PI);
+
     let mods = [
       //
       new Base(mini),
+      //
       new LineStuff(mini, {
-        delay: 1 * 200.0,
-        shape: "sphere",
-        position: new Vector3(-7.0, 0.0, 0.0),
+        name: "floor",
+        baseGeometry: plane,
+        position: new Vector3(0.0, -2.5, 0.0),
       }),
       new LineStuff(mini, {
         //,
-        delay: 2 * 200.0,
-        shape: "box",
+        name: "item1",
+        baseGeometry: sphere,
         position: new Vector3(0.0, 0.0, 0.0),
       }),
       new LineStuff(mini, {
         //
-        delay: 3 * 200.0,
-        shape: "sphere",
+        name: "item2",
+        baseGeometry: sphere,
         position: new Vector3(7.0, 0.0, 0.0),
+      }),
+      new LineStuff(mini, {
+        //
+        name: "item3",
+        baseGeometry: box,
+        position: new Vector3(-7.0, 0.0, 0.0),
       }),
       new SceneControls(mini),
     ];
 
     //, new SceneControls(mini)
+    let play = () => {
+      Promise.all([
+        mini.i.floor,
+        mini.i.item1,
+        mini.i.item2,
+        mini.i.item3,
+        //
+      ]).then(([floor, item1, item2, item3]) => {
+        floor.hide();
+        item1.hide();
+        item2.hide();
+        item3.hide();
+
+        floor.run({});
+
+        item1.run({ delay: 1500 });
+        item2.run({ delay: 2000 });
+        item3.run({ delay: 2500 });
+      });
+    };
+    play();
+
+    replayBtn.current.style.cursor = "pointer";
+    replayBtn.current.addEventListener("click", () => {
+      play();
+    });
 
     let rAFID = 0;
 
@@ -52,6 +96,8 @@ export const LinesCanvas = () => {
         camera,
         scene,
       ]) => {
+        camera.position.x = -5;
+        camera.position.y = 5;
         camera.position.z = 15;
         renderer.autoClear = false;
         workDisplay = () => {
@@ -87,7 +133,16 @@ export const LinesCanvas = () => {
     return cleaner;
   }, []);
 
-  return <div className="w-full h-full" ref={ref}></div>;
+  return (
+    <div className="w-full h-full" ref={ref}>
+      <span
+        className="bg-white p-3 m-3 inline-block absolute top-0 left-0 text-xs"
+        ref={replayBtn}
+      >
+        Replay
+      </span>
+    </div>
+  );
 };
 
 if (module.hot) {
