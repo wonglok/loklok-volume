@@ -19,18 +19,19 @@ export const LinesCanvas = () => {
   //
   useEffect(() => {
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    let sphere = new SphereBufferGeometry(2.5, 32, 32);
-    let plane = new PlaneBufferGeometry(50, 50, 250, 250);
-    let box = new BoxBufferGeometry(5, 5, 5, 30, 30, 30);
-    plane.rotateX(-0.5 * Math.PI);
 
-    let mods = [
+    let sphere = new SphereBufferGeometry(2.5, 45, 45);
+    let box = new BoxBufferGeometry(5, 5, 5, 30, 30, 30);
+    let floor = new PlaneBufferGeometry(50, 50, 150, 150);
+    floor.rotateX(-0.5 * Math.PI);
+
+    let parts = [
       //
       new Base(mini),
       //
       new LineStuff(mini, {
         name: "floor",
-        baseGeometry: plane,
+        baseGeometry: floor,
         position: new Vector3(0.0, -2.5, 0.0),
       }),
       new LineStuff(mini, {
@@ -117,7 +118,7 @@ export const LinesCanvas = () => {
     let cleaner = () => {
       cancelAnimationFrame(rAFID);
       mini.clean();
-      mods.forEach((m) => {
+      parts.forEach((m) => {
         if (m.clean) {
           m.clean();
         }

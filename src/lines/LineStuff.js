@@ -34,11 +34,9 @@ export class LineStuff {
   }
   async setup({ name, position, delay, baseGeometry }) {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
-    let unitSize = 0.05;
+    let unitSize = 0.075;
     let height = 4;
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 1, 1, 1);
-
-    // let baseGeometry = new SphereBufferGeometry(3, 64, 64);
 
     let iGeo = new InstancedBufferGeometry();
     iGeo.copy(pGeo);
