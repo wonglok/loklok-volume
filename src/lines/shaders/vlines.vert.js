@@ -28,7 +28,7 @@ module.exports = /* glsl */ `
 
     faceMePos *= calcLookAtMatrix(vec3(0.0), vec3(cameraPosition.xyz), 0.0) * faceMePos;
 
-    vec3 newOffsets = offsets + vec3(0.0, initHeight * myProgress, 0.0) * rand3 + vec3(0.0, rand3.y * initHeight * 3.0 * myProgress * rand3.y, 0.0);
+    vec3 newOffsets = offsets + vec3(0.0, initHeight * myProgress * cos(offsets.z*myProgress)*10., 0.0) * rand3 + vec3(0.0, rand3.y * initHeight * 3.0 * myProgress * rand3.y, 0.0);
 
     vec3 outputPos0 = faceMePos + newOffsets;
 
