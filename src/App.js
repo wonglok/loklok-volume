@@ -135,7 +135,7 @@ function App() {
             <Link to={"/life-energy-water"}>Life Energy Water</Link>
           </div>
           <div className={"m-5"}>
-            <Link to={"/line-stuff"}>Line Stuff</Link>
+            <Link to={"/line-stuff"}>Line Stuff (broken)</Link>
           </div>
           <div className={"m-5"}>
             <Link to={"/line-drop"}>Line Drop</Link>
