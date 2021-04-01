@@ -81,6 +81,7 @@ export class LineStuff {
     iMesh.frustumCulled = false;
 
     iMesh.position.copy(position);
+    this.mesh = iMesh;
 
     onScene((scene) => {
       scene.add(iMesh);
