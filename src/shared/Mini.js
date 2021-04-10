@@ -101,7 +101,7 @@ export class Mini {
       };
     };
 
-    this.i = new Proxy(
+    this.ready = new Proxy(
       {},
       {
         get: (obj, key) => {

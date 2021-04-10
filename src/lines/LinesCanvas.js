@@ -15,8 +15,9 @@ import {
 } from "three";
 
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import {DRACOLoader} from "three/examples/jsm/loaders/DRACOLoader.js";
-
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+//
+// import { SceneControls } from "../shared/SceneControls";
 
 export const LinesCanvas = () => {
   const ref = useRef(null);
@@ -139,7 +140,7 @@ export const LinesCanvas = () => {
     }
 
     let mini = new Mini({ name: "base", domElement: ref.current, window });
-    
+
     let sphere = new SphereBufferGeometry(2.5, 45, 45);
     let box = new BoxBufferGeometry(5, 5, 5, 30, 30, 30);
     let floor = new PlaneBufferGeometry(50, 50, 150, 150);
@@ -164,8 +165,8 @@ export const LinesCanvas = () => {
             console.error(scene)
           }
         )*/
-      } )
-    })
+      });
+    });
 
     let parts = [
       //
