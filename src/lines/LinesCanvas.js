@@ -31,8 +31,7 @@ export const LinesCanvas = () => {
       var loaderModel = new GLTFLoader();
       const dracoLoader = new DRACOLoader();
       dracoLoader.setDecoderConfig( { type: 'jsm' } );
-      //dracoLoader.setDecoderPath( "three/examples/js/libs/draco/" );
-      dracoLoader.setDecoderPath( "https://localhost:5000/draco/" );
+      dracoLoader.setDecoderPath( "draco/" );
       loaderModel.setDRACOLoader( dracoLoader );
 
       loaderModel.load(
@@ -50,7 +49,7 @@ export const LinesCanvas = () => {
 
           let loaderText = new FontLoader();
           loaderText.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
-            const geometry = new TextGeometry( 'hello', {
+            const geometry = new TextGeometry( 'Smart Showroom Test', {
                 font: font,
                 size: 20,
                 height: 2,
@@ -61,15 +60,19 @@ export const LinesCanvas = () => {
                 bevelOffset: 0,
                 bevelSegments: 10
               } );
+
             let super_mesh = new Mesh(geometry,new Material());
-            super_mesh.geometry.scale(0.1,0.1,0.1)
+            super_mesh.geometry.scale(0.7,0.7,0.7)
             super_mesh.name = "text_mesh";
             
-            geometries.push(super_mesh);
+            if (index==0) {
+              //geometries.push(super_mesh);
+            }
+            
             geometries.forEach( object => {
 
-              if (object.name == "text_mesh") {
-                placement = new Vector3(-5.0* index, +5.0, -5.0*index) ; 
+              if (object.name === "text_mesh") {
+                placement = new Vector3(-5.0* index, +300.0, -5.0*index) ; 
               }
 
               let object_name = object.name + "_" + index;
@@ -87,20 +90,16 @@ export const LinesCanvas = () => {
             console.error(objects_name)
             let play = () => {
   
-              let mini_objects = []
+              let ready = mini.ready;
   
-              objects_name.forEach(element => {
-                mini_objects.push(mini.i[element])
+              const set_of_promises = objects_name.map(element => {
+                return ready[element];
               });
-  
-              Promise.all([
-                mini.i.floor,
-                mini.i.item1,
-                mini.i.item2,
-                mini.i.item3,
-                //
-              ].concat(mini_objects)).then( (array_items) => {
-                
+
+              Promise.all(
+                set_of_promises
+              ).then( (array_items) => {
+                console.log(array_items)
                 array_items.forEach( (item) => {
                   item.hide();
                 })
@@ -127,9 +126,9 @@ export const LinesCanvas = () => {
     };
 
 
-    const uris = ["http://localhost:5000/showroom_garments.gltf","http://localhost:5000/showroom_motorcycles.gltf"]
-    const placements = [new Vector3(+60.0 +  0.0, -40.0, -5.0),new Vector3(+60.0 +  10.0, -40.0, -5.0), new Vector3(+0.0 +  0.0, 0.0, -5.0),new Vector3(+0.0 +  10.0, -3.0, -5.0)]
-    const scales = [1,1,0.2,0.2]
+    const uris = ["http://localhost:5000/gltf/showroom_garments.gltf","http://localhost:5000/gltf/showroom_motorcycles.gltf","http://localhost:5000/gltf/motorcycles.gltf"]
+    const placements = [new Vector3(-500, -40.0, -5.0),new Vector3(+500, -40.0, -5.0), new Vector3(+500, -30.0, +140.0),new Vector3(+0.0 +  10.0, -3.0, -5.0)]
+    const scales = [1,1,3,0.2]
     const effect_speed = [150,150,300,50]
     
     const loadModel2 = async (mini,uri,index) =>{
