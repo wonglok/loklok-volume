@@ -87,7 +87,6 @@ export const LinesCanvas = () => {
               objects_name.push(object_name)
             } )
   
-            console.error(objects_name)
             let play = () => {
   
               let ready = mini.ready;
@@ -99,7 +98,6 @@ export const LinesCanvas = () => {
               Promise.all(
                 set_of_promises
               ).then( (array_items) => {
-                console.log(array_items)
                 array_items.forEach( (item) => {
                   item.hide();
                 })
@@ -126,7 +124,7 @@ export const LinesCanvas = () => {
     };
 
 
-    const uris = ["http://localhost:5000/gltf/showroom_garments.gltf","http://localhost:5000/gltf/showroom_motorcycles.gltf","http://localhost:5000/gltf/motorcycles.gltf"]
+    const uris = ["gltf/showroom_garments.gltf","gltf/showroom_motorcycles.gltf","gltf/motorcycles.gltf"]
     const placements = [new Vector3(-500, -40.0, -5.0),new Vector3(+500, -40.0, -5.0), new Vector3(+500, -30.0, +140.0),new Vector3(+0.0 +  10.0, -3.0, -5.0)]
     const scales = [1,1,3,0.2]
     const effect_speed = [150,150,300,50]
@@ -148,8 +146,6 @@ export const LinesCanvas = () => {
     // load a set of GLTF objects
     uris.forEach( (uri,index) => {
       loadModel2(mini,uri,index).then( (model)=> {
-        console.log(model.scene);
-
         /*
 
         //maybe scene.add(model.scene) to render faces for 3D models composed of flat surface low polygon ?
