@@ -65,7 +65,7 @@ export const LinesCanvas = () => {
             super_mesh.geometry.scale(0.7,0.7,0.7)
             super_mesh.name = "text_mesh";
             
-            if (index==0) {
+            if (index===0) {
               //geometries.push(super_mesh);
             }
             
