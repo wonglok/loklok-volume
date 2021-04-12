@@ -9,6 +9,7 @@ import {
   InstancedBufferGeometry,
   Mesh,
   ShaderMaterial,
+  WebGLRenderTarget,
   SphereBufferGeometry,
   Vector3,
 } from "three";
@@ -35,7 +36,7 @@ export class LineStuff {
   async setup({ name, position, delay, baseGeometry }) {
     let onScene = (cb) => this.mini.get("scene").then((e) => cb(e));
     let unitSize = 0.075;
-    let height = 4;
+    let height = 10;
     let pGeo = new BoxBufferGeometry(unitSize, height, unitSize, 1, 1, 1);
 
     let iGeo = new InstancedBufferGeometry();
@@ -81,20 +82,59 @@ export class LineStuff {
 
     iMesh.position.copy(position);
 
+    let alpha_faces = 0.2;
+    if ( name.indexOf('text_mesh') !== -1) {
+      alpha_faces = 1.0;
+    }
+    let progress_faces = { value: 0};
+
+    let texture = new WebGLRenderTarget(
+      window.innerWidth,
+      window.innerHeight
+    ).texture;
+
+    let iMeshFace = new Mesh(baseGeometry, new ShaderMaterial({
+      uniforms: {
+        envMap: { value: texture },
+        uReso: { value: alpha_faces },
+        progress_faces,
+      },
+      depthTest: false,
+      transparent: true,
+      side: FrontSide,
+      vertexShader: require("./shaders/vfaces.vert.js"),
+      fragmentShader: require("./shaders/vfaces.frag.js"),
+    }
+    ));
+    iMeshFace.frustumCulled = false;
+    iMeshFace.position.copy(position);
+
     onScene((scene) => {
       scene.add(iMesh);
+      scene.add(iMeshFace);
     });
 
-    let current = false;
+    let current_lines = false;
+    let current_faces = false;
     let runner = ({ done = () => {}, delay = 0 }) => {
       progress.value = 0.0;
-      current = anime({
+      current_lines = anime({
         targets: [progress],
-        value: 1,
+        value: 1.0,
         easing: "easeOutSine", //"easeOutQuad",
         duration: 2000,
         delay,
         complete: () => {
+          current_faces = anime({
+            targets: [progress_faces],
+            value: 1.0,
+            easing: "easeOutSine", //"easeOutQuad",
+            duration: 3000,
+            delay,
+            complete: () => {
+              done();
+            },
+          });
           done();
         },
       });
@@ -102,10 +142,14 @@ export class LineStuff {
 
     this.run = runner;
     this.hide = () => {
-      if (current) {
-        current.pause();
+      if (current_lines) {
+        current_lines.pause();
+      }
+      if (current_faces) {
+        current_faces.pause();
       }
       progress.value = 0.0;
+      progress_faces.value = 0.0;
     };
 
     this.mini.set(name, this);

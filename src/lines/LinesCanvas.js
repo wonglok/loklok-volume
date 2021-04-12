@@ -7,6 +7,10 @@ import {
   BoxBufferGeometry,
   PlaneBufferGeometry,
   SphereBufferGeometry,
+  TextGeometry,
+  FontLoader,
+  Mesh,
+  Material,
   Vector3,
 } from "three";
 
@@ -18,94 +22,119 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 export const LinesCanvas = () => {
   const ref = useRef(null);
   const replayBtn = useRef(null);
-  //
 
   useEffect(() => {
-    // load GLTF loader
-    const loadModel = async (mini, uri) => {
-      return new Promise((resolve) => {
-        var loaderModel = new GLTFLoader();
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderConfig({ type: "jsm" });
-        //dracoLoader.setDecoderPath( "three/examples/js/libs/draco/" );
-        dracoLoader.setDecoderPath("http://192.168.0.22:5000/draco/");
-        loaderModel.setDRACOLoader(dracoLoader);
 
-        loaderModel.load(uri, (model) => {
-          let geometries = [];
-          let objects_name = [];
+    const loadModel = async (mini,uri,index,placement,scale,effect_speed) => 
+    {
+    return new Promise(resolve => {
+      var loaderModel = new GLTFLoader();
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderConfig( { type: 'jsm' } );
+      dracoLoader.setDecoderPath( "draco/" );
+      loaderModel.setDRACOLoader( dracoLoader );
 
-          // find all geometries in model
-          model.scene.traverse(function (object) {
-            if (object.isMesh === true) {
-              geometries.push(object);
+      loaderModel.load(
+        uri,
+        model => {
+
+          let geometries = []
+          let objects_name = []
+
+          model.scene.traverse( function ( object ) {
+            if ( object.isMesh === true ) {
+              geometries.push( object );
             }
           });
 
-          let placement = new Vector3(-10.0, +9.0, -0.0); //new Vector3(+60.0, -40.0, -5.0) ;
+          let loaderText = new FontLoader();
+          loaderText.load( 'fonts/helvetiker_regular.typeface.json', function ( font ) {
+            const geometry = new TextGeometry( 'Smart Showroom Test', {
+                font: font,
+                size: 20,
+                height: 2,
+                curveSegments: 20,
+                bevelEnabled: false,
+                bevelThickness: 10,
+                bevelSize: 8,
+                bevelOffset: 0,
+                bevelSegments: 10
+              } );
 
-          geometries.forEach((object) => {
-            let object_name = object.name;
-            let object_geo = object.geometry;
-            object_geo.scale(5, 5, 5);
+            let super_mesh = new Mesh(geometry,new Material());
+            super_mesh.geometry.scale(0.7,0.7,0.7)
+            super_mesh.name = "text_mesh";
+            
+            if (index===0) {
+              //geometries.push(super_mesh);
+            }
+            
+            geometries.forEach( object => {
 
-            new LineStuff(mini, {
-              name: object_name,
-              baseGeometry: object_geo,
-              position: placement,
-            });
-            objects_name.push(object_name);
-          });
+              if (object.name === "text_mesh") {
+                placement = new Vector3(-5.0* index, +300.0, -5.0*index) ; 
+              }
 
-          console.error(objects_name);
-          let play = () => {
-            let mini_objects = [];
-
-            objects_name.forEach((element) => {
-              mini_objects.push(mini.i[element]);
-            });
-
-            Promise.all(
-              [
-                mini.ready.floor,
-                mini.ready.item1,
-                mini.ready.item2,
-                mini.ready.item3,
-                //
-              ].concat(mini_objects)
-            ).then((array_items) => {
-              array_items.forEach((item) => {
-                item.hide();
+              let object_name = object.name + "_" + index;
+              let object_geo = object.geometry;
+              object_geo.scale(scale,scale,scale);
+  
+              new LineStuff(mini, {
+                name: object_name,
+                baseGeometry: object_geo,
+                position: placement,
+              });
+              objects_name.push(object_name)
+            } )
+  
+            let play = () => {
+  
+              let ready = mini.ready;
+  
+              const set_of_promises = objects_name.map(element => {
+                return ready[element];
               });
 
-              array_items.forEach((item, idx) => {
-                item.run({ delay: idx * 30 });
+              Promise.all(
+                set_of_promises
+              ).then( (array_items) => {
+                array_items.forEach( (item) => {
+                  item.hide();
+                })
+        
+                array_items.forEach( (item, idx) => {
+                  item.run({ delay: idx*effect_speed });
+                })
+  
               });
-            });
-          };
-          play();
-          replayBtn.current.style.cursor = "pointer";
-          replayBtn.current.addEventListener("click", () => {
+            };
             play();
-          });
-          resolve(model);
-        });
-      });
+            replayBtn.current.style.cursor = "pointer";
+            replayBtn.current.addEventListener("click", () => {
+              play();
+            });
+            resolve(model);
+          } );
+          
+
+
+        }
+      );
+    });
     };
 
-    //const uris = ["http://localhost:5000/2018_Mclaren_senna.gltf"]
-    //const uris = ["http://localhost:5000/showroom_garments.gltf"]
-    //const uris = ["http://localhost:5000/showroom_motorcycles.gltf"]
-    //const uris = ["http://localhost:5000/villa_joli.gltf"]
-    //const uris = ["http://localhost:5000/house_joli.gltf"]
-    //const uris = ["http://localhost:5000/DE-LEB-08.gltf"]
-    //const uris = ["http://localhost:5000/DE-LEB-08.gltf"]
-    const uris = ["http://192.168.0.22:5000/katedra-processed.gltf"];
 
-    const loadModel2 = async (mini, uri) => {
-      const [model] = await Promise.all([loadModel(mini, uri)]);
-      return model;
-    };
+    const uris = ["gltf/showroom_garments.gltf","gltf/showroom_motorcycles.gltf","gltf/motorcycles.gltf"]
+    const placements = [new Vector3(-500, -40.0, -5.0),new Vector3(+500, -40.0, -5.0), new Vector3(+500, -30.0, +140.0),new Vector3(+0.0 +  10.0, -3.0, -5.0)]
+    const scales = [1,1,3,0.2]
+    const effect_speed = [150,150,300,50]
+    
+    const loadModel2 = async (mini,uri,index) =>{
+      const [model] = await Promise.all([
+        loadModel(mini, uri, index, placements[index],scales[index],effect_speed[index]),
+      ]);
+      return model
+    }
 
     let mini = new Mini({ name: "base", domElement: ref.current, window });
 
@@ -115,10 +144,13 @@ export const LinesCanvas = () => {
     floor.rotateX(-0.5 * Math.PI);
 
     // load a set of GLTF objects
-    uris.forEach((uri) => {
-      loadModel2(mini, uri).then((model) => {
-        console.log(model.scene);
-        /*Promise.all([
+    uris.forEach( (uri,index) => {
+      loadModel2(mini,uri,index).then( (model)=> {
+        /*
+
+        //maybe scene.add(model.scene) to render faces for 3D models composed of flat surface low polygon ?
+
+        Promise.all([
           mini.get("renderer"),
           mini.get("camera"),
           mini.get("scene"),
@@ -160,8 +192,6 @@ export const LinesCanvas = () => {
       }),
       new SceneControls(mini),
     ];
-
-    //, new SceneControls(mini)
 
     let rAFID = 0;
 
