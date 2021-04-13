@@ -13,7 +13,7 @@ import {
   Vector3,
 } from "three";
 import anime from "animejs/lib/anime.es.js";
-import { resample } from "@thi.ng/geom-resample";
+// import { resample } from "@thi.ng/geom-resample";
 
 export class LineStuff {
   constructor(
