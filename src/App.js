@@ -19,6 +19,7 @@ import { LifeCanvas } from "./life-energy/LifeCanvas";
 import { LifeWaterCanvas } from "./life-energy-water/LifeWaterCanvas";
 import { LinesCanvas } from "./lines/LinesCanvas";
 import { LinesDropCanvas } from "./linedrop/LinesDropCanvas";
+import { EnergyWarCanvas } from "./energy-war/EnergyCanvas";
 
 function App() {
   return (
@@ -82,6 +83,9 @@ function App() {
         <Route exact path="/line-drop">
           <LinesDropCanvas></LinesDropCanvas>
         </Route>
+        <Route exact path="/energy-war">
+          <EnergyWarCanvas></EnergyWarCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -139,6 +143,9 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/line-drop"}>Line Drop</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/energy-war"}>Energy War</Link>
           </div>
         </Route>
       </Switch>

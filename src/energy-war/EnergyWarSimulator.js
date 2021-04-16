@@ -34,6 +34,7 @@ vec3 fromBall(float r, float az, float el) {
     r * sin(el)
   );
 }
+
 void toBall(vec3 pos, out float az, out float el) {
   az = atan2(pos.y, pos.x);
   el = atan2(pos.z, sqrt(pos.x * pos.x + pos.y * pos.y));
@@ -55,7 +56,8 @@ vec3 ballify (vec3 pos, float r) {
   );
 }
 `;
-export class EnergySimulator {
+
+export class EnergyWarSimulator {
   constructor({ ...mini }, name = "EnergySimulator") {
     this.mini = {
       ...mini,
@@ -189,65 +191,78 @@ export class EnergySimulator {
       }
     }
 
-    this.shaderCode = /* glsl */ `
-      #include <common>
+    this.sharedShaderCodes = {
+      //
+      header: /* glsl */ `
+        #include <common>
 
-      precision highp float;
-      uniform highp sampler2D nowPosTex;
-      uniform highp sampler2D lastPosTex;
-      uniform float dT;
-      uniform float eT;
+        precision highp float;
+        uniform highp sampler2D nowPosTex;
+        uniform highp sampler2D lastPosTex;
+        uniform float dT;
+        uniform float eT;
 
-      uniform vec3 mouseNow;
-      uniform vec3 mouseLast;
+        uniform vec3 mouseNow;
+        uniform vec3 mouseLast;
 
-      ${Ballify}
+        ${Ballify}
 
-      float sdBox( vec3 p, vec3 b ) {
-        vec3 q = abs(p) - b;
-        return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-      }
-
-      void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
-        vec3 dif = (colliderSpherePosition) - particlePos.xyz;
-        if( length( dif ) < sphereRadius ){
-          particleVel -= normalize(dif) * dT * 1.0;
+        float sdBox( vec3 p, vec3 b ) {
+          vec3 q = abs(p) - b;
+          return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
         }
-      }
 
-      void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
-        vec3 dif = (mouseNow) - particlePos.xyz;
-
-        if( length( dif ) < sphereRadius ){
-          particleVel -= normalize(dif) * dT * 1.0;
-          vec3 mouseForce = mouseNow - mouseLast;
-          particleVel += mouseForce * dT * 2.0;
+        void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
+          vec3 dif = (colliderSpherePosition) - particlePos.xyz;
+          if( length( dif ) < sphereRadius ){
+            particleVel -= normalize(dif) * dT * 1.0;
+          }
         }
-      }
 
-      void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
-        vec3 p = (colliderBoxPosition) - particlePos.xyz;
+        // void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+        //   vec3 dif = (mouseNow) - particlePos.xyz;
+        //   if( length( dif ) < sphereRadius ){
+        //     particleVel -= normalize(dif) * dT * 1.0;
+        //     vec3 mouseForce = mouseNow - mouseLast;
+        //     particleVel += mouseForce * dT * 2.0;
+        //   }
+        // }
 
-        if(sdBox(p, boxSize) < 0.0){
-          float EPSILON_A = 0.05;
-
-          vec3 boxNormal = normalize(vec3(
-            sdBox(vec3(p.x + EPSILON_A, p.y, p.z),  boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
-            sdBox(vec3(p.x, p.y + EPSILON_A, p.z),  boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
-            sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
-          ));
-
-          particleVel -= boxNormal * dT * 1.0;
+        void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+          vec3 dif = (mouseNow) - particlePos.xyz;
+          if( length( dif ) - sphereRadius < 0.0 ){
+            particleVel -= normalize(dif) * dT * 1.0;
+            vec3 mouseForce = mouseNow - mouseLast;
+            particleVel += mouseForce * dT * 2.0;
+          } else if (length( dif ) - sphereRadius < sphereRadius * 0.5) {
+            particleVel += normalize(dif) * dT * 1.0;
+            vec3 mouseForce = mouseNow - mouseLast;
+            particleVel += mouseForce * dT * 2.0;
+          }
         }
-      }
 
-      // 0001
+        void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
+          vec3 p = (colliderBoxPosition) - particlePos.xyz;
 
-      void handleCollision (inout vec4 pos, inout vec3 vel) {
-        ${collisionCode}
-      }
+          if(sdBox(p, boxSize) < 0.0){
+            float EPSILON_A = 0.05;
 
-      void main(void) {
+            vec3 boxNormal = normalize(vec3(
+              sdBox(vec3(p.x + EPSILON_A, p.y, p.z),  boxSize) - sdBox(vec3(p.x - EPSILON_A, p.y, p.z), boxSize),
+              sdBox(vec3(p.x, p.y + EPSILON_A, p.z),  boxSize) - sdBox(vec3(p.x, p.y - EPSILON_A, p.z), boxSize),
+              sdBox(vec3(p.x, p.y, p.z  + EPSILON_A), boxSize) - sdBox(vec3(p.x, p.y, p.z - EPSILON_A), boxSize)
+            ));
+
+            particleVel -= boxNormal * dT * 1.0;
+          }
+        }
+
+        void handleCollision (inout vec4 pos, inout vec3 vel) {
+          ${collisionCode}
+        }
+      `,
+
+      mainBody: ({ type = "position" }) => /* glsl */ `
         vec2 uv = gl_FragCoord.xy / resolution.xy;
 
         vec4 pos = texture2D(nowPosTex, uv);
@@ -297,8 +312,25 @@ export class EnergySimulator {
         vel *= .96; // dampening
 
         vec3 p = pos.xyz + vel;
-        gl_FragColor = vec4(p , life);
 
+        gl_FragColor = vec4(p , life);
+      `,
+
+      //
+    };
+
+    this.metaShaderCode = /* glsl */ `
+    ${this.sharedShaderCodes.header}
+
+    void main(void) {
+      ${this.sharedShaderCodes.mainBody({ type: "meta" })}
+    }
+    `;
+
+    this.shaderCode = /* glsl */ `
+      ${this.sharedShaderCodes.header}
+      void main(void) {
+        ${this.sharedShaderCodes.mainBody({ type: "position" })}
       }
       `;
 
@@ -374,15 +406,40 @@ export class EnergySimulator {
 
       nowPosTex: { value: null },
       lastPosTex: { value: null },
+
+      nowMetaTex: { value: null },
+      lastMetaTex: { value: null },
       dT: { value: 0 },
       eT: { value: 0 },
     });
+
+    this.filter1 = this.gpuCompute.createShaderMaterial(this.metaShaderCode, {
+      mouseNow: {
+        value: mouseNow,
+      },
+      mouseLast: {
+        value: mouseLast,
+      },
+
+      nowPosTex: { value: null },
+      lastPosTex: { value: null },
+
+      nowMetaTex: { value: null },
+      lastMetaTex: { value: null },
+      dT: { value: 0 },
+      eT: { value: 0 },
+    });
+
+    this.rttMeta0 = this.gpuCompute.createRenderTarget();
+    this.rttMeta1 = this.gpuCompute.createRenderTarget();
+    this.rttMeta2 = this.gpuCompute.createRenderTarget();
 
     this.rttPos0 = this.gpuCompute.createRenderTarget();
     this.rttPos1 = this.gpuCompute.createRenderTarget();
     this.rttPos2 = this.gpuCompute.createRenderTarget();
 
     this.loopRTTPos = [this.rttPos0, this.rttPos1, this.rttPos2];
+    this.loopRTTMeta = [this.rttMeta0, this.rttMeta1, this.rttMeta2];
 
     let prepInitTexture = () => {
       var tex = this.gpuCompute.createTexture();
@@ -401,6 +458,10 @@ export class EnergySimulator {
       this.gpuCompute.renderTexture(tex, this.loopRTTPos[0]);
       this.gpuCompute.renderTexture(tex, this.loopRTTPos[1]);
       this.gpuCompute.renderTexture(tex, this.loopRTTPos[2]);
+
+      this.gpuCompute.renderTexture(tex, this.loopRTTMeta[0]);
+      this.gpuCompute.renderTexture(tex, this.loopRTTMeta[1]);
+      this.gpuCompute.renderTexture(tex, this.loopRTTMeta[2]);
     };
 
     prepInitTexture();
@@ -426,26 +487,44 @@ export class EnergySimulator {
       "position",
       new BufferAttribute(new Float32Array(uv), 3)
     );
+
     let matPt = new ShaderMaterial({
       uniforms: {
         nowPosTex: {
           value: null,
         },
+        nowMetaTex: {
+          value: null,
+        },
+        lastPosTex: {
+          value: null,
+        },
+        lastMetaTex: {
+          value: null,
+        },
       },
       vertexShader: /* glsl */ `
-          uniform sampler2D nowPosTex;
-          void main (void) {
-            vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            gl_PointSize = 1.0;
-          }
-          `,
+        uniform sampler2D nowPosTex;
+        varying vec2 vUv;
+
+        //
+        void main (void) {
+          vec3 pos = texture2D(nowPosTex, uv.xy).xyz;
+          vUv = uv.xy;
+
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = 1.0;
+        }
+      `,
       fragmentShader: /* glsl */ `
-          void main (void) {
-            gl_FragColor = vec4(0.7, 0.7, 1.0, 1.0);
-          }
-          `,
+        void main (void) {
+          vec3 delta = vec3(1.0, 1.0, 1.0);
+
+          gl_FragColor = vec4(delta.x, delta.y, delta.z, 1.0);
+        }
+      `,
     });
+
     let particles = new Points(geoPt, matPt);
     particles.frustumCulled = false;
     scene.add(particles);
@@ -453,8 +532,13 @@ export class EnergySimulator {
     this.mini.onLoop(() => {
       if (this.filter0) {
         this.compute();
-        let outdata = this.loopRTTPos[2];
-        matPt.uniforms.nowPosTex.value = outdata.texture;
+
+        // link to render
+        let outdataPos = this.loopRTTPos[2];
+        matPt.uniforms.nowPosTex.value = outdataPos.texture;
+
+        let outdataMeta = this.loopRTTMeta[2];
+        matPt.uniforms.nowMetaTex.value = outdataMeta.texture;
       }
     });
   }
@@ -468,12 +552,30 @@ export class EnergySimulator {
       this.loopRTTPos = [this.rttPos1, this.rttPos2, this.rttPos0];
     }
 
+    if (this.tick % 3 === 0) {
+      this.loopRTTMeta = [this.rttMeta0, this.rttMeta1, this.rttMeta2];
+    } else if (this.tick % 3 === 1) {
+      this.loopRTTMeta = [this.rttMeta2, this.rttMeta0, this.rttMeta1];
+    } else if (this.tick % 3 === 2) {
+      this.loopRTTMeta = [this.rttMeta1, this.rttMeta2, this.rttMeta0];
+    }
+
     this.filter0.uniforms.nowPosTex.value = this.loopRTTPos[0].texture;
+    this.filter0.uniforms.nowMetaTex.value = this.loopRTTMeta[0].texture;
     this.filter0.uniforms.lastPosTex.value = this.loopRTTPos[1].texture;
+    this.filter0.uniforms.lastMetaTex.value = this.loopRTTMeta[1].texture;
     this.filter0.uniforms.dT.value = this.clock.getDelta();
     this.filter0.uniforms.eT.value = this.clock.getElapsedTime();
 
+    this.filter1.uniforms.nowPosTex.value = this.loopRTTPos[0].texture;
+    this.filter1.uniforms.nowMetaTex.value = this.loopRTTMeta[0].texture;
+    this.filter1.uniforms.lastPosTex.value = this.loopRTTPos[1].texture;
+    this.filter1.uniforms.lastMetaTex.value = this.loopRTTMeta[1].texture;
+    this.filter1.uniforms.dT.value = this.clock.getDelta();
+    this.filter1.uniforms.eT.value = this.clock.getElapsedTime();
+
     this.gpuCompute.doRenderTarget(this.filter0, this.loopRTTPos[2]);
+    this.gpuCompute.doRenderTarget(this.filter1, this.loopRTTMeta[2]);
 
     this.tick++;
   }
