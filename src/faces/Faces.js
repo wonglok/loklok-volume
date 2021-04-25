@@ -46,12 +46,12 @@ export class Faces {
           //
           // dropMesh.rotation.x = Math.PI * 0.5;
           // dropMesh.rotation.z = Math.PI * 0.5;
-          dropMesh.scale.set(300, 300, 300);
+          dropMesh.scale.set(500, 500, 500);
           appScene.add(dropMesh);
 
           // mesh.rotation.x = Math.PI * 0.5;
           // mesh.rotation.z = Math.PI * 0.5;
-          mesh.scale.set(300, 300, 300);
+          mesh.scale.set(500, 500, 500);
           appScene.add(mesh);
         });
     });
@@ -175,10 +175,8 @@ export class FaceAnimation {
       node.fragmentShader = node.fragmentShader.replace(
         `gl_FragColor = vec4( outgoingLight, diffuseColor.a );`,
         /* glsl */ `
-
 // float transition = smoothstep(0.0, 1.0, abs(sin((vScan.x) + time)));
         gl_FragColor = vec4(outgoingLight, diffuseColor.a * vOpacity);
-
         `
       );
     };
@@ -225,8 +223,8 @@ export class FaceAnimation {
           } else if (slick < 0.1) {
             float slickP = pow(slick * 10.0, 0.8);
 
-            box.y = mix(box.y + 0.003, box.y, slickP);
-            box.y = mix(box.y * 500.0, box.y, slickP);
+            box.y = mix(box.y + 0.001, box.y, slickP);
+            box.y = mix(box.y * 100.0, box.y, slickP);
 
             vOpacity = slick * 5.0;
           }
