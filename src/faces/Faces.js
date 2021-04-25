@@ -236,9 +236,9 @@ export class FaceAnimation {
           vec4 mvPosition = modelViewMatrix * vec4(nPos, 1.0);
 
           vColor = vec3(
-            rand(0.1 + mvPosition.xx),
-            rand(0.2 + mvPosition.yy),
-            rand(0.3 + mvPosition.zz)
+            0.2 + rand(0.1 + mvPosition.xx),
+            0.2 + rand(0.2 + mvPosition.yy),
+            0.2 + rand(0.3 + mvPosition.zz)
           );
 
           gl_Position = projectionMatrix * mvPosition;
@@ -256,7 +256,7 @@ export class FaceAnimation {
         varying float vOpacity;
 
         void main (void) {
-        gl_FragColor = vec4(vColor.rgb, (vOpacity) * 0.45);
+        gl_FragColor = vec4(vColor.rgb, (vOpacity));
         }
       `,
     });
