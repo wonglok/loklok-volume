@@ -7,6 +7,7 @@ import {
   MeshStandardMaterial,
   PointLight,
 } from "three";
+//
 import { Clock } from "three";
 import { Points } from "three";
 import { ShaderMaterial } from "three";
@@ -42,6 +43,7 @@ void toBall(vec3 pos, out float az, out float el) {
 
 // float az = 0.0;
 // float el = 0.0;
+
 // vec3 noiser = vec3(lastVel);
 // toBall(noiser, az, el);
 // lastVel.xyz = fromBall(1.0, az, el);
@@ -72,13 +74,13 @@ export class EnergyWarSimulator {
       },
       {
         type: "static-sphere",
-        position: new Vector3(0.9, 0.0, 0.0),
-        radius: 0.35,
+        position: new Vector3(0.9, 1.8, 0.0),
+        radius: 1.3,
       },
       {
         type: "static-sphere",
-        position: new Vector3(2.0, -2.0, 0.0),
-        radius: 1.4,
+        position: new Vector3(3.0, -2.0, 0.0),
+        radius: 1.8,
       },
       {
         type: "static-sphere",
@@ -92,7 +94,7 @@ export class EnergyWarSimulator {
       },
       {
         type: "static-box",
-        position: new Vector3(0.9, 0.8, 0.0),
+        position: new Vector3(-0.9, 0.0, 0.0),
         boxSize: new Vector3(1.0, 0.1, 1.0),
       },
     ];
@@ -154,6 +156,7 @@ export class EnergyWarSimulator {
       let ball = this.balls[i];
       if (ball.type === "mouse-sphere") {
         collisionCode += `collisionMouseSphere(
+          life,
           pos,
           vel,
           ${ball.radius.toFixed(3)}
@@ -162,6 +165,7 @@ export class EnergyWarSimulator {
 
       if (ball.type === "static-sphere") {
         collisionCode += `collisionStaticSphere(
+          life,
           pos,
           vel,
           vec3(
@@ -175,6 +179,7 @@ export class EnergyWarSimulator {
 
       if (ball.type === "static-box") {
         collisionCode += `collisionStaticBox(
+          life,
           pos,
           vel,
           vec3(
@@ -193,7 +198,7 @@ export class EnergyWarSimulator {
 
     this.sharedShaderCodes = {
       //
-      header: /* glsl */ `
+      header: ({ type = "position" }) => /* glsl */ `
         #include <common>
 
         precision highp float;
@@ -212,14 +217,14 @@ export class EnergyWarSimulator {
           return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
         }
 
-        void collisionStaticSphere (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
+        void collisionStaticSphere (float life, inout vec4 particlePos, inout vec3 particleVel, vec3 colliderSpherePosition, float sphereRadius) {
           vec3 dif = (colliderSpherePosition) - particlePos.xyz;
           if( length( dif ) < sphereRadius ){
             particleVel -= normalize(dif) * dT * 1.0;
           }
         }
 
-        // void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+        // void collisionMouseSphere (float life, inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
         //   vec3 dif = (mouseNow) - particlePos.xyz;
         //   if( length( dif ) < sphereRadius ){
         //     particleVel -= normalize(dif) * dT * 1.0;
@@ -228,7 +233,8 @@ export class EnergyWarSimulator {
         //   }
         // }
 
-        void collisionMouseSphere (inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
+        // holdarea
+        void collisionMouseSphere (float life, inout vec4 particlePos, inout vec3 particleVel, float sphereRadius) {
           vec3 dif = (mouseNow) - particlePos.xyz;
           if( length( dif ) - sphereRadius < 0.0 ){
             particleVel -= normalize(dif) * dT * 1.0;
@@ -241,7 +247,7 @@ export class EnergyWarSimulator {
           }
         }
 
-        void collisionStaticBox (inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
+        void collisionStaticBox (float life, inout vec4 particlePos, inout vec3 particleVel, vec3 colliderBoxPosition, vec3 boxSize) {
           vec3 p = (colliderBoxPosition) - particlePos.xyz;
 
           if(sdBox(p, boxSize) < 0.0){
@@ -257,7 +263,7 @@ export class EnergyWarSimulator {
           }
         }
 
-        void handleCollision (inout vec4 pos, inout vec3 vel) {
+        void handleCollision (inout vec4 pos, inout vec3 vel, inout float life) {
           ${collisionCode}
         }
       `,
@@ -268,9 +274,13 @@ export class EnergyWarSimulator {
         vec4 pos = texture2D(nowPosTex, uv);
         vec4 oPos = texture2D(lastPosTex, uv);
 
+        //
+
         float life = pos.w;
 
         vec3 vel = pos.xyz - oPos.xyz;
+
+        handleCollision(pos, vel, life);
 
         life -= .01 * ( rand( uv ) + 0.1 );
 
@@ -287,7 +297,7 @@ export class EnergyWarSimulator {
           life = .99;
         }
 
-        float bottomLimit = -7.0 + rand(uv + 0.1);
+        float bottomLimit = -8.0 + rand(uv + 0.1);
 
         if( life < 0. || pos.y <= bottomLimit ){
           vel = vec3( 0. );
@@ -302,12 +312,10 @@ export class EnergyWarSimulator {
         }
 
         // gravity
-        vel += vec3( 0.0 , -.003 , 0. );
+        vel += vec3( 0.0 , -.00253 , 0. );
 
         // wind
         vel += vec3( 0.001 * life, 0.0, 0.0 );
-
-        handleCollision(pos, vel);
 
         vel *= .96; // dampening
 
@@ -320,7 +328,7 @@ export class EnergyWarSimulator {
     };
 
     this.metaShaderCode = /* glsl */ `
-    ${this.sharedShaderCodes.header}
+    ${this.sharedShaderCodes.header({ type: "meta" })}
 
     void main(void) {
       ${this.sharedShaderCodes.mainBody({ type: "meta" })}
@@ -328,7 +336,7 @@ export class EnergyWarSimulator {
     `;
 
     this.shaderCode = /* glsl */ `
-      ${this.sharedShaderCodes.header}
+      ${this.sharedShaderCodes.header({ type: "position" })}
       void main(void) {
         ${this.sharedShaderCodes.mainBody({ type: "position" })}
       }
@@ -344,13 +352,15 @@ export class EnergyWarSimulator {
       transparent: true,
       color: new Color("#888"),
     });
-    let dirLight = new DirectionalLight(0xffffff, 1);
+    let white = new Color("#fff");
+    let dirLight = new DirectionalLight(white, 1);
     scene.add(dirLight);
     dirLight.position.x = 5;
     dirLight.position.y = 5;
     dirLight.position.z = 5;
 
-    let ptLight = new PointLight(0xffffff, 1);
+    let gray = new Color("#bababa");
+    let ptLight = new PointLight(gray, 1, 15);
     ptLight.position.x = 0;
     ptLight.position.y = 0;
     ptLight.position.z = 0;
