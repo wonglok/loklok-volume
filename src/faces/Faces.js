@@ -76,7 +76,7 @@ export class FaceAnimation {
     let progressShared = { value: 0 };
     let speed = 1.0;
     this.mini.onLoop(() => {
-      let time = (window.performance.now() * 0.0001 * speed) % 1;
+      let time = window.performance.now() * 0.0001 * speed;
       let tt = time % 1;
 
       progressShared.value = tt;
@@ -183,6 +183,8 @@ export class FaceAnimation {
       );
     };
 
+    //
+
     material.needsUpdate = true;
 
     let geometry = this.geometry;
@@ -223,8 +225,8 @@ export class FaceAnimation {
           } else if (slick < 0.1) {
             float slickP = pow(slick * 10.0, 0.8);
 
-            box.y = mix(box.y + 0.01, box.y, slickP);
-            box.y = mix(box.y * 200.0, box.y, slickP);
+            box.y = mix(box.y + 0.003, box.y, slickP);
+            box.y = mix(box.y * 500.0, box.y, slickP);
 
             vOpacity = slick * 5.0;
           }
@@ -279,7 +281,7 @@ export class GeoProcessor {
     //- -------
 
     let dropGeo = (this.dropGeo = new InstancedBufferGeometry());
-    dropGeo.copy(new BoxBufferGeometry(0.0002, 0.0002, 0.0002));
+    dropGeo.copy(new BoxBufferGeometry(0.0001, 0.0001, 0.0001));
 
     let points = [];
     let origPosAttr = geometry.attributes.position;
