@@ -19,9 +19,9 @@ export class PostProcessing {
     let renderPass = new RenderPass(scene, camera);
     let unrealBloomPass = new UnrealBloomPass(
       new Vector2(renderer.domElement.width, renderer.domElement.height),
-      0.8,
+      0.4,
       1.2,
-      0.2
+      0.25
     );
 
     composer.addPass(renderPass);

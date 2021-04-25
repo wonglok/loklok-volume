@@ -147,8 +147,6 @@ export class FaceAnimation {
       float bodyPercent = (yPercent * 0.5 + 0.5);
       float slick = transition - bodyPercent;
 
-
-
       if (slick < 0.0) {
         gl_Position = vec4(vec3(0.0), 0.0);
       } else if (slick < 0.1) {
@@ -166,7 +164,6 @@ export class FaceAnimation {
         #include <clipping_planes_pars_fragment>
 
         varying float vOpacity;
-
         uniform float time;
 
         float avg3 (vec3 v3color) {
