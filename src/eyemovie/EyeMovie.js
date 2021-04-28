@@ -44,11 +44,12 @@ export class RequestGameControl {
   }
   async setupDesk() {
     let camera = await this.mini.ready.camera;
-    camera.position.y += 20;
+    camera.position.y += 30;
+    camera.position.z += 10;
 
     let dom = await this.mini.domElement;
     let controls = new OrbitControls(camera, dom);
-    controls.target.set(0, camera.position.y, -10);
+    controls.target.set(0, camera.position.y, 0);
     this.mini.onLoop(() => {
       controls.update();
     });
@@ -57,7 +58,8 @@ export class RequestGameControl {
   }
   async setupMobile() {
     let camera = await this.mini.ready.camera;
-    camera.position.y += 20;
+    camera.position.z += 10;
+    camera.position.y += 30;
 
     let dom = this.mini.domElement;
     let insert = document.createElement("div");
