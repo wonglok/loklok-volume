@@ -15,9 +15,11 @@ import {
   Vector3,
 } from "three";
 import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOrientationControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
-export class Popup {
+export class RequestGameControl {
   constructor(mini) {
     this.mini = mini;
 
@@ -35,13 +37,28 @@ export class Popup {
     }
 
     if (isMobile) {
-      this.promise = this.setup();
+      this.promise = this.setupMobile();
     } else {
-      this.promise = Promise.resolve();
+      this.promise = this.setupDesk();
     }
   }
-  async setup() {
+  async setupDesk() {
     let camera = await this.mini.ready.camera;
+    camera.position.y += 20;
+
+    let dom = await this.mini.domElement;
+    let controls = new OrbitControls(camera, dom);
+    controls.target.set(0, camera.position.y, -10);
+    this.mini.onLoop(() => {
+      controls.update();
+    });
+
+    // camera.lookAt(0, 130, 1);
+  }
+  async setupMobile() {
+    let camera = await this.mini.ready.camera;
+    camera.position.y += 20;
+
     let dom = this.mini.domElement;
     let insert = document.createElement("div");
     dom.appendChild(insert);
@@ -148,21 +165,16 @@ export class SpaceWalk {
   }
 }
 
-export class EyeMovie {
+export class Bubbles {
   constructor(mini) {
     this.mini = mini;
-
     this.promise = this.setup();
   }
   async setup() {
     let onLoop = this.mini.onLoop;
-    let renderer = await this.mini.ready.renderer;
     let scene = await this.mini.ready.scene;
-    let camera = await this.mini.ready.camera;
 
-    let pop = new Popup(this.mini);
-    let space = new SpaceWalk(this.mini);
-    camera.position.y += 16;
+    console.log(this.mini);
 
     let makeBall = ({ position }) => {
       let geo = new SphereGeometry(1, 32, 32);
@@ -189,8 +201,20 @@ export class EyeMovie {
       });
     }
 
-    camera.position.z = 15;
+    //
+  }
+}
 
+export class EyeMovie {
+  constructor(mini) {
+    this.mini = mini;
+
+    this.promise = this.setup();
+  }
+  async setup() {
+    let pop = new RequestGameControl(this.mini);
+    let space = new SpaceWalk(this.mini);
+    let bubbles = new Bubbles(this.mini);
     //
 
     return this;
