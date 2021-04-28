@@ -18,6 +18,7 @@ import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOri
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import anime from "animejs/lib/anime.es.js";
 
 export class RequestGameControl {
   constructor(mini) {
@@ -36,10 +37,13 @@ export class RequestGameControl {
       isMobile = true;
     }
 
+    let after = () => {
+      return this.setupButtons();
+    };
     if (isMobile) {
-      this.promise = this.setupMobile();
+      this.promise = this.setupMobile().then(after);
     } else {
-      this.promise = this.setupDesk();
+      this.promise = this.setupDesk().then(after);
     }
   }
   async setupDesk() {
@@ -84,6 +88,62 @@ export class RequestGameControl {
       </div>,
       insert
     );
+  }
+
+  setupButtons() {
+    let buttonBottomLeft = () => {
+      let dom = this.mini.domElement;
+      let insert = document.createElement("div");
+      dom.appendChild(insert);
+      reactDom.render(
+        <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl">
+          <div className="h-full w-full flex justify-center items-center">
+            <button
+              onClick={() => {}}
+              className={
+                "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
+              }
+            >
+              Previous
+            </button>
+          </div>
+        </div>,
+        insert
+      );
+
+      this.mini.onClean(() => {
+        insert.remove();
+      });
+    };
+    let buttonBottomRight = () => {
+      let dom = this.mini.domElement;
+      let insert = document.createElement("div");
+      dom.appendChild(insert);
+      reactDom.render(
+        <div className=" absolute bottom-0 right-0 bg-blue-800 bg-opacity-70 rounded-tl-2xl">
+          <div className="h-full w-full flex justify-center items-center">
+            <button
+              onClick={() => {
+                //
+              }}
+              className={
+                "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
+              }
+            >
+              Next
+            </button>
+          </div>
+        </div>,
+        insert
+      );
+
+      this.mini.onClean(() => {
+        insert.remove();
+      });
+    };
+
+    buttonBottomLeft();
+    buttonBottomRight();
   }
 }
 
