@@ -45,7 +45,7 @@ export class RequestGameControl {
   async setupDesk() {
     let camera = await this.mini.ready.camera;
     camera.position.y += 30;
-    camera.position.z += 10;
+    camera.position.z += 20;
 
     let dom = await this.mini.domElement;
     let controls = new OrbitControls(camera, dom);
@@ -58,8 +58,8 @@ export class RequestGameControl {
   }
   async setupMobile() {
     let camera = await this.mini.ready.camera;
-    camera.position.z += 10;
     camera.position.y += 30;
+    camera.position.z += 20;
 
     let dom = this.mini.domElement;
     let insert = document.createElement("div");
@@ -199,7 +199,11 @@ export class Bubbles {
 
     for (let i = 0; i < 25; i++) {
       makeBall({
-        position: [distribution * getRand(), distribution * getRand() + 15, 0],
+        position: [
+          distribution * getRand(),
+          distribution * getRand() + 30,
+          -10,
+        ],
       });
     }
 
