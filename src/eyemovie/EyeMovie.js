@@ -1,6 +1,21 @@
 import reactDom from "react-dom";
-import { Mesh, MeshNormalMaterial, SphereGeometry, Vector3 } from "three";
+import {
+  AmbientLight,
+  Color,
+  DirectionalLight,
+  DoubleSide,
+  Mesh,
+  MeshMatcapMaterial,
+  MeshNormalMaterial,
+  MeshStandardMaterial,
+  Object3D,
+  PMREMGenerator,
+  SphereGeometry,
+  TextureLoader,
+  Vector3,
+} from "three";
 import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOrientationControls";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 
 export class Popup {
   constructor(mini) {
@@ -53,6 +68,86 @@ export class Popup {
   }
 }
 
+let loadFBX = (url) => {
+  return new Promise((resolve) => {
+    new FBXLoader().load(url, (model) => {
+      console.log(model);
+      resolve(model);
+    });
+  });
+};
+
+let loadMatCap = (url) => {
+  return new Promise((resolve) => {
+    new TextureLoader().load(url, (textutre) => {
+      let matcap = new MeshMatcapMaterial({
+        matcap: textutre,
+        side: DoubleSide,
+      });
+      resolve(matcap);
+    });
+  });
+};
+
+export class SpaceWalk {
+  constructor(mini) {
+    this.mini = mini;
+    this.promise = this.setup();
+  }
+  async setup() {
+    let renderer = await this.mini.ready.renderer;
+    let scene = await this.mini.ready.scene;
+    let fbx = await loadFBX("/gamemap/space-walk.fbx");
+    let silver = await loadMatCap("/matcap/silver.png");
+    fbx.traverse((item) => {
+      if (item.isMesh) {
+        // console.log(item.name)
+        item.material = new MeshStandardMaterial({
+          color: new Color("#ffffff"),
+          metalness: 0.9,
+          roughness: 0.1,
+        });
+        if (
+          item.name === "Mesh018" ||
+          item.name === "Mesh013" ||
+          item.name === "Mesh017"
+        ) {
+          item.material = silver;
+        }
+        item.material.side = DoubleSide;
+        item.material.transparent = true;
+      }
+    });
+    let o3d = new Object3D();
+    let scale = 0.5;
+    o3d.position.y = 242.6 * scale;
+    fbx.scale.x = scale;
+    fbx.scale.y = scale;
+    fbx.scale.z = scale;
+
+    let ambLight = new AmbientLight(new Color("#ffffff"), 1);
+    scene.add(ambLight);
+    let directional = new DirectionalLight(new Color("#ffffff"), 1);
+    directional.position.x = 10;
+    directional.position.y = 10;
+    scene.add(directional);
+
+    let url = `/hdr/photo_studio_01.jpg`;
+    const pmremGenerator = new PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    let loader = new TextureLoader();
+    // loader.setDataType(UnsignedByteType);
+    loader.load(url, (texture) => {
+      const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+      scene.environment = envMap;
+    });
+
+    o3d.add(fbx);
+    scene.add(o3d);
+  }
+}
+
 export class EyeMovie {
   constructor(mini) {
     this.mini = mini;
@@ -66,6 +161,8 @@ export class EyeMovie {
     let camera = await this.mini.ready.camera;
 
     let pop = new Popup(this.mini);
+    let space = new SpaceWalk(this.mini);
+    camera.position.y += 16;
 
     let makeBall = ({ position }) => {
       let geo = new SphereGeometry(1, 32, 32);
@@ -88,7 +185,7 @@ export class EyeMovie {
 
     for (let i = 0; i < 25; i++) {
       makeBall({
-        position: [distribution * getRand(), distribution * getRand(), 0],
+        position: [distribution * getRand(), distribution * getRand() + 15, 0],
       });
     }
 
