@@ -22,7 +22,7 @@ import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOri
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import anime from "animejs/lib/anime.es.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 
@@ -170,19 +170,16 @@ export class RequestGameControl {
       });
     };
 
-    let intv = 0;
-    let sess = 0;
-    let run = () => {
-      clearTimeout(sess);
-      sess = setTimeout(() => {
-        clearInterval(intv);
-        intv = setInterval(() => {
-          let progress = (window.performance.now() * 0.00001 * 2) % 1;
-          goToPt({ progress });
-        }, 1000 / 60);
-      }, 100);
-    };
-    run();
+    let time = 0;
+    let mode = "auto";
+    this.mini.onLoop(() => {
+      if (mode === "auto") {
+        time += (1000 / 60) * 0.00002;
+        goToPt({ progress: time % 1 });
+      } else {
+        goToPt({ progress: time % 1 });
+      }
+    });
 
     let rangerSlider = () => {
       let dom = this.mini.domElement;
@@ -190,22 +187,39 @@ export class RequestGameControl {
       dom.appendChild(insert);
 
       function SliderUI() {
+        let ref = useRef();
+
+        useEffect(() => {
+          let intv = setInterval(() => {
+            ref.current.state.value = time * 100.0;
+            ref.current.setState(ref.current.state);
+          });
+          return () => {
+            clearInterval(intv);
+          };
+        }, []);
+
         return (
           <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl w-full px-10 py-4">
             <div className="h-full w-full flex justify-center items-center">
               <Slider
+                ref={ref}
                 defaultValue={0}
                 handleStyle={{
                   width: `30px`,
                   height: "30px",
                   top: `${-30 + 30 * 0.5 + 10}px`,
                 }}
-                onChange={(e) => {
-                  let localProgress = e / 100;
-                  goToPt({ progress: localProgress });
+                onBeforeChange={(e) => {
+                  time = e / 100;
+                  mode = "drag";
                 }}
-                onAfterChange={(e) => {
-                  run();
+                onChange={(e) => {
+                  time = e / 100;
+                  mode = "drag";
+                }}
+                onAfterChange={() => {
+                  mode = "auto";
                 }}
                 min={0}
                 max={100}
@@ -260,7 +274,7 @@ export class SpaceWalk {
         item.material = new MeshStandardMaterial({
           color: new Color("#ffffff"),
           metalness: 0.9,
-          roughness: 0.1,
+          roughness: 0.2,
         });
 
         if (
@@ -281,6 +295,7 @@ export class SpaceWalk {
         item.material.transparent = true;
       }
     });
+
     let o3d = new Object3D();
     let scale = 0.5;
     o3d.position.y = 242.6 * scale;
