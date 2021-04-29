@@ -2,6 +2,7 @@ import reactDom from "react-dom";
 import {
   AmbientLight,
   Color,
+  CubeRefractionMapping,
   DirectionalLight,
   DoubleSide,
   Mesh,
@@ -15,10 +16,10 @@ import {
   Vector3,
 } from "three";
 import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOrientationControls";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls";
+// import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import anime from "animejs/lib/anime.es.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 export class RequestGameControl {
   constructor(mini) {
@@ -41,29 +42,56 @@ export class RequestGameControl {
       return this.setupButtons();
     };
     if (isMobile) {
-      this.promise = this.setupMobile().then(after);
+      this.promise = this.setupMobile();
     } else {
-      this.promise = this.setupDesk().then(after);
+      this.promise = this.setupDesk();
     }
+
+    this.mini.get("game-started").then(() => {
+      after();
+    });
   }
   async setupDesk() {
     let camera = await this.mini.ready.camera;
-    camera.position.y += 30;
-    camera.position.z += 20;
+    camera.position.x = 0;
+    camera.position.y = 30;
+    camera.position.z = 0;
+    // let scene = await this.mini.ready.scene;
 
-    let dom = await this.mini.domElement;
-    let controls = new OrbitControls(camera, dom);
-    controls.target.set(0, camera.position.y, 0);
+    let dom = this.mini.domElement;
+
+    const controls = new OrbitControls(camera, dom);
+    controls.target.y = 30;
+
     this.mini.onLoop(() => {
       controls.update();
     });
+    this.mini.set("controls", controls);
 
-    // camera.lookAt(0, 130, 1);
+    let insert = document.createElement("div");
+    dom.appendChild(insert);
+    reactDom.render(
+      <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
+        <div className="h-full w-full flex justify-center items-center">
+          <button
+            onClick={() => {
+              insert.style.display = "none";
+              this.mini.set("game-started", true);
+            }}
+            className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
+          >
+            Play
+          </button>
+        </div>
+      </div>,
+      insert
+    );
   }
   async setupMobile() {
     let camera = await this.mini.ready.camera;
-    camera.position.y += 30;
-    camera.position.z += 20;
+    camera.position.x = 0;
+    camera.position.y = 30;
+    camera.position.z = 0;
 
     let dom = this.mini.domElement;
     let insert = document.createElement("div");
@@ -73,12 +101,16 @@ export class RequestGameControl {
         <div className="h-full w-full flex justify-center items-center">
           <button
             onClick={() => {
-              let orient = new DeviceOrientationControls(camera);
+              let controls = new DeviceOrientationControls(camera);
               this.mini.onLoop(() => {
-                orient.update();
+                controls.update();
               });
-              this.mini.set(orient);
+              this.mini.set(controls);
+
               insert.remove();
+              this.mini.set("controls", controls);
+
+              this.mini.set("game-started", true);
             }}
             className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
           >
@@ -90,7 +122,107 @@ export class RequestGameControl {
     );
   }
 
-  setupButtons() {
+  async setupButtons() {
+    let getRand = () => (Math.random() - 0.5) * 2.0;
+    //
+    let camera = await this.mini.ready.camera;
+    let scene = await this.mini.ready.scene;
+
+    let index = 0;
+    let places = [
+      {
+        location: new Vector3(0, 30, 0 * 150),
+      },
+      {
+        location: new Vector3(0, 30, -1 * 150),
+      },
+      {
+        location: new Vector3(0, 30, -2 * 150),
+      },
+      {
+        location: new Vector3(0, 30, -3 * 150),
+      },
+      {
+        location: new Vector3(0, 30, -4 * 150),
+      },
+      {
+        location: new Vector3(0, 30, -5 * 150),
+      },
+    ];
+
+    let makeMarker = ({ position }) => {
+      let geo = new SphereGeometry(7, 4, 2);
+      geo.scale(1, 1.78, 1);
+
+      let mat = new MeshStandardMaterial({
+        color: "#0047bb",
+        metalness: 0.9,
+        roughness: 0.1,
+        flatShading: true,
+        // envMap: cube,
+        transparent: true,
+        opacity: 1,
+      });
+      let mesh = new Mesh(geo, mat);
+      mesh.position.copy(position);
+
+      scene.add(mesh);
+    };
+    places.forEach(({ location }) => {
+      makeMarker({ position: location });
+    });
+
+    let processCam = ({ ctrls, index }) => {
+      let location = places[index].location.clone();
+      let target = places[index].location.clone();
+
+      let dir = camera.position.clone().sub(location);
+      dir = dir.normalize();
+
+      target.sub(dir);
+
+      anime({
+        targets: [camera.position],
+        x: location.x,
+        y: location.y,
+        z: location.z,
+        easing: "easeInOutQuad",
+        duartion: 1000,
+
+        update: () => {
+          if (ctrls.target && ctrls.target.lerp) {
+            ctrls.target.lerp(target, 0.3);
+          }
+        },
+        begin: () => {
+          // ctrls.enabled = false;
+        },
+        complete: () => {
+          // ctrls.enabled = true;
+        },
+      });
+    };
+
+    let backward = () => {
+      this.mini.get("controls").then((ctrls) => {
+        index--;
+        if (index <= 0) {
+          index = 0;
+        }
+        processCam({ ctrls, index });
+      });
+    };
+
+    let forward = () => {
+      this.mini.get("controls").then((ctrls) => {
+        index++;
+        if (index >= places.length - 1) {
+          index = places.length - 1;
+        }
+        processCam({ ctrls, index });
+      });
+    };
+
     let buttonBottomLeft = () => {
       let dom = this.mini.domElement;
       let insert = document.createElement("div");
@@ -99,7 +231,9 @@ export class RequestGameControl {
         <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl">
           <div className="h-full w-full flex justify-center items-center">
             <button
-              onClick={() => {}}
+              onPointerDown={() => {
+                backward();
+              }}
               className={
                 "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
               }
@@ -123,8 +257,8 @@ export class RequestGameControl {
         <div className=" absolute bottom-0 right-0 bg-blue-800 bg-opacity-70 rounded-tl-2xl">
           <div className="h-full w-full flex justify-center items-center">
             <button
-              onClick={() => {
-                //
+              onPointerDown={() => {
+                forward();
               }}
               className={
                 "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
@@ -186,6 +320,7 @@ export class SpaceWalk {
           metalness: 0.9,
           roughness: 0.1,
         });
+
         if (
           item.name === "Mesh018" ||
           item.name === "Mesh013" ||
@@ -193,6 +328,13 @@ export class SpaceWalk {
         ) {
           item.material = silver;
         }
+
+        // item.material = new MeshStandardMaterial({
+        //   color: new Color("#ff0000"),
+        //   metalness: 0.9,
+        //   roughness: 0.1,
+        // });
+
         item.material.side = DoubleSide;
         item.material.transparent = true;
       }
@@ -243,6 +385,7 @@ export class Bubbles {
       let mat = new MeshNormalMaterial();
       let mesh = new Mesh(geo, mat);
       scene.add(mesh);
+
       mesh.position.fromArray(position);
       let vel = new Vector3(getRand(), getRand(), getRand());
       let temp = new Vector3();
@@ -262,7 +405,7 @@ export class Bubbles {
         position: [
           distribution * getRand(),
           distribution * getRand() + 30,
-          -10,
+          -50,
         ],
       });
     }
@@ -278,9 +421,9 @@ export class EyeMovie {
     this.promise = this.setup();
   }
   async setup() {
-    let pop = new RequestGameControl(this.mini);
     let space = new SpaceWalk(this.mini);
     let bubbles = new Bubbles(this.mini);
+    let pop = new RequestGameControl(this.mini);
     //
 
     return this;

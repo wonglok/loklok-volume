@@ -20,7 +20,6 @@ export const EyeMovieCanvas = () => {
       mini.get("camera"),
       mini.get("scene"),
     ]).then(([renderer, camera, scene]) => {
-      camera.position.z = 15;
       workDisplay = () => {
         renderer.render(scene, camera);
       };
