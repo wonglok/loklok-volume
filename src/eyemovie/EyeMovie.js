@@ -1,4 +1,4 @@
-import reactDom from "react-dom";
+import ReactDom from "react-dom";
 import {
   AmbientLight,
   CatmullRomCurve3,
@@ -61,7 +61,7 @@ export class RequestGameControl {
       let dom = this.mini.domElement;
       let insert = document.createElement("div");
       dom.appendChild(insert);
-      reactDom.render(
+      ReactDom.render(
         <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
           <div className="h-full w-full flex justify-center items-center">
             <button
@@ -71,7 +71,7 @@ export class RequestGameControl {
               }}
               className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
             >
-              Play
+              Start the theme Ride.
             </button>
           </div>
         </div>,
@@ -171,12 +171,16 @@ export class RequestGameControl {
     };
 
     let intv = 0;
+    let sess = 0;
     let run = () => {
-      clearInterval(intv);
-      intv = setInterval(() => {
-        let progress = (window.performance.now() * 0.00001 * 2) % 1;
-        goToPt({ progress });
-      }, 1000 / 60);
+      clearTimeout(sess);
+      sess = setTimeout(() => {
+        clearInterval(intv);
+        intv = setInterval(() => {
+          let progress = (window.performance.now() * 0.00001 * 2) % 1;
+          goToPt({ progress });
+        }, 1000 / 60);
+      }, 100);
     };
     run();
 
@@ -212,7 +216,7 @@ export class RequestGameControl {
         );
       }
 
-      reactDom.render(<SliderUI></SliderUI>, insert);
+      ReactDom.render(<SliderUI></SliderUI>, insert);
     };
 
     rangerSlider();
