@@ -23,6 +23,8 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import anime from "animejs/lib/anime.es.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { useEffect, useRef } from "react";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
 export class RequestGameControl {
   constructor(mini) {
@@ -124,13 +126,8 @@ export class RequestGameControl {
   }
 
   async setupButtons() {
-    let getRand = () => (Math.random() - 0.5) * 2.0;
-    //
-    let camera = await this.mini.ready.camera;
-    let scene = await this.mini.ready.scene;
     let controls = await this.mini.ready.controls;
 
-    let index = 0;
     let pointDatabase = [
       {
         location: [0, 40, 0 * 150],
@@ -157,50 +154,65 @@ export class RequestGameControl {
     });
 
     let curve = new CatmullRomCurve3(points, false);
-    this.mini.onLoop(() => {});
+
     let camdir = new Vector3();
+    let goToPt = ({ progress }) => {
+      this.mini.get("camera").then((camera) => {
+        curve.getPointAt(progress, camera.position);
+        camera.getWorldDirection(camdir);
+        if (controls.target) {
+          controls.target.set(
+            camera.position.x + camdir.x,
+            camera.position.y + camdir.y,
+            camera.position.z + camdir.z
+          );
+        }
+      });
+    };
+
+    let intv = 0;
+    let run = () => {
+      clearInterval(intv);
+      intv = setInterval(() => {
+        let progress = (window.performance.now() * 0.00001 * 2) % 1;
+        goToPt({ progress });
+      }, 1000 / 60);
+    };
+    run();
+
     let rangerSlider = () => {
       let dom = this.mini.domElement;
       let insert = document.createElement("div");
       dom.appendChild(insert);
 
-      let mini = this.mini;
-      function Slider() {
-        let slider = useRef();
-        useEffect(() => {
-          slider.current.value = 0;
-        }, []);
+      function SliderUI() {
         return (
-          <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl w-full">
+          <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl w-full px-10 py-4">
             <div className="h-full w-full flex justify-center items-center">
-              <input
-                type="range"
-                ref={slider}
-                onInput={(e) => {
-                  let localProgress = e.target.value / 100;
-                  mini.get("camera").then((camera) => {
-                    curve.getPointAt(localProgress, camera.position);
-                    camera.getWorldDirection(camdir);
-                    controls.target.set(
-                      camera.position.x + camdir.x,
-                      camera.position.y + camdir.y,
-                      camera.position.z + camdir.z
-                    );
-                  });
+              <Slider
+                defaultValue={0}
+                handleStyle={{
+                  width: `30px`,
+                  height: "30px",
+                  top: `${-30 + 30 * 0.5 + 10}px`,
                 }}
-                min="0"
-                max="100"
-                step="0.01"
-                className={
-                  " w-full opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
-                }
+                onChange={(e) => {
+                  let localProgress = e / 100;
+                  goToPt({ progress: localProgress });
+                }}
+                onAfterChange={(e) => {
+                  run();
+                }}
+                min={0}
+                max={100}
+                step={0.01}
               />
             </div>
           </div>
         );
       }
 
-      reactDom.render(<Slider></Slider>, insert);
+      reactDom.render(<SliderUI></SliderUI>, insert);
     };
 
     rangerSlider();

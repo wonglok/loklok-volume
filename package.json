@@ -19,6 +19,7 @@
     "primitive-plane": "^2.0.1",
     "primitive-quad": "^2.0.0",
     "primitive-sphere": "^3.0.0",
+    "rc-slider": "^9.7.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-router-dom": "^5.2.0",
