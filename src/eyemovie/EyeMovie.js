@@ -44,7 +44,7 @@ export class RequestGameControl {
     }
 
     let after = () => {
-      return this.setupButtons();
+      return this.setupTimelineSlider();
     };
     if (isMobile) {
       this.promise = this.setupMobile();
@@ -125,7 +125,7 @@ export class RequestGameControl {
     this.mini.set("game-started", true);
   }
 
-  async setupButtons() {
+  async setupTimelineSlider() {
     let controls = await this.mini.ready.controls;
 
     let pointDatabase = [
