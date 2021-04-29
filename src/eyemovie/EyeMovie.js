@@ -175,9 +175,12 @@ export class RequestGameControl {
     this.mini.onLoop(() => {
       if (mode === "auto") {
         time += (1000 / 60) * 0.00002;
-        goToPt({ progress: time % 1 });
+        if (time >= 1) {
+          time = 1;
+        }
+        goToPt({ progress: time });
       } else {
-        goToPt({ progress: time % 1 });
+        goToPt({ progress: time });
       }
     });
 
@@ -192,6 +195,10 @@ export class RequestGameControl {
         useEffect(() => {
           let intv = setInterval(() => {
             ref.current.state.value = time * 100.0;
+            if (ref.current.state.value > 100) {
+              mode = "stop";
+              ref.current.state.value = 100;
+            }
             ref.current.setState(ref.current.state);
           });
           return () => {
