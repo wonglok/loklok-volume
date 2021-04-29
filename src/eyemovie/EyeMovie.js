@@ -99,7 +99,7 @@ export class RequestGameControl {
     controls.enableDamping = true;
     controls.enablePan = false;
     controls.enableRotate = true;
-    controls.enableZoom = true;
+    controls.enableZoom = false;
 
     this.mini.onLoop(() => {
       controls.update();
