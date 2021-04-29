@@ -1,6 +1,7 @@
 import reactDom from "react-dom";
 import {
   AmbientLight,
+  CatmullRomCurve3,
   Color,
   CubeRefractionMapping,
   DirectionalLight,
@@ -11,6 +12,7 @@ import {
   MeshStandardMaterial,
   Object3D,
   PMREMGenerator,
+  Quaternion,
   SphereGeometry,
   TextureLoader,
   Vector3,
@@ -20,6 +22,7 @@ import { DeviceOrientationControls } from "three/examples/jsm/controls/DeviceOri
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import anime from "animejs/lib/anime.es.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { useEffect, useRef } from "react";
 
 export class RequestGameControl {
   constructor(mini) {
@@ -51,75 +54,73 @@ export class RequestGameControl {
       after();
     });
   }
+  async setupPopup() {
+    return new Promise((resolve) => {
+      let dom = this.mini.domElement;
+      let insert = document.createElement("div");
+      dom.appendChild(insert);
+      reactDom.render(
+        <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
+          <div className="h-full w-full flex justify-center items-center">
+            <button
+              onClick={() => {
+                insert.style.display = "none";
+                resolve();
+              }}
+              className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
+            >
+              Play
+            </button>
+          </div>
+        </div>,
+        insert
+      );
+    });
+  }
+
   async setupDesk() {
     let camera = await this.mini.ready.camera;
+    let scene = await this.mini.ready.scene;
     camera.position.x = 0;
-    camera.position.y = 30;
+    camera.position.y = 40;
     camera.position.z = 0;
-    // let scene = await this.mini.ready.scene;
+    await this.setupPopup();
+    camera.lookAt(
+      camera.position.x,
+      40 + camera.position.y,
+      -1 + camera.position.z
+    );
 
-    let dom = this.mini.domElement;
+    scene.add(camera);
 
-    const controls = new OrbitControls(camera, dom);
-    controls.target.y = 30;
+    let renderer = await this.mini.ready.renderer;
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.y += camera.position.y;
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.enableRotate = true;
+    controls.enableZoom = true;
 
     this.mini.onLoop(() => {
       controls.update();
     });
     this.mini.set("controls", controls);
-
-    let insert = document.createElement("div");
-    dom.appendChild(insert);
-    reactDom.render(
-      <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
-        <div className="h-full w-full flex justify-center items-center">
-          <button
-            onClick={() => {
-              insert.style.display = "none";
-              this.mini.set("game-started", true);
-            }}
-            className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
-          >
-            Play
-          </button>
-        </div>
-      </div>,
-      insert
-    );
+    this.mini.set("game-started", true);
   }
   async setupMobile() {
     let camera = await this.mini.ready.camera;
     camera.position.x = 0;
-    camera.position.y = 30;
+    camera.position.y = 40;
     camera.position.z = 0;
+    await this.setupPopup();
 
-    let dom = this.mini.domElement;
-    let insert = document.createElement("div");
-    dom.appendChild(insert);
-    reactDom.render(
-      <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70">
-        <div className="h-full w-full flex justify-center items-center">
-          <button
-            onClick={() => {
-              let controls = new DeviceOrientationControls(camera);
-              this.mini.onLoop(() => {
-                controls.update();
-              });
-              this.mini.set(controls);
-
-              insert.remove();
-              this.mini.set("controls", controls);
-
-              this.mini.set("game-started", true);
-            }}
-            className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
-          >
-            Play
-          </button>
-        </div>
-      </div>,
-      insert
-    );
+    let controls = new DeviceOrientationControls(camera);
+    this.mini.onLoop(() => {
+      controls.update();
+    });
+    this.mini.set(controls);
+    this.mini.set("controls", controls);
+    this.mini.set("game-started", true);
   }
 
   async setupButtons() {
@@ -127,157 +128,82 @@ export class RequestGameControl {
     //
     let camera = await this.mini.ready.camera;
     let scene = await this.mini.ready.scene;
+    let controls = await this.mini.ready.controls;
 
     let index = 0;
-    let places = [
+    let pointDatabase = [
       {
-        location: new Vector3(0, 30, 0 * 150),
+        location: [0, 40, 0 * 150],
       },
       {
-        location: new Vector3(0, 30, -1 * 150),
+        location: [-40, 40, -1 * 150],
       },
       {
-        location: new Vector3(0, 30, -2 * 150),
+        location: [40, 40, -2 * 150],
       },
       {
-        location: new Vector3(0, 30, -3 * 150),
+        location: [-40, 40, -3 * 150],
       },
       {
-        location: new Vector3(0, 30, -4 * 150),
+        location: [40, 40, -4 * 150],
       },
       {
-        location: new Vector3(0, 30, -5 * 150),
+        location: [-40, 40, -5 * 150],
       },
     ];
 
-    let makeMarker = ({ position }) => {
-      let geo = new SphereGeometry(7, 4, 2);
-      geo.scale(1, 1.78, 1);
-
-      let mat = new MeshStandardMaterial({
-        color: "#0047bb",
-        metalness: 0.9,
-        roughness: 0.1,
-        flatShading: true,
-        // envMap: cube,
-        transparent: true,
-        opacity: 1,
-      });
-      let mesh = new Mesh(geo, mat);
-      mesh.position.copy(position);
-
-      scene.add(mesh);
-    };
-    places.forEach(({ location }) => {
-      makeMarker({ position: location });
+    let points = pointDatabase.map((p) => {
+      return new Vector3().fromArray(p.location);
     });
 
-    let processCam = ({ ctrls, index }) => {
-      let location = places[index].location.clone();
-      let target = places[index].location.clone();
-
-      let dir = camera.position.clone().sub(location);
-      dir = dir.normalize();
-
-      target.sub(dir);
-
-      anime({
-        targets: [camera.position],
-        x: location.x,
-        y: location.y,
-        z: location.z,
-        easing: "easeInOutQuad",
-        duartion: 1000,
-
-        update: () => {
-          if (ctrls.target && ctrls.target.lerp) {
-            ctrls.target.lerp(target, 0.3);
-          }
-        },
-        begin: () => {
-          // ctrls.enabled = false;
-        },
-        complete: () => {
-          // ctrls.enabled = true;
-        },
-      });
-    };
-
-    let backward = () => {
-      this.mini.get("controls").then((ctrls) => {
-        index--;
-        if (index <= 0) {
-          index = 0;
-        }
-        processCam({ ctrls, index });
-      });
-    };
-
-    let forward = () => {
-      this.mini.get("controls").then((ctrls) => {
-        index++;
-        if (index >= places.length - 1) {
-          index = places.length - 1;
-        }
-        processCam({ ctrls, index });
-      });
-    };
-
-    let buttonBottomLeft = () => {
+    let curve = new CatmullRomCurve3(points, false);
+    this.mini.onLoop(() => {});
+    let camdir = new Vector3();
+    let rangerSlider = () => {
       let dom = this.mini.domElement;
       let insert = document.createElement("div");
       dom.appendChild(insert);
-      reactDom.render(
-        <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl">
-          <div className="h-full w-full flex justify-center items-center">
-            <button
-              onPointerDown={() => {
-                backward();
-              }}
-              className={
-                "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
-              }
-            >
-              Previous
-            </button>
-          </div>
-        </div>,
-        insert
-      );
 
-      this.mini.onClean(() => {
-        insert.remove();
-      });
-    };
-    let buttonBottomRight = () => {
-      let dom = this.mini.domElement;
-      let insert = document.createElement("div");
-      dom.appendChild(insert);
-      reactDom.render(
-        <div className=" absolute bottom-0 right-0 bg-blue-800 bg-opacity-70 rounded-tl-2xl">
-          <div className="h-full w-full flex justify-center items-center">
-            <button
-              onPointerDown={() => {
-                forward();
-              }}
-              className={
-                "px-6 py-3 opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
-              }
-            >
-              Next
-            </button>
+      let mini = this.mini;
+      function Slider() {
+        let slider = useRef();
+        useEffect(() => {
+          slider.current.value = 0;
+        }, []);
+        return (
+          <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl w-full">
+            <div className="h-full w-full flex justify-center items-center">
+              <input
+                type="range"
+                ref={slider}
+                onInput={(e) => {
+                  let localProgress = e.target.value / 100;
+                  mini.get("camera").then((camera) => {
+                    curve.getPointAt(localProgress, camera.position);
+                    camera.getWorldDirection(camdir);
+                    controls.target.set(
+                      camera.position.x + camdir.x,
+                      camera.position.y + camdir.y,
+                      camera.position.z + camdir.z
+                    );
+                  });
+                }}
+                min="0"
+                max="100"
+                step="0.01"
+                className={
+                  " w-full opacity-100 hover:opacity-50 transition-opacity duration-500 bg-white border-yellow-700 border text-blue-800 m-3 rounded-2xl"
+                }
+              />
+            </div>
           </div>
-        </div>,
-        insert
-      );
+        );
+      }
 
-      this.mini.onClean(() => {
-        insert.remove();
-      });
+      reactDom.render(<Slider></Slider>, insert);
     };
 
-    buttonBottomLeft();
-    buttonBottomRight();
+    rangerSlider();
   }
 }
 
