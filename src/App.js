@@ -119,9 +119,9 @@ function App() {
           <div className={"m-5"}>
             <Link to={"/water"}>Water</Link>
           </div>
-          <div className={"m-5"}>
+          {/* <div className={"m-5"}>
             <Link to={"/human"}>Human</Link>
-          </div>
+          </div> */}
           <div className={"m-5"}>
             <Link to={"/sdf-renderer"}>SDF Texture Renderer</Link>
           </div>

@@ -207,15 +207,19 @@ export class RequestGameControl {
         }, []);
 
         return (
-          <div className=" absolute bottom-0 left-0 bg-blue-800 bg-opacity-70 rounded-tr-2xl w-full px-10 py-4">
+          <div className=" absolute bottom-0 left-0 bg-gray-800 bg-opacity-70 w-full px-10 py-4">
             <div className="h-full w-full flex justify-center items-center">
               <Slider
                 ref={ref}
                 defaultValue={0}
                 handleStyle={{
+                  border: "none",
                   width: `30px`,
                   height: "30px",
                   top: `${-30 + 30 * 0.5 + 10}px`,
+                }}
+                trackStyle={{
+                  backgroundColor: "white",
                 }}
                 onBeforeChange={(e) => {
                   time = e / 100;
@@ -373,8 +377,6 @@ export class Bubbles {
         ],
       });
     }
-
-    //
   }
 }
 
