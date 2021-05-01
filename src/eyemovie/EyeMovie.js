@@ -64,15 +64,30 @@ export class RequestGameControl {
       ReactDom.render(
         <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
           <div className="h-full w-full flex justify-center items-center">
-            <button
-              onClick={() => {
-                insert.style.display = "none";
-                resolve();
-              }}
-              className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
-            >
-              Start the theme Ride.
-            </button>
+            <div className={" flex flex-col justify-center items-center "}>
+              <img
+                className={" w-36 object-contain object-center lg:hidden"}
+                src={require("./img/hold-phone-vertically.png").default}
+                alt="hold phone up right"
+              />
+              <div className="p-3 lg:hidden">
+                <b>Please Hold Your Phone Up.</b>
+              </div>
+
+              <div className={"hidden lg:block"}>
+                Drag the mouse to look around.
+              </div>
+
+              <button
+                onClick={() => {
+                  insert.style.display = "none";
+                  resolve();
+                }}
+                className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
+              >
+                Start the theme Ride.
+              </button>
+            </div>
           </div>
         </div>,
         insert
