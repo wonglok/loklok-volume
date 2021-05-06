@@ -159,7 +159,6 @@ export class CoreSurfaceSim {
           return d1 - rounder;
         }
 
-        ${Ballify}
 
         vec3 opTwist( in vec3 p, in float k )
         {
