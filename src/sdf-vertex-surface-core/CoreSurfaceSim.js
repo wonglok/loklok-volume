@@ -180,8 +180,8 @@ export class CoreSurfaceSim {
 
           d = opSmoothUnion(
             mix(
-              sdOctahedron(pp, 2.3),
-              sdBox(pp, vec3(2.3)),
+              sdOctahedron(pp, 4.0),
+              sdBox(pp, vec3(4.0)),
               sin(time)
             ),
             d,
