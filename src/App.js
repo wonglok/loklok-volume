@@ -26,6 +26,7 @@ import { DungeonCanvas } from "./dungenon/DungeonCanvas";
 import { SurfaceCanvas } from "./sdf-vertex-surface/SurfaceCanvas";
 import { InstancedSurfaceCanvas } from "./sdf-vertex-surface-instancing/InstancedSurfaceCanvas";
 import { CoreSurfaceCanvas } from "./sdf-vertex-surface-core/CoreSurfaceCanvas";
+import { AntennaSurfaceCanvas } from "./sdf-vertex-surface-antenna/AntennaSurfaceCanvas";
 
 function App() {
   return (
@@ -112,6 +113,9 @@ function App() {
         <Route exact path="/sdf-vertex-surface-core">
           <CoreSurfaceCanvas></CoreSurfaceCanvas>
         </Route>
+        <Route exact path="/sdf-vertex-surface-antenna">
+          <AntennaSurfaceCanvas></AntennaSurfaceCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -194,6 +198,11 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/sdf-vertex-surface-core"}>Core SDF Vertex Surface</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/sdf-vertex-surface-antenna"}>
+              Antenna SDF Vertex Surface
+            </Link>
           </div>
 
           <div className={"h-12"}></div>

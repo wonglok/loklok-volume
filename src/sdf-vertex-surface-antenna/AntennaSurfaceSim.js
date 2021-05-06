@@ -52,7 +52,7 @@ vec3 ballify (vec3 pos, float r) {
 var glsl = require("glslify");
 console.log(glsl);
 
-export class CoreSurfaceSim {
+export class AntennaSurfaceSim {
   constructor({ ...mini }, name = "EnergySimulator") {
     this.mini = {
       ...mini,
@@ -71,7 +71,7 @@ export class CoreSurfaceSim {
     let shaderMaterial = new ShaderMaterial({
       transparent: true,
       uniforms: {
-        spheretex: { value: new TextureLoader().load("/matcap/golden2.png") },
+        spheretex: { value: new TextureLoader().load("/matcap/pink.png") },
         time: {
           get value() {
             return window.performance.now() / 1000;
@@ -130,6 +130,16 @@ export class CoreSurfaceSim {
           return length(vec3(q.x,q.y-s+k,q.z-k));
         }
 
+        float sdHexPrism( vec3 p, vec2 h )
+        {
+          const vec3 k = vec3(-0.8660254, 0.5, 0.57735);
+          p = abs(p);
+          p.xy -= 2.0*min(dot(k.xy, p.xy), 0.0)*k.xy;
+          vec2 d = vec2(
+              length(p.xy-vec2(clamp(p.x,-k.z*h.x,k.z*h.x), h.x))*sign(p.y-h.x),
+              p.z-h.y );
+          return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+        }
 
         float sdTorus( vec3 p, vec2 t )
         {
@@ -175,19 +185,20 @@ export class CoreSurfaceSim {
 
           float d = 2.0;
 
-          vec3 pp = opTwist(p, cos(time));
+          vec3 pp = opTwist(p, sin(time) * 0.75);
 
           d = opSmoothUnion(
             mix(
-              sdOctahedron(pp, 4.0),
-              sdBox(pp, vec3(4.0)),
-              sin(time)
+              sdTriPrism(pp, vec2(1.0, 4.0)),
+              sdHexPrism(pp, vec2(1.0, 4.0)),
+              abs(sin(time))
             ),
             d,
             1.0
           );
 
           d = opRound(d, 0.2);
+
 
           // for (int i = 0; i < 3; i++)
           // {

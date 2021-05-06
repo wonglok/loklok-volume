@@ -275,16 +275,13 @@ export class SurfaceSim {
         uniform sampler2D spheretex;
         varying vec3 vViewPosition;
 
-        vec2 matcap(vec3 eye, vec3 normal) {
-          vec3 reflected = reflect(eye, normal);
-          float m = 2.8284271247461903 * sqrt( reflected.z+1.0 );
-          return reflected.xy / m + 0.5;
-        }
-
         void main (void) {
-          vec2 vv = matcap(vViewPosition, vNormal);
+          vec3 viewDir = normalize( vViewPosition );
+          vec3 x = normalize( vec3( viewDir.z, 0.0, - viewDir.x ) );
+          vec3 y = cross( viewDir, x );
+          vec2 uv = vec2( dot( x, vNormal ), dot( y, vNormal ) ) * 0.495 + 0.5; // 0.495 to remove artifacts caused by undersized matcap disks
 
-          vec4 color = texture2D(spheretex, vv.xy);
+          vec4 color = texture2D(spheretex, uv.xy);
 
           gl_FragColor = vec4(color.rgb, 1.0);
         }
