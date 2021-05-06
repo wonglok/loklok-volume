@@ -61,7 +61,7 @@ export class SurfaceSim {
     let renderer = await this.mini.ready.renderer;
     let scene = await this.mini.ready.scene;
 
-    let rayGeo = new SphereBufferGeometry(10, 320, 320);
+    let rayGeo = new SphereBufferGeometry(10, 512, 512);
 
     let shaderMaterial = new ShaderMaterial({
       transparent: true,
@@ -116,16 +116,23 @@ export class SurfaceSim {
 
         float doModel(vec3 p) {
           float d = 2.0;
-          for (int i = 0; i < 15; i++)
+          for (int i = 0; i < 3; i++)
           {
-            float fi = float(i);
+            float fi = float(i) / 3.0 + 0.5;
             float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
             d = opSmoothUnion(
-                    sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(2.0, 2.0, 0.8), mix(0.5, 1.0, fract(fi * 412.531 + 0.5124))),
+              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(1.5, 1.5, 1.5), mix(0.5, 2.3, fract(fi * 412.531 + 0.5124))),
               d,
-              0.4
+              1.4
             );
           }
+
+          // d = opSmoothUnion(
+          //   sdVerticalCapsule(p, 0.5, 0.2),
+          //   d,
+          //   0.4
+          // );
+
           return d;
         }
 
@@ -154,6 +161,7 @@ export class SurfaceSim {
         float calcIntersection( in vec3 ro, in vec3 rd )
         {
           const float maxd = 10.0;           // max trace distance
+          // const float precis = 0.001;        // precission of the intersection
           const float precis = 0.001;        // precission of the intersection
           float h = precis*2.0;
           float t = 0.0;
@@ -167,25 +175,40 @@ export class SurfaceSim {
               t += h;
           }
 
-          if( t < maxd ) res = t;
+          if( abs(t) <= maxd ) {
+            res = t;
+          }
+
           return res;
         }
 
         void main (void) {
           vec3 rayOrigin = position;
+          vec3 rayOriginInverse = -position;
           vec3 rayDirection = -normal;
+          vec3 rayDirectionInverse = normal;
+
           float collision = calcIntersection(rayOrigin, rayDirection);
+          float collisionInverse = calcIntersection(rayOrigin, rayDirection);
 
           vec3 pos = rayOrigin + rayDirection * collision;
+          vec3 posInverse = rayOriginInverse + rayDirectionInverse * collisionInverse;
 
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          float useVertex = 1.0;
+          if (length(pos) >= length(position)) {
+            useVertex = 0.0;
+            pos = vec3(0.0);
+          }
+
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, useVertex);
           vNormal = calcNormal(pos);
         }
       `,
       fragmentShader: `
         varying vec3 vNormal;
         void main (void) {
-          gl_FragColor = vec4(vec3(vNormal) + 0.3, 0.5);
+
+          gl_FragColor = vec4(vec3(vNormal * 0.5 + 0.5) + 0.3, 0.5);
         }
       `,
     });
