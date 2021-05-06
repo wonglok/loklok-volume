@@ -155,6 +155,9 @@ export class SurfaceSim {
             float h = clamp( 0.5 - 0.5*(d2-d1)/k, 0.0, 1.0 );
             return mix( d2, d1, h ) + k*h*(1.0-h); }
 
+        float opRound (float d1, float rounder) {
+          return d1 - rounder;
+        }
 
         float doModel(vec3 p) {
 
@@ -163,7 +166,7 @@ export class SurfaceSim {
           d = opSmoothUnion(
             sdOctahedron(p, 2.3),
             d,
-            1.4
+            1.0
           );
 
           for (int i = 0; i < 3; i++)
@@ -171,15 +174,14 @@ export class SurfaceSim {
             float fi = float(i) / 3.0 + 0.5;
             float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
             d = opSmoothUnion(
-              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(3.5, 3.5, 3.5), mix(0.3, 1.3, fract(fi * 412.531 + 0.5124))),
+              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(4.0, 4.0, 4.0), mix(0.1, 1.3, fract(fi * 412.531 + 0.5124))),
               d,
               1.5
             );
+
+            /// rounding
+            d = opRound(d, 0.135);
           }
-
-
-          // rounding
-          d = d - 0.135;
 
           return d;
         }
@@ -211,14 +213,14 @@ export class SurfaceSim {
 
         float calcIntersection( in vec3 ro, in vec3 rd )
         {
+          const int Scans = 15;
           const float maxd = 20.0;           // max trace distance
           // const float precis = 0.001;        // precission of the intersection
           const float precis = 0.001;        // precission of the intersection
           float h = precis*2.0;
           float t = 0.0;
           float res = -1.0;
-          const int Scan = 5;
-          for( int i=0; i<Scan; i++ )          // max number of raymarching iterations is 90
+          for( int i=0; i<Scans; i++ )          // max number of raymarching iterations is 90
           {
               if(h < precis || t > maxd) break;
               h = doModel( ro + rd * t );
