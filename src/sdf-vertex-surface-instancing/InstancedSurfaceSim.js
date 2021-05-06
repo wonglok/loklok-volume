@@ -1,4 +1,5 @@
 import {
+  BoxBufferGeometry,
   InstancedMesh,
   Mesh,
   Object3D,
@@ -209,10 +210,19 @@ export class InstancedSurfaceSim {
           );
         }
 
+        float sdEllipsoid( vec3 p, vec3 r )
+        {
+          float k0 = length(p/r);
+          float k1 = length(p/(r*r));
+          return k0*(k0-1.0)/k1;
+        }
+
 
         float doModel(vec3 p) {
 
           float d = 2.0;
+
+          p  = twistPos(p, sin(time) * 3.14);
 
           vec4 rotXZP4 = rotation3d(vec3(1.0, 0.0, 0.0), time) * rotation3d(vec3(0.0, 0.0, 1.0), time) * vec4(p, 1.0);
           d = opSmoothUnion(
@@ -221,41 +231,14 @@ export class InstancedSurfaceSim {
               0.3
           );
 
-          d = opRound(d, 0.1);
 
           d = opSmoothUnion(
-            sdSphere(p, 1.25),
+            sdOctahedron(p, 1.5),
               d,
               0.3
           );
 
           d = opRound(d, 0.1);
-
-
-          // vec3 floatingP = vec3(p.x, p.y - 1.0 - 1.0 * sin(time), p.z);
-          // vec4 rotYP4 = rotation3d(vec3(0.0, 1.0, 0.0), time) * vec4(floatingP, 1.0);
-          // vec3 rotationYP = floatingP;
-          // d = opSmoothUnion(
-          //   sdOctahedron(rotYP4.xyz, 1.0),
-          //     d,
-          //     0.3
-          // );
-
-
-          // for (int i = 0; i < 3; i++)
-          // {
-          //   float fi = float(i) / 3.0 + 0.5;
-          //   float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
-          //   d = opSmoothUnion(
-          //     sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(1.0, 1.0, 1.0), mix(0.1, 1.3, fract(fi * 412.531 + 0.5124))),
-          //     d,
-          //     1.0
-          //   );
-
-          //   /// rounding
-          //   d = opRound(d, 0.1);
-          // }
-
 
           return d;
         }
@@ -316,10 +299,10 @@ export class InstancedSurfaceSim {
           vec3 pos = rayOrigin + rayDirection * collision;
 
           float useVertex = 1.0;
-          if (length(pos) >= length(position)) {
-            useVertex = 0.0;
-            pos = vec3(0.0);
-          }
+          // if (length(pos) >= length(position)) {
+          //   useVertex = 0.0;
+          //   pos = vec3(0.0);
+          // }
 
           gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(pos, useVertex);
           vNormal = -calcNormal(pos);
