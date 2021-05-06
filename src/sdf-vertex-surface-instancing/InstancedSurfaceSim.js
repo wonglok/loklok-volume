@@ -69,7 +69,7 @@ export class InstancedSurfaceSim {
     let renderer = await this.mini.ready.renderer;
     let scene = await this.mini.ready.scene;
 
-    let rayGeo = new SphereBufferGeometry(10, 200, 200);
+    let rayGeo = new SphereBufferGeometry(10, 320, 320);
 
     let shaderMaterial = new ShaderMaterial({
       transparent: true,
@@ -330,14 +330,16 @@ export class InstancedSurfaceSim {
       `,
     });
 
-    let count = 10;
+    let count = 6;
 
     let mesh = new InstancedMesh(rayGeo, shaderMaterial, count);
+    mesh.scale.set(3, 3, 3);
+
     let obj = new Object3D();
 
     for (let i = 0; i < count; i++) {
       obj.matrix.identity();
-      obj.position.x = ((i - count / 2) / count) * 50;
+      obj.position.x = ((i - count / 2) / count) * 40.0;
       obj.updateMatrixWorld();
       mesh.setMatrixAt(i, obj.matrixWorld);
     }
