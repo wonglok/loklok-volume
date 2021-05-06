@@ -1,5 +1,13 @@
+import reactDom from "react-dom";
 import {
+  Audio,
+  AudioAnalyser,
+  AudioListener,
+  AudioLoader,
+  DataTexture,
+  LuminanceFormat,
   Mesh,
+  RedFormat,
   ShaderMaterial,
   SphereBufferGeometry,
   TextureLoader,
@@ -71,6 +79,7 @@ export class AntennaSurfaceSim {
     let shaderMaterial = new ShaderMaterial({
       transparent: true,
       uniforms: {
+        tAudioData: { value: null },
         spheretex: { value: new TextureLoader().load("/matcap/pink.png") },
         time: {
           get value() {
@@ -82,8 +91,11 @@ export class AntennaSurfaceSim {
 
         #include <common>
         uniform float time;
+        uniform sampler2D tAudioData;
         varying vec3 vNormal;
+        varying vec2 vUv;
         varying vec3 vViewPosition;
+
 
         // Originally sourced from https://www.shadertoy.com/view/ldfSWs
         // Thank you Iñigo :)
@@ -183,9 +195,11 @@ export class AntennaSurfaceSim {
 
         float doModel(vec3 p) {
 
+
+
           float d = 2.0;
 
-          vec3 pp = opTwist(p, sin(time) * 0.75);
+          vec3 pp = opTwist(p, cos(time) * 0.7);
 
           d = opSmoothUnion(
             mix(
@@ -199,7 +213,7 @@ export class AntennaSurfaceSim {
 
           d = opRound(d, 0.2);
 
-
+          //
           // for (int i = 0; i < 3; i++)
           // {
           //   float fi = float(i) / 3.0 + 0.5;
@@ -285,22 +299,32 @@ export class AntennaSurfaceSim {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, useVertex);
           vNormal = calcNormal(pos);
           vViewPosition = cameraPosition.xyz;
-        }
-      `,
-      fragmentShader: /* glsl */ `
-        varying vec3 vNormal;
-        uniform sampler2D spheretex;
-        varying vec3 vViewPosition;
-
-        void main (void) {
           vec3 viewDir = normalize( vViewPosition );
           vec3 x = normalize( vec3( viewDir.z, 0.0, - viewDir.x ) );
           vec3 y = cross( viewDir, x );
           vec2 uv = vec2( dot( x, vNormal ), dot( y, vNormal ) ) * 0.495 + 0.5; // 0.495 to remove artifacts caused by undersized matcap disks
 
-          vec4 color = texture2D(spheretex, uv.xy);
+          vUv = uv;
 
-          gl_FragColor = vec4(color.rgb, 1.0);
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        varying vec3 vViewPosition;
+        varying vec3 vNormal;
+        varying vec2 vUv;
+        uniform sampler2D spheretex;
+        uniform sampler2D tAudioData;
+
+        void main (void) {
+          vec3 viewDir = normalize( vViewPosition );
+          vec3 x = normalize( vec3( viewDir.z, 0.0, - viewDir.x ) );
+          vec3 y = cross( viewDir, x );
+          vec2 smoothUV = vec2( dot( x, vNormal ), dot( y, vNormal ) ) * 0.495 + 0.5; // 0.495 to remove artifacts caused by undersized matcap disks
+
+          float f = texture2D( tAudioData, vec2( smoothUV.x, 0.0 ) ).r;
+          vec4 color = texture2D(spheretex, smoothUV.xy);
+
+          gl_FragColor = vec4(color.rgb * f, 1.0);
         }
       `,
     });
@@ -317,6 +341,96 @@ export class AntennaSurfaceSim {
       renderer.render(scene, camera);
     });
 
+    this.setupPopup().then(() => {
+      const listener = new AudioListener();
+
+      // Copyright Susaye Greene, Authorised to use in this project. All rights reserved.
+      // https://res.cloudinary.com/loklok-keystone/video/upload/v1620343573/susaye/deep-inside-it-for-susaye.m4a
+
+      const audio = new Audio(listener);
+      const file =
+        "https://res.cloudinary.com/loklok-keystone/video/upload/v1620343573/susaye/deep-inside-it-for-susaye.m4a";
+
+      // if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+      //   const loader = new AudioLoader();
+      //   loader.load(file, function (buffer) {
+      //     audio.setBuffer(buffer);
+      //     audio.play();
+      //   });
+      // } else {
+      //   const mediaElement = new Audio(file);
+      //   mediaElement.play();
+
+      //   audio.setMediaElementSource(mediaElement);
+      // }
+
+      const loader = new AudioLoader();
+      loader.load(file, function (buffer) {
+        audio.setBuffer(buffer);
+        audio.play();
+      });
+
+      const fftSize = 128;
+
+      const analyser = new AudioAnalyser(audio, fftSize);
+
+      const format = renderer.capabilities.isWebGL2
+        ? RedFormat
+        : LuminanceFormat;
+
+      shaderMaterial.uniforms.tAudioData.value = new DataTexture(
+        analyser.data,
+        fftSize / 2,
+        1,
+        format
+      );
+
+      //
+      this.mini.onLoop(() => {
+        analyser.getFrequencyData();
+        shaderMaterial.uniforms.tAudioData.value.needsUpdate = true;
+      });
+    });
+
     return this;
+  }
+
+  async setupPopup() {
+    return new Promise((resolve) => {
+      let dom = this.mini.domElement;
+      let insert = document.createElement("div");
+      dom.appendChild(insert);
+      reactDom.render(
+        <div className=" absolute top-0 left-0 h-full w-full bg-white bg-opacity-70 z-30">
+          <div className="h-full w-full flex justify-center items-center">
+            <div className={" flex flex-col justify-center items-center "}>
+              {/* <img
+                className={" w-36 object-contain object-center lg:hidden"}
+                src={require("./img/hold-phone-vertically.png").default}
+                alt="hold phone up right"
+              /> */}
+              <div className="p-3 lg:hidden">
+                <b>Fun Fun Candy</b>
+              </div>
+
+              <div className={"hidden lg:block"}>
+                <b>Fun Fun Candy</b>
+              </div>
+
+              <button
+                onClick={() => {
+                  insert.style.display = "none";
+                  resolve();
+                }}
+                className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
+              >
+                Start the music!
+              </button>
+            </div>
+          </div>
+        </div>,
+        insert
+      );
+    });
   }
 }
