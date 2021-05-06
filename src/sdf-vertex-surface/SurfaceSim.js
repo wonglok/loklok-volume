@@ -169,24 +169,24 @@ export class SurfaceSim {
             1.0
           );
 
+          d = opRound(d, 0.2);
+
           for (int i = 0; i < 3; i++)
           {
             float fi = float(i) / 3.0 + 0.5;
             float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
             d = opSmoothUnion(
-              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(4.0, 4.0, 4.0), mix(0.1, 1.3, fract(fi * 412.531 + 0.5124))),
+              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(4.0, 4.0, 4.0), mix(0.2, 2.3, fract(fi * 412.531 + 0.5124))),
               d,
-              1.5
+              1.0
             );
 
             /// rounding
-            d = opRound(d, 0.135);
+
           }
 
           return d;
         }
-
-
 
 
         vec3 opRep( vec3 p, vec3 c )
