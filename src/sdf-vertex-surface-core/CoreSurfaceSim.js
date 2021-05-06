@@ -52,7 +52,7 @@ vec3 ballify (vec3 pos, float r) {
 var glsl = require("glslify");
 console.log(glsl);
 
-export class SurfaceSim {
+export class CoreSurfaceSim {
   constructor({ ...mini }, name = "EnergySimulator") {
     this.mini = {
       ...mini,
@@ -176,31 +176,38 @@ export class SurfaceSim {
 
           float d = 2.0;
 
-          vec3 pp = opTwist(p, sin(time) * 2.0);
+          vec3 pp = opTwist(p, cos(time));
 
           d = opSmoothUnion(
-            sdOctahedron(pp, 2.3),
+            mix(
+              sdOctahedron(pp, 2.3),
+              sdBox(pp, vec3(2.3)),
+              sin(time)
+            ),
             d,
             1.0
           );
 
-
-
           d = opRound(d, 0.2);
 
-          for (int i = 0; i < 3; i++)
-          {
-            float fi = float(i) / 3.0 + 0.5;
-            float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
-            d = opSmoothUnion(
-              sdSphere(p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(4.0, 4.0, 4.0), mix(0.2, 2.3, fract(fi * 412.531 + 0.5124))),
-              d,
-              1.0
-            );
+          // for (int i = 0; i < 3; i++)
+          // {
+          //   float fi = float(i) / 3.0 + 0.5;
+          //   float timer = time * (fract(fi * 412.531 + 0.513) - 0.5) * 2.0;
+          //   vec3 pos = p + sin(timer + fi * vec3(52.5126, 64.62744, 632.25)) * vec3(4.0, 4.0, 4.0);
+          //   float size = mix(0.2, 2.3, fract(fi * 412.531 + 0.5124));
+          //   d = opSmoothUnion(
+          //     mix(
+          //       sdSphere(pos, size),
+          //       sdOctahedron(pos, size),
+          //       sin(time)
+          //     ),
+          //     d,
+          //     1.0
+          //   );
 
-            /// rounding
-
-          }
+          //   /// rounding
+          // }
 
           return d;
         }
