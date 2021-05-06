@@ -330,7 +330,7 @@ export class InstancedSurfaceSim {
       `,
     });
 
-    let count = 6;
+    let count = 4;
 
     let mesh = new InstancedMesh(rayGeo, shaderMaterial, count);
     mesh.scale.set(3, 3, 3);
