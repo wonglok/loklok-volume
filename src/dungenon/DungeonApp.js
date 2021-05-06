@@ -105,6 +105,7 @@ export class RequestGameControl {
     camera.position.z = 0;
 
     await this.setupPopup();
+
     camera.lookAt(
       camera.position.x,
       40 + camera.position.y,
@@ -148,8 +149,12 @@ export class RequestGameControl {
 
     let reversed = [
       {
+        location: [0, 55 + 100, 0 * 150],
+      },
+      {
         location: [0, 55, 0 * 150],
       },
+
       {
         location: [-40, 55, 1 * 150],
       },
@@ -320,10 +325,12 @@ export class Dungeon {
     gltf.scene.traverse((item) => {
       if (item.isMesh) {
         // console.log(item.name)
+        // item.material.vertexColor = true;
         item.material = new MeshStandardMaterial({
           color: new Color("#ffffff"),
           metalness: 0.9,
-          roughness: 0.2,
+          roughness: 0.5,
+          // vertexColors: true,
         });
 
         if (
@@ -376,74 +383,6 @@ export class Dungeon {
     return this;
   }
 }
-
-// export class SpaceWalk {
-//   constructor(mini) {
-//     this.mini = mini;
-//     this.promise = this.setup();
-//   }
-//   async setup() {
-//     let renderer = await this.mini.ready.renderer;
-//     let scene = await this.mini.ready.scene;
-//     let fbx = await loadFBX("/gamemap/space-walk.fbx");
-//     let silver = await loadMatCap("/matcap/silver.png");
-//     fbx.traverse((item) => {
-//       if (item.isMesh) {
-//         // console.log(item.name)
-//         item.material = new MeshStandardMaterial({
-//           color: new Color("#ffffff"),
-//           metalness: 0.9,
-//           roughness: 0.2,
-//         });
-
-//         if (
-//           item.name === "Mesh018" ||
-//           item.name === "Mesh013" ||
-//           item.name === "Mesh017"
-//         ) {
-//           item.material = silver;
-//         }
-
-//         // item.material = new MeshStandardMaterial({
-//         //   color: new Color("#ff0000"),
-//         //   metalness: 0.9,
-//         //   roughness: 0.1,
-//         // });
-
-//         item.material.side = DoubleSide;
-//         item.material.transparent = true;
-//       }
-//     });
-
-//     let o3d = new Object3D();
-//     let scale = 0.5;
-//     o3d.position.y = 242.6 * scale;
-//     fbx.scale.x = scale;
-//     fbx.scale.y = scale;
-//     fbx.scale.z = scale;
-
-//     let ambLight = new AmbientLight(new Color("#ffffff"), 1);
-//     scene.add(ambLight);
-//     let directional = new DirectionalLight(new Color("#ffffff"), 1);
-//     directional.position.x = 10;
-//     directional.position.y = 10;
-//     scene.add(directional);
-
-//     let url = `/hdr/photo_studio_01.jpg`;
-//     const pmremGenerator = new PMREMGenerator(renderer);
-//     pmremGenerator.compileEquirectangularShader();
-
-//     let loader = new TextureLoader();
-//     // loader.setDataType(UnsignedByteType);
-//     loader.load(url, (texture) => {
-//       const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-//       scene.environment = envMap;
-//     });
-
-//     o3d.add(fbx);
-//     scene.add(o3d);
-//   }
-// }
 
 export class Bubbles {
   constructor(mini) {

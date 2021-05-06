@@ -11,6 +11,8 @@
     "@testing-library/user-event": "^12.1.10",
     "@thi.ng/geom-resample": "^0.2.67",
     "animejs": "^3.2.1",
+    "glsl-raytrace": "^1.0.0",
+    "glslify": "^7.1.1",
     "pex-cam": "^2.8.0",
     "pex-context": "^2.10.4",
     "pex-math": "^2.1.1",

@@ -23,6 +23,7 @@ import { EnergyWarCanvas } from "./energy-war/EnergyCanvas";
 import { FacesCanvas } from "./faces/FacesCanvas";
 import { EyeMovieCanvas } from "./eyemovie/EyeMovieCanvas";
 import { DungeonCanvas } from "./dungenon/DungeonCanvas";
+import { SurfaceCanvas } from "./sdf-vertex-surface/SurfaceCanvas";
 
 function App() {
   return (
@@ -98,6 +99,9 @@ function App() {
         <Route exact path="/dungeon">
           <DungeonCanvas></DungeonCanvas>
         </Route>
+        <Route exact path="/sdf-vertex-surface">
+          <SurfaceCanvas></SurfaceCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -168,6 +172,10 @@ function App() {
           </div>
           <div className={"m-5"}>
             <Link to={"/dungeon"}>Dungeon</Link>
+          </div>
+
+          <div className={"m-5"}>
+            <Link to={"/sdf-vertex-surface"}>SDF Vertex Surface</Link>
           </div>
 
           <div className={"h-12"}></div>
