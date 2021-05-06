@@ -159,6 +159,8 @@ export class SurfaceSim {
           return d1 - rounder;
         }
 
+        ${Ballify}
+
         float doModel(vec3 p) {
 
           float d = 2.0;
@@ -168,6 +170,8 @@ export class SurfaceSim {
             d,
             1.0
           );
+
+
 
           d = opRound(d, 0.2);
 
