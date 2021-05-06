@@ -24,6 +24,7 @@ import { FacesCanvas } from "./faces/FacesCanvas";
 import { EyeMovieCanvas } from "./eyemovie/EyeMovieCanvas";
 import { DungeonCanvas } from "./dungenon/DungeonCanvas";
 import { SurfaceCanvas } from "./sdf-vertex-surface/SurfaceCanvas";
+import { InstancedSurfaceCanvas } from "./sdf-vertex-surface-instancing/InstancedSurfaceCanvas";
 
 function App() {
   return (
@@ -103,6 +104,10 @@ function App() {
           <SurfaceCanvas></SurfaceCanvas>
         </Route>
 
+        <Route exact path="/sdf-vertex-surface-instancing">
+          <InstancedSurfaceCanvas></InstancedSurfaceCanvas>
+        </Route>
+
         {/* Energy Game SDF Physics */}
 
         <Route exact path="/">
@@ -176,6 +181,11 @@ function App() {
 
           <div className={"m-5"}>
             <Link to={"/sdf-vertex-surface"}>SDF Vertex Surface</Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/sdf-vertex-surface-instancing"}>
+              Instanced SDF Vertex Surface
+            </Link>
           </div>
 
           <div className={"h-12"}></div>
