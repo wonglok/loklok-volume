@@ -58,7 +58,6 @@ vec3 ballify (vec3 pos, float r) {
 }
 `;
 var glsl = require("glslify");
-console.log(glsl);
 
 export class AntennaSurfaceSim {
   constructor({ ...mini }, name = "EnergySimulator") {

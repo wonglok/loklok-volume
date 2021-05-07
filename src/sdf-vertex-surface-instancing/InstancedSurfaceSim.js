@@ -53,7 +53,6 @@ vec3 ballify (vec3 pos, float r) {
 }
 `;
 var glsl = require("glslify");
-console.log(glsl);
 
 export class InstancedSurfaceSim {
   constructor({ ...mini }, name = "EnergySimulator") {
