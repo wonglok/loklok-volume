@@ -202,19 +202,16 @@ export class AntennaSurfaceSim {
 
           d = opSmoothUnion(
             mix(
-              sdTriPrism(pp, vec2(1.0, 4.0)),
+              sdTriPrism(pp, vec2(1.0, 4.0)) - 0.2,
               sdHexPrism(pp, vec2(1.0, 4.0)),
-              abs(sin(time))
+              midAudio
             ),
             d,
             1.0
           );
 
-
-
           d = opRound(d, 0.2);
 
-          //
           // for (int i = 0; i < 3; i++)
           // {
           //   float fi = float(i) / 3.0 + 0.5;
