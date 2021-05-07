@@ -96,7 +96,6 @@ export class AntennaSurfaceSim {
         varying vec2 vUv;
         varying vec3 vViewPosition;
 
-
         // Originally sourced from https://www.shadertoy.com/view/ldfSWs
         // Thank you Iñigo :)
 
@@ -126,7 +125,6 @@ export class AntennaSurfaceSim {
         {
           return length(p)-s;
         }
-
 
         float sdOctahedron( vec3 p, float s)
         {
@@ -194,12 +192,13 @@ export class AntennaSurfaceSim {
         //https://iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
         float doModel(vec3 p) {
-
-
+          float midAudio = texture2D(tAudioData, vec2(0.3, 0.0)).r;
+          midAudio = abs(midAudio);
 
           float d = 2.0;
+          vec3 pp = opTwist(p, cos(time) * 0.5 + 0.5 * midAudio);
 
-          vec3 pp = opTwist(p, cos(time) * 0.7);
+          pp *= (1.0 + midAudio * 0.1);
 
           d = opSmoothUnion(
             mix(
@@ -210,6 +209,8 @@ export class AntennaSurfaceSim {
             d,
             1.0
           );
+
+
 
           d = opRound(d, 0.2);
 
@@ -321,7 +322,9 @@ export class AntennaSurfaceSim {
           vec3 y = cross( viewDir, x );
           vec2 smoothUV = vec2( dot( x, vNormal ), dot( y, vNormal ) ) * 0.495 + 0.5; // 0.495 to remove artifacts caused by undersized matcap disks
 
-          float f = texture2D( tAudioData, vec2( smoothUV.x, 0.0 ) ).r;
+          float f = texture2D(tAudioData, vec2( smoothUV.x, 0.0)).r;
+          f += 0.5;
+
           vec4 color = texture2D(spheretex, smoothUV.xy);
 
           gl_FragColor = vec4(color.rgb * f, 1.0);
@@ -337,6 +340,7 @@ export class AntennaSurfaceSim {
     });
 
     camera.position.z = 10;
+
     this.mini.onLoop(() => {
       renderer.render(scene, camera);
     });
