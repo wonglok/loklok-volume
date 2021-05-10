@@ -186,7 +186,7 @@ export class RequestGameControl {
         location: [-40, 55, 6 * 150],
       },
       {
-        location: [-40, 55, 7 * 150],
+        location: [0, 55, 10 * 150],
       },
     ];
     return this.wayPts;
