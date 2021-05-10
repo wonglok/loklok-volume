@@ -13,6 +13,7 @@ import {
   Object3D,
   PMREMGenerator,
   Quaternion,
+  RepeatWrapping,
   SphereGeometry,
   TextureLoader,
   Vector3,
@@ -81,8 +82,13 @@ export class RequestGameControl {
 
               <button
                 onClick={() => {
-                  insert.style.display = "none";
-                  resolve();
+                  let res = {
+                    hide: () => {
+                      insert.style.display = "none";
+                      res.hide = () => {};
+                    },
+                  };
+                  resolve(res);
                 }}
                 className={"px-6 py-3 border-yellow-700 border bg-white m-3"}
               >
@@ -100,17 +106,17 @@ export class RequestGameControl {
     let camera = await this.mini.ready.camera;
     let scene = await this.mini.ready.scene;
 
-    camera.position.x = 0;
-    camera.position.y = 40;
-    camera.position.z = 0;
-
-    await this.setupPopup();
+    let wayPts = this.getWayPts();
+    camera.position.fromArray(wayPts[0].location);
 
     camera.lookAt(
       camera.position.x,
       40 + camera.position.y,
-      -1 + camera.position.z
+      -1 * camera.position.z
     );
+
+    let { hide } = await this.setupPopup();
+    hide();
 
     scene.add(camera);
 
@@ -133,9 +139,12 @@ export class RequestGameControl {
     camera.position.x = 0;
     camera.position.y = 40;
     camera.position.z = 0;
-    await this.setupPopup();
+    let { hide } = await this.setupPopup();
 
     let controls = new DeviceOrientationControls(camera);
+    controls.addEventListener("change", () => {
+      hide();
+    });
     this.mini.onLoop(() => {
       controls.update();
     });
@@ -144,17 +153,20 @@ export class RequestGameControl {
     this.mini.set("game-started", true);
   }
 
-  async setupTimelineSlider() {
-    let controls = await this.mini.ready.controls;
-
-    let reversed = [
+  getWayPts() {
+    this.wayPts = this.wayPts || [
       {
-        location: [0, 55 + 100, 0 * 150],
+        location: [0, 300, -8 * 150],
+      },
+      {
+        location: [0, 300, -2 * 150],
       },
       {
         location: [0, 55, 0 * 150],
       },
-
+      {
+        location: [0, 55, 0 * 150],
+      },
       {
         location: [-40, 55, 1 * 150],
       },
@@ -170,8 +182,20 @@ export class RequestGameControl {
       {
         location: [-40, 55, 5 * 150],
       },
-    ].reverse();
-    let pointDatabase = [...reversed];
+      {
+        location: [-40, 55, 6 * 150],
+      },
+      {
+        location: [-40, 55, 7 * 150],
+      },
+    ];
+    return this.wayPts;
+  }
+
+  async setupTimelineSlider() {
+    let controls = await this.mini.ready.controls;
+
+    let pointDatabase = this.getWayPts();
 
     this.mini.set("init-pos", pointDatabase[0].location);
 
@@ -301,13 +325,33 @@ let loadGLTF = (url) => {
 
 let loadMatCap = (url) => {
   return new Promise((resolve) => {
-    new TextureLoader().load(url, (textutre) => {
-      let matcap = new MeshMatcapMaterial({
-        matcap: textutre,
-        side: DoubleSide,
-      });
-      resolve(matcap);
+    let texture = new TextureLoader().load(url, (textutre) => {});
+
+    let matcap = new MeshMatcapMaterial({
+      matcap: texture,
+      side: DoubleSide,
     });
+
+    resolve(matcap);
+  });
+};
+
+let loadTextureMaterial = (url) => {
+  return new Promise((resolve) => {
+    let texture = new TextureLoader().load(url, (textutre) => {
+      texture.wrapS = RepeatWrapping;
+      texture.wrapT = RepeatWrapping;
+      texture.repeat.set(5, 5);
+    });
+
+    let matcap = new MeshStandardMaterial({
+      map: texture,
+      metalness: 0.5,
+      roughness: 0.5,
+      side: DoubleSide,
+    });
+
+    resolve(matcap);
   });
 };
 
@@ -321,24 +365,61 @@ export class Dungeon {
     let scene = await this.mini.ready.scene;
     let gltf = await loadGLTF("/gamemap/dungeos-3.glb");
 
-    let silver = await loadMatCap("/matcap/silver.png");
+    let silver = await loadMatCap("/matcap/silver.jpg");
+    let brick = await loadMatCap("/matcap/brick.jpg");
+    // let cyanCyber = await loadMatCap("/matcap/cyan-green-cyber.jpg");
+    // let muddy = await loadMatCap("/matcap/muddy.jpg");
+
+    let floorWood = await loadTextureMaterial("/texture/floor-wood.jpg");
+    floorWood.metalness = 0.1;
+    floorWood.roughness = 0.9;
+    let metalRoof = await loadTextureMaterial("/texture/metal-roof.jpg");
+    let stone = await loadTextureMaterial("/texture/stone.jpg");
+
+    let muddyMetalRoof = await loadTextureMaterial(
+      "/texture/muddy-metal-roof.jpg"
+    );
+    muddyMetalRoof.color = new Color("#555555");
+
     gltf.scene.traverse((item) => {
       if (item.isMesh) {
         // console.log(item.name)
         // item.material.vertexColor = true;
         item.material = new MeshStandardMaterial({
           color: new Color("#ffffff"),
-          metalness: 0.9,
-          roughness: 0.5,
+          metalness: 0.8,
+          roughness: 0.3,
           // vertexColors: true,
         });
 
-        if (
-          item.name === "Mesh018" ||
-          item.name === "Mesh013" ||
-          item.name === "Mesh017"
-        ) {
+        console.log(item.name);
+
+        if (item.name.indexOf("floor") !== -1) {
+          item.material = floorWood;
+        }
+        if (item.name.indexOf("arch") !== -1) {
+          item.material = metalRoof;
+        }
+        if (item.name.indexOf("door") !== -1) {
+          item.material = brick;
+        }
+        if (item.name.indexOf("roof") !== -1) {
+          item.material = muddyMetalRoof;
+        }
+        if (item.name.indexOf("wall") !== -1) {
+          item.material = muddyMetalRoof;
+        }
+        if (item.name.indexOf("pill") !== -1) {
+          item.material = muddyMetalRoof;
+        }
+        if (item.name.indexOf("lamp") !== -1) {
           item.material = silver;
+        }
+        if (item.name.indexOf("stair") !== -1) {
+          item.material = stone;
+        }
+        if (item.name.indexOf("fire") !== -1) {
+          item.visible = false;
         }
 
         // item.material = new MeshStandardMaterial({
@@ -379,6 +460,8 @@ export class Dungeon {
 
     o3d.add(gltf.scene);
     scene.add(o3d);
+
+    this.mini.set("dungeonready", true);
 
     return this;
   }
@@ -438,7 +521,8 @@ export class DungeonApp {
     let dungeon = new Dungeon(this.mini);
     let bubbles = new Bubbles(this.mini);
     let pop = new RequestGameControl(this.mini);
-    //
+
+    // this.mini.ready["dungeon-loaded"];
 
     return this;
   }
