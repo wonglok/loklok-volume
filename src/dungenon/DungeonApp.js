@@ -1,6 +1,7 @@
 import ReactDom from "react-dom";
 import {
   AmbientLight,
+  Camera,
   CatmullRomCurve3,
   Color,
   CubeRefractionMapping,
@@ -136,14 +137,26 @@ export class RequestGameControl {
   }
   async setupMobile() {
     let camera = await this.mini.ready.camera;
-    camera.position.x = 0;
-    camera.position.y = 40;
-    camera.position.z = 0;
-    let { hide } = await this.setupPopup();
+    // camera.position.x = 0;
+    // camera.position.y = 40;
+    // camera.position.z = 0;
 
-    let controls = new DeviceOrientationControls(camera);
+    let wayPts = this.getWayPts();
+    camera.position.fromArray(wayPts[0].location);
+
+    camera.lookAt(
+      camera.position.x,
+      40 + camera.position.y,
+      -1 * camera.position.z
+    );
+
+    let { hide } = await this.setupPopup();
+    let fakeCam = new Camera();
+    let controls = new DeviceOrientationControls(fakeCam);
     controls.addEventListener("change", () => {
       hide();
+      fakeCam.rotation.y += Math.PI;
+      camera.rotation.copy(fakeCam.rotation);
     });
     this.mini.onLoop(() => {
       controls.update();
