@@ -213,18 +213,17 @@ export class RequestGameControl {
     let curve = new CatmullRomCurve3(points, false);
 
     let camdir = new Vector3();
+    let camera = await this.mini.ready.camera;
     let goToPt = ({ progress }) => {
-      this.mini.get("camera").then((camera) => {
-        curve.getPointAt(progress, camera.position);
-        camera.getWorldDirection(camdir);
-        if (controls.target) {
-          controls.target.set(
-            camera.position.x + camdir.x,
-            camera.position.y + camdir.y,
-            camera.position.z + camdir.z
-          );
-        }
-      });
+      curve.getPointAt(progress, camera.position);
+      camera.getWorldDirection(camdir);
+      if (controls.target) {
+        controls.target.set(
+          camera.position.x + camdir.x,
+          camera.position.y + camdir.y,
+          camera.position.z + camdir.z
+        );
+      }
     };
 
     let time = 0;
@@ -240,7 +239,7 @@ export class RequestGameControl {
         goToPt({ progress: time });
       }
     });
-
+    let self = this;
     let rangerSlider = () => {
       let dom = this.mini.domElement;
       let insert = document.createElement("div");
@@ -257,7 +256,7 @@ export class RequestGameControl {
               ref.current.state.value = 100;
             }
             ref.current.setState(ref.current.state);
-          });
+          }, 50);
           return () => {
             clearInterval(intv);
           };
@@ -513,9 +512,9 @@ export class Bubbles {
 export class DungeonApp {
   constructor(mini) {
     this.mini = mini;
-
     this.promise = this.setup();
   }
+
   async setup() {
     // let space = new SpaceWalk(this.mini);
     let dungeon = new Dungeon(this.mini);
