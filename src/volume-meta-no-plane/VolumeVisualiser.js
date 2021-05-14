@@ -1,4 +1,10 @@
-import { Object3D, TextureLoader } from "three";
+import {
+  AdditiveBlending,
+  Color,
+  Object3D,
+  SphereBufferGeometry,
+  TextureLoader,
+} from "three";
 import { ShaderMaterial } from "three";
 import { MeshBasicMaterial } from "three";
 import { BackSide } from "three";
@@ -38,7 +44,7 @@ export class VolumeVisualiser {
   }
 
   async setupDrawable() {
-    let STEPS = 80;
+    let STEPS = 100;
 
     let renderer = await this.mini.get("renderer");
     let scene = await this.mini.get("scene");
@@ -78,7 +84,7 @@ void main()
     };
 
     this.rtTexture = new WebGLRenderTarget(1024, 1024);
-    // this.rtTexture2 = new WebGLRenderTarget(512, 512);
+    this.rtTextureTV = new WebGLRenderTarget(256, 256);
 
     this.pass2 = {
       vs: /* glsl */ `
@@ -101,7 +107,7 @@ varying vec4 vProjectedCoords;
 uniform sampler2D tex; //, cubeTex, transferTex;
 uniform float steps;
 uniform float alphaCorrection;
-const int MAX_STEPS = 128;
+const int MAX_STEPS = 1024;
 
 uniform float time;
 
@@ -201,7 +207,7 @@ vec4 sampleAs3DTexture (vec3 pos) {
     color = texture2D(matcap, myUV.xy);
   }
 
-  return vec4(color.rgb * 1.5 + 0.5, (1.0 - alpha) * 5.0);
+  return vec4(color.rgb * 1.5 + 0.5, (1.0 - alpha) * 10.0);
 }
 
 void main( void ) {
@@ -296,7 +302,7 @@ gl_FragColor  = accumulatedColor;
     };
 
     this.scenePass1 = new Scene();
-    this.scenePass2 = scene;
+    this.scenePass2 = new Scene();
     // this.scenePass2.background = new Color("#bababa");
 
     let mat1 = new ShaderMaterial({
@@ -306,6 +312,11 @@ gl_FragColor  = accumulatedColor;
       transparent: false,
       side: BackSide,
     });
+
+    // let sphereShape = new SphereBufferGeometry(1, 32, 32)
+    // let boxShape
+
+    let box2 = new BoxBufferGeometry(1, 1, 1, 2, 2, 2);
     let box1 = new BoxBufferGeometry(1, 1, 1, 2, 2, 2);
     let drawable1 = new Mesh(box1, mat1);
     drawable1.frustumCulled = false;
@@ -320,32 +331,55 @@ gl_FragColor  = accumulatedColor;
       side: FrontSide,
     });
 
-    let box2 = new BoxBufferGeometry(1, 1, 1, 2, 2, 2);
     let drawable2 = new Mesh(box2, mat2);
     drawable2.frustumCulled = false;
     this.scenePass2.add(drawable2);
 
-    // let mat3 = new MeshBasicMaterial({
-    //   color: 0xffffff,
-    //   map: this.rtTexture2.texture,
-    // });
+    let mat3 = new ShaderMaterial({
+      uniforms: {
+        map: { value: this.rtTextureTV.texture },
+        color: new Color(0xffffff),
+      },
+      blending: AdditiveBlending,
+      vertexShader: `
+        varying vec2 vUv;
+        void main (void) {
+          gl_Position = vec4(position, 1.0);
+          vUv = uv;
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform sampler2D map;
 
-    // let geo3 = new PlaneBufferGeometry(75, 75, 2, 2);
-    // let mesh = new Mesh(geo3, mat3);
-    // mesh.frustumCulled = false;
-    // this.drawable.add(mesh);
+        void main (void) {
+          gl_FragColor = texture2D(map, vUv);
+        }
+      `,
+    });
 
-    // let volumeCamera = new PerspectiveCamera(45, 1, 0.1, 10000);
-    // volumeCamera.updateProjectionMatrix();
-    // volumeCamera.position.z = 1.0;
+    let geo3 = new PlaneBufferGeometry(2, 2, 2, 2);
+    let mesh = new Mesh(geo3, mat3);
+    mesh.frustumCulled = false;
+    this.drawable.add(mesh);
 
-    // this.mini.set("VolumeCamera", volumeCamera);
-    // this.mini.get("VolumeControls").then((controls) => {
-    //   controls.minDistance = 1.0;
-    // });
+    let volumeCamera = new PerspectiveCamera(45, 1, 0.1, 10000);
+    this.mini.onResize(() => {
+      volumeCamera.aspect = camera.aspect;
+      volumeCamera.updateProjectionMatrix();
+    });
+    volumeCamera.aspect = camera.aspect;
+    volumeCamera.updateProjectionMatrix();
+    volumeCamera.position.z = 2.0;
 
-    camera.position.z = 1.0;
+    this.mini.set("VolumeCamera", volumeCamera);
+    this.mini.get("VolumeControls").then((controls) => {
+      controls.minDistance = 1.0;
+    });
 
+    camera.position.z = 15.0;
+
+    let lastLength = false;
     this.compute = () => {
       let time = window.performance.now() * 0.001;
       this.pass1.uniforms.time.value = time;
@@ -359,12 +393,18 @@ gl_FragColor  = accumulatedColor;
       // camera.position.z = 50.0;
 
       // let oldRenderTarget = renderer.getRenderTarget();
-      renderer.setRenderTarget(this.rtTexture);
-      renderer.render(this.scenePass1, camera);
+      if (camera.position.toArray().join(",") !== lastLength) {
+        lastLength = camera.position.toArray().join(",");
+        renderer.setRenderTarget(this.rtTexture);
+        renderer.render(this.scenePass1, volumeCamera);
+      }
+
+      renderer.setRenderTarget(this.rtTextureTV);
+      renderer.render(this.scenePass2, volumeCamera);
+      renderer.setRenderTarget(null);
+
       // renderer.setRenderTarget(null);
       // renderer.render(scene, camera);
-
-      renderer.setRenderTarget(null);
     };
   }
 

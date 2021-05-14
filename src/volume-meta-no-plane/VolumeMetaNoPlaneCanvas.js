@@ -4,7 +4,7 @@ import { Base } from "../shared/Base";
 // import { SDFTexture } from "./SDFTexture";
 import { VolumeVisualiser } from "./VolumeVisualiser";
 import { SceneControls } from "../slicer/SceneControls";
-// import { VolumeControls } from "./VolumeControls";
+import { VolumeControls } from "./VolumeControls";
 
 export const VolumeMetaNoPlaneCanvas = () => {
   const ref = useRef(null);
@@ -13,7 +13,7 @@ export const VolumeMetaNoPlaneCanvas = () => {
     let mods = [
       new Base(mini),
       new SceneControls(mini),
-      // new VolumeControls(mini),
+      new VolumeControls(mini),
       // new SDFTexture(mini),
       new VolumeVisualiser(mini),
     ];
