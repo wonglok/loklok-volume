@@ -27,6 +27,7 @@ import { SurfaceCanvas } from "./sdf-vertex-surface/SurfaceCanvas";
 import { InstancedSurfaceCanvas } from "./sdf-vertex-surface-instancing/InstancedSurfaceCanvas";
 import { CoreSurfaceCanvas } from "./sdf-vertex-surface-core/CoreSurfaceCanvas";
 import { AntennaSurfaceCanvas } from "./sdf-vertex-surface-antenna/AntennaSurfaceCanvas";
+import { VolumeMetaNoPlaneCanvas } from "./volume-meta-no-plane/VolumeMetaNoPlaneCanvas";
 
 function App() {
   return (
@@ -116,6 +117,9 @@ function App() {
         <Route exact path="/sdf-vertex-surface-antenna">
           <AntennaSurfaceCanvas></AntennaSurfaceCanvas>
         </Route>
+        <Route exact path="/volume-meta-no-plane">
+          <VolumeMetaNoPlaneCanvas></VolumeMetaNoPlaneCanvas>
+        </Route>
 
         {/* Energy Game SDF Physics */}
 
@@ -203,6 +207,9 @@ function App() {
             <Link to={"/sdf-vertex-surface-antenna"}>
               Antenna SDF Vertex Surface
             </Link>
+          </div>
+          <div className={"m-5"}>
+            <Link to={"/volume-meta-no-plane"}>VolumeMeta No Plane</Link>
           </div>
 
           <div className={"h-12"}></div>
